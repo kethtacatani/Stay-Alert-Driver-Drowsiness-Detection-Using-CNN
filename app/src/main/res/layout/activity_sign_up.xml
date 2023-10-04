@@ -209,6 +209,7 @@
                 android:layout_width="60dp"
                 android:layout_height="44dp"
                 android:background="@drawable/ic_google"
+                app:backgroundTint="@null"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/TVtext3"
                 tools:ignore="SpeakableTextPresentCheck,TouchTargetSizeCheck,TouchTargetSizeCheck" />
@@ -219,6 +220,7 @@
                 android:layout_height="44dp"
                 android:layout_marginStart="10dp"
                 android:background="@drawable/ic_facebook"
+                app:backgroundTint="@null"
                 app:layout_constraintStart_toEndOf="@+id/BTNgoogle"
                 app:layout_constraintTop_toBottomOf="@+id/TVtext3"
                 tools:ignore="SpeakableTextPresentCheck,TouchTargetSizeCheck" />
@@ -229,6 +231,7 @@
                 android:layout_height="44dp"
                 android:layout_marginStart="10dp"
                 android:background="@drawable/ic_apple"
+                app:backgroundTint="@null"
                 app:layout_constraintStart_toEndOf="@+id/BTNapple"
                 app:layout_constraintTop_toBottomOf="@+id/TVtext3"
                 tools:ignore="SpeakableTextPresentCheck,TouchTargetSizeCheck" />
