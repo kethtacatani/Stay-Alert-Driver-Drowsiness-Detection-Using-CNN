@@ -7,12 +7,12 @@
     <item
         android:id="@+id/home"
         android:title="Home"
-        android:icon="@drawable/ic_home"/>
+        android:icon="@drawable/selector_home"/>
 
     <item
         android:id="@+id/phone"
         android:title="Phone"
-        android:icon="@drawable/ic_call"
+        android:icon="@drawable/selector_phone"
         />
 
     <item
@@ -22,10 +22,10 @@
     <item
         android:id="@+id/stats"
         android:title="Stats"
-        android:icon="@drawable/ic_stats" />
+        android:icon="@drawable/selector_stats" />
     <item
         android:id="@+id/profile"
         android:title="Profile"
-        android:icon="@drawable/ic_profile" />
+        android:icon="@drawable/selector_profile" />
 
 </menu>

@@ -51,6 +51,7 @@ public class Home extends AppCompatActivity {
             return true;
         });
 
+        binding.bottomNavigationView.setItemIconTintList(null);
 
         binding.menuFab.setOnClickListener(new View.OnClickListener() {
             @Override

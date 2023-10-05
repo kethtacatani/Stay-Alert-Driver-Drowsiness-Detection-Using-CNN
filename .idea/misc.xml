@@ -17,12 +17,22 @@
         <entry key="..\:/Android Studio Projects/StaySafe/app/src/main/res/layout/activity_sign_in.xml" value="0.264" />
         <entry key="..\:/Android Studio Projects/StaySafe/app/src/main/res/layout/activity_sign_up.xml" value="0.21096491228070174" />
         <entry key="..\:/Android Studio Projects/app/src/main/res/layout/activity_main.xml" value="0.4" />
+        <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN/app/src/main/res/drawable/home_selector.xml" value="0.132" />
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN/app/src/main/res/drawable/ic_apple.xml" value="0.2595" />
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN/app/src/main/res/drawable/ic_call.xml" value="0.124" />
+        <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN/app/src/main/res/drawable/ic_call_selected.xml" value="0.132" />
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN/app/src/main/res/drawable/ic_google.xml" value="0.2595" />
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN/app/src/main/res/drawable/ic_home.xml" value="0.124" />
+        <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN/app/src/main/res/drawable/ic_home_selected.xml" value="0.132" />
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN/app/src/main/res/drawable/ic_menu_circle.xml" value="0.21" />
-        <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN/app/src/main/res/layout/activity_home.xml" value="0.4" />
+        <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN/app/src/main/res/drawable/ic_profile_selected.xml" value="0.132" />
+        <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN/app/src/main/res/drawable/ic_stats_selected.xml" value="0.132" />
+        <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN/app/src/main/res/drawable/selector_home.xml" value="0.132" />
+        <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN/app/src/main/res/drawable/selector_icon.xml" value="0.2585" />
+        <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN/app/src/main/res/drawable/selector_phone.xml" value="0.124" />
+        <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN/app/src/main/res/drawable/selector_profile.xml" value="0.124" />
+        <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN/app/src/main/res/drawable/selector_stats.xml" value="0.124" />
+        <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN/app/src/main/res/layout/activity_home.xml" value="0.264" />
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN/app/src/main/res/layout/activity_sign_in.xml" value="0.4" />
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN/app/src/main/res/layout/activity_sign_up.xml" value="0.25052083333333336" />
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN/app/src/main/res/layout/bottom_sheet.xml" value="0.25052083333333336" />
