@@ -5,9 +5,20 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#E6E6E6"
+    android:background="#00E6E6E6"
     tools:context=".Home">
 
+
+
+    <FrameLayout
+        android:id="@+id/frame_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" >
+
+
+
+
+    </FrameLayout>
 
 
     <com.etebarian.meowbottomnavigation.MeowBottomNavigation
@@ -24,6 +35,8 @@
         app:mbn_selectedIconColor="@color/white"
         app:mbn_shadowColor="#1f212121"
         />
+
+
 
 
 
