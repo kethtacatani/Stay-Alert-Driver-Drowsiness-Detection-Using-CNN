@@ -30,6 +30,9 @@ import android.media.Image;
 import android.media.Image.Plane;
 import android.media.ImageReader;
 import android.media.ImageReader.OnImageAvailableListener;
+import android.media.Ringtone;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -44,6 +47,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
@@ -63,6 +67,7 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
@@ -110,19 +115,73 @@ public abstract class CameraActivity extends AppCompatActivity
   int currentModel = -1;
   int currentNumThreads = -1;
   FrameLayout frameLayout;
-  Button backBtn;
+  ImageButton backBtn;
+  public static int elevation=0;
+  public static String eyeStatus="";
+  public static String mouthStatus="";
+
+  private String[] values = new String[30];
+  private int currentIndex = 0;
+  private int closeCount = 0;
+  private Runnable runnableCode;
+  boolean ring=false;
 
   ArrayList<String> deviceStrings = new ArrayList<String>();
 
   @Override
   protected void onCreate(final Bundle savedInstanceState) {
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+      View decorView = getWindow().getDecorView();
+      decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+    }
+
+    CameraManager cameraManager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
+
     LOGGER.d("onCreate " + this);
     super.onCreate(null);
     getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
     setContentView(R.layout.tfe_od_activity_camera);
     frameLayout = findViewById(R.id.container);
+    Handler handler = new Handler();
+    Uri defaultRingtoneUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
+    // Create a Ringtone object from the URI
+    Ringtone ringtone = RingtoneManager.getRingtone(CameraActivity.this, defaultRingtoneUri);
 
+    runnableCode = new Runnable() {
+      @Override
+      public void run() {
+        String newValue = eyeStatus; // Replace with your variable to check
+        if ("closed".equals(newValue) && closeCount<30) {
+          closeCount++;
+        }else if (closeCount>0){
+          closeCount--;
+        }
+        values[currentIndex] = newValue;
+        currentIndex = (currentIndex + 1) % 30; // Wrap around to the beginning of the array
+        double closePercentage = (closeCount / 30.0) * 100.0;
+
+        if(closePercentage>90 && !ring){
+          Toast.makeText(CameraActivity.this, "Please WAKE UP!!!!", Toast.LENGTH_SHORT).show();
+
+          // Play the default ringtone
+          ringtone.play();
+          ring=true;
+        }
+        else if(closePercentage<90){
+          ringtone.stop();
+          ring=false;
+        }
+        // Schedule the next update
+//        System.out.println("looping "+ closePercentage+"\n"+ Arrays.toString(values)+"\n closeCount: "+closeCount);
+
+        handler.postDelayed(this, 100); // Schedule the task to run again after 100 milliseconds
+      }
+    };
+
+    // Start the task initially
+    handler.post(runnableCode);
 
     bottomNavigation= findViewById(R.id.bottomNavigation);
     backBtn= findViewById(R.id.backBtn);
@@ -133,17 +192,17 @@ public abstract class CameraActivity extends AppCompatActivity
     bottomNavigation.add(new MeowBottomNavigation.Model(4, R.drawable.ic_stats));
     bottomNavigation.add(new MeowBottomNavigation.Model(5, R.drawable.ic_profile));
 
-//    bottomNavigation.show(3,true);
+    bottomNavigation.show(3,true);
+    replaceFragment(new HomeFrag());
     bottomNavigation.clearCount(1);
 
-    replaceFragment(new MenuFrag());
     bottomNavigation.setOnClickMenuListener(new Function1<MeowBottomNavigation.Model, Unit>() {
       @Override
       public Unit invoke(MeowBottomNavigation.Model model) {
         switch (model.getId()){
           case 1:
             replaceFragment(new MenuFrag());
-            Toast.makeText(CameraActivity.this, "Home", Toast.LENGTH_SHORT).show();
+            Toast.makeText(CameraActivity.this, "Menu", Toast.LENGTH_SHORT).show();
             break;
           case 2:
             replaceFragment(new PhoneFrag());
@@ -173,7 +232,8 @@ public abstract class CameraActivity extends AppCompatActivity
     backBtn.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
-        changeFrameLayoutElevation(0);
+        elevation=0;
+        changeFrameLayoutElevation();
       }
     });
 
@@ -284,7 +344,7 @@ public abstract class CameraActivity extends AppCompatActivity
     plusImageView.setOnClickListener(this);
     minusImageView.setOnClickListener(this);
 
-    Handler handler = new Handler();
+
 
     handler.postDelayed(new Runnable() {
       @Override
@@ -296,26 +356,64 @@ public abstract class CameraActivity extends AppCompatActivity
 
   ////////////////////////////////////////////
 
+
+//  private Runnable updateArrayTask = new Runnable() {
+//    @Override
+//    public void run() {
+//      // Update the array with a new value
+//      String newValue = eyeStatus; // Replace with your variable to check
+//      if ("close".equals(newValue) && closeCount<30) {
+//        closeCount++;
+//      }else if (closeCount>0){
+//        closeCount--;
+//      }
+//      values[currentIndex] = newValue;
+//      currentIndex = (currentIndex + 1) % 30; // Wrap around to the beginning of the array
+//      double closePercentage = (closeCount / 30.0) * 100.0;
+//
+//      if(closePercentage>90){
+//        Toast.makeText(CameraActivity.this, "Please WAKE UP!!!!", Toast.LENGTH_SHORT).show();
+//      }
+//      // Schedule the next update
+//      handler.postDelayed(this, 100); // Run every 100 milliseconds
+//      System.out.println("looping "+ closePercentage+"\n"+ Arrays.toString(values)+"\n closeCount: "+closeCount);
+//    }
+//  };
+
+
+
+  @Override
+  public void onBackPressed() {
+    if(backBtn.getVisibility()==View.VISIBLE){
+      elevation=0;
+      backBtn.setVisibility(View.GONE);
+      msTV.setElevation(elevation);
+      frameLayout.setElevation(elevation);
+    }
+  }
+
   private void replaceFragment(androidx.fragment.app.Fragment fragment) {
     FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
     transaction.replace(R.id.frame_layout,fragment);
     transaction.commit();
   }
-  public void changeFrameLayoutElevation(float newElevation) {
+  public void changeFrameLayoutElevation() {
+    int newElevation= elevation;
     if (frameLayout != null) {
       frameLayout.setElevation(newElevation);
       if(newElevation>0){
         backBtn.setElevation(newElevation);
         backBtn.setVisibility(View.VISIBLE);
         msTV.setElevation(newElevation);
+        HomeFrag.viewDetectionBtn.setVisibility(View.GONE);
       }
       else{
         backBtn.setVisibility(View.GONE);
         msTV.setElevation(newElevation);
+        HomeFrag.viewDetectionBtn.setVisibility(View.VISIBLE);
       }
     }
   }
-
 
 
 
@@ -706,6 +804,7 @@ public abstract class CameraActivity extends AppCompatActivity
 
   protected abstract void updateActiveModel();
   protected abstract void processImage();
+
 
   protected abstract void onPreviewSizeChosen(final Size size, final int rotation);
 

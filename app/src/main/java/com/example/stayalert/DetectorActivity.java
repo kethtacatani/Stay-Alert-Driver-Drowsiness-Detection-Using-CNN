@@ -45,6 +45,7 @@ import com.example.stayalert.tflite.YoloV5Classifier;
 import com.example.stayalert.tracking.MultiBoxTracker;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -65,6 +66,7 @@ public class DetectorActivity extends com.example.stayalert.CameraActivity imple
     private Integer sensorOrientation;
 
     private YoloV5Classifier detector;
+    private DrowsyDetection detectorAlarm;
 
     private long lastProcessingTimeMs;
     private Bitmap rgbFrameBitmap = null;
@@ -312,18 +314,24 @@ public class DetectorActivity extends com.example.stayalert.CameraActivity imple
                         final List<Classifier.Recognition> mappedRecognitions =
                                 new LinkedList<Classifier.Recognition>();
 
+                        List<String> resultTitles = new ArrayList<>();
+
                         for (final Classifier.Recognition result : results) {
                             final RectF location = result.getLocation();
                             if (location != null && result.getConfidence() >= minimumConfidence) {
                                 canvas.drawRect(location, paint);
 
                                 cropToFrameTransform.mapRect(location);
+                                resultTitles.add(result.getTitle());
 
                                 result.setLocation(location);
                                 mappedRecognitions.add(result);
-//                                Toast.makeText(DetectorActivity.this, "Detected", Toast.LENGTH_SHORT).show();
                             }
                         }
+
+                        eyeStatus=resultTitles.contains("open")||resultTitles.contains("closed")?resultTitles.contains("open") ? "open" : "closed":"";
+                        mouthStatus=resultTitles.contains("yawn")||resultTitles.contains("no_yawn")?resultTitles.contains("yawn") ? "yawn" : "no_yawn":"";
+                        System.out.println("mouth: "+mouthStatus+"\neyes: "+eyeStatus);
 
                         tracker.trackResults(mappedRecognitions, currTimestamp);
                         trackingOverlay.postInvalidate();
