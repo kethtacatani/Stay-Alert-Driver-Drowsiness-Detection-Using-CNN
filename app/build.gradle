@@ -51,4 +51,5 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.8.6'
     androidTestImplementation 'com.android.support.test:rules:1.0.2'
     androidTestImplementation 'com.google.truth:truth:1.0.1'
+    implementation 'de.hdodenhof:circleimageview:3.1.0'
 }

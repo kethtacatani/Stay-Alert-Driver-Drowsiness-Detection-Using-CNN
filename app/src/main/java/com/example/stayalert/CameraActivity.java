@@ -68,6 +68,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
@@ -149,6 +150,21 @@ public abstract class CameraActivity extends AppCompatActivity
     // Create a Ringtone object from the URI
     Ringtone ringtone = RingtoneManager.getRingtone(CameraActivity.this, defaultRingtoneUri);
 
+
+
+    bottomNavigation= findViewById(R.id.bottomNavigation);
+    backBtn= findViewById(R.id.backBtn);
+
+    bottomNavigation.add(new MeowBottomNavigation.Model(1, R.drawable.ic_menu));
+    bottomNavigation.add(new MeowBottomNavigation.Model(2, R.drawable.ic_call));
+    bottomNavigation.add(new MeowBottomNavigation.Model(3, R.drawable.ic_home));
+    bottomNavigation.add(new MeowBottomNavigation.Model(4, R.drawable.ic_stats));
+    bottomNavigation.add(new MeowBottomNavigation.Model(5, R.drawable.ic_profile));
+
+
+
+    
+
     runnableCode = new Runnable() {
       @Override
       public void run() {
@@ -166,10 +182,12 @@ public abstract class CameraActivity extends AppCompatActivity
           Toast.makeText(CameraActivity.this, "Please WAKE UP!!!!", Toast.LENGTH_SHORT).show();
 
           // Play the default ringtone
+          HomeFrag.statusDriverTV.setText(" SLEEPY ");
           ringtone.play();
           ring=true;
         }
         else if(closePercentage<90){
+          HomeFrag.statusDriverTV.setText(" ACTIVE ");
           ringtone.stop();
           ring=false;
         }
@@ -182,15 +200,6 @@ public abstract class CameraActivity extends AppCompatActivity
 
     // Start the task initially
     handler.post(runnableCode);
-
-    bottomNavigation= findViewById(R.id.bottomNavigation);
-    backBtn= findViewById(R.id.backBtn);
-
-    bottomNavigation.add(new MeowBottomNavigation.Model(1, R.drawable.ic_menu));
-    bottomNavigation.add(new MeowBottomNavigation.Model(2, R.drawable.ic_call));
-    bottomNavigation.add(new MeowBottomNavigation.Model(3, R.drawable.ic_home));
-    bottomNavigation.add(new MeowBottomNavigation.Model(4, R.drawable.ic_stats));
-    bottomNavigation.add(new MeowBottomNavigation.Model(5, R.drawable.ic_profile));
 
     bottomNavigation.show(3,true);
     replaceFragment(new HomeFrag());
@@ -355,31 +364,6 @@ public abstract class CameraActivity extends AppCompatActivity
   }
 
   ////////////////////////////////////////////
-
-
-//  private Runnable updateArrayTask = new Runnable() {
-//    @Override
-//    public void run() {
-//      // Update the array with a new value
-//      String newValue = eyeStatus; // Replace with your variable to check
-//      if ("close".equals(newValue) && closeCount<30) {
-//        closeCount++;
-//      }else if (closeCount>0){
-//        closeCount--;
-//      }
-//      values[currentIndex] = newValue;
-//      currentIndex = (currentIndex + 1) % 30; // Wrap around to the beginning of the array
-//      double closePercentage = (closeCount / 30.0) * 100.0;
-//
-//      if(closePercentage>90){
-//        Toast.makeText(CameraActivity.this, "Please WAKE UP!!!!", Toast.LENGTH_SHORT).show();
-//      }
-//      // Schedule the next update
-//      handler.postDelayed(this, 100); // Run every 100 milliseconds
-//      System.out.println("looping "+ closePercentage+"\n"+ Arrays.toString(values)+"\n closeCount: "+closeCount);
-//    }
-//  };
-
 
 
   @Override
