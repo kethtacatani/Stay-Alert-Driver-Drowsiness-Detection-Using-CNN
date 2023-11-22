@@ -58,15 +58,17 @@
 
     </RelativeLayout>
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <LinearLayout
         android:id="@+id/constraintLayout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="vertical">
 
         <TextView
             android:id="@+id/textView"
             android:layout_width="282dp"
-            android:layout_height="40dp"
+            android:layout_height="wrap_content"
             android:layout_marginTop="74dp"
             android:fontFamily="@font/poppins_semibold"
             android:gravity="center"
@@ -90,93 +92,406 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/textView" />
 
-        <EditText
-            android:id="@+id/ETemailSignup"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="50dp"
-            android:background="@drawable/input"
-            android:ems="14"
-            android:fontFamily="@font/poppins_medium"
-            android:hint="Email"
-            android:inputType="textPersonName"
-            android:paddingLeft="15dp"
-            android:textSize="16sp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textView2" />
 
-        />
-        <EditText
-            android:id="@+id/ETpassSignup"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/input"
-            android:ems="14"
-            android:inputType="textPassword"
-            android:layout_marginTop="25dp"
-            android:hint="Password"
-            android:paddingLeft="15dp"
-            android:textSize="16sp"
-            android:fontFamily="@font/poppins_medium"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/ETemailSignup" />
-
-        />
-
-        <EditText
-            android:id="@+id/ETconPassSignup"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/input"
-            android:ems="14"
-            android:inputType="textPassword"
-            android:layout_marginTop="25dp"
-            android:hint="Confirm Password"
-            android:paddingLeft="15dp"
-            android:textSize="16sp"
-            android:fontFamily="@font/poppins_medium"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/ETpassSignup" />
-
-        />
+        <ScrollView
+            android:id="@+id/scrollView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scrollbars="none"
+            android:layout_weight="1"
+            android:layout_marginBottom="20dp"
+            android:fillViewport="true"
+            app:layout_constraintBottom_toTopOf="@+id/BTNsignup"
+            app:layout_constraintTop_toBottomOf="@+id/textView2">
 
 
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="40dp"
+                android:layout_marginRight="40dp">
+
+                <LinearLayout
+                    android:id="@+id/fNameMNameLL"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginTop="25dp"
+                    android:orientation="horizontal"
+                    app:layout_constraintTop_toTopOf="parent">
+
+                    <EditText
+                        android:id="@+id/ETfNameSignup"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="2"
+                        android:background="@drawable/input"
+                        android:ems="14"
+                        android:fontFamily="@font/poppins_medium"
+                        android:hint="First Name"
+                        android:inputType="textPersonName"
+                        android:paddingLeft="15dp"
+                        android:textSize="16sp"
+                        />
+                    <EditText
+                        android:id="@+id/ETmInitialSignup"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="20dp"
+                        android:layout_weight="6"
+                        android:background="@drawable/input"
+                        android:ems="14"
+                        android:fontFamily="@font/poppins_medium"
+                        android:hint="M.I"
+                        android:maxLength="1"
+                        android:inputType="textCapCharacters"
+                        android:paddingLeft="15dp"
+                        android:textSize="16sp"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/TVFNameErr"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="10dp"
+                    android:text="Required*"
+                    android:textColor="@color/red"
+                    android:textSize="12sp"
+                    android:visibility="invisible"
+                    app:layout_constraintStart_toStartOf="@+id/fNameMNameLL"
+                    app:layout_constraintTop_toBottomOf="@+id/fNameMNameLL" />
+
+                <TextView
+                    android:id="@+id/TVMNameErr"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginRight="10dp"
+                    android:text="Required*"
+                    android:textColor="@color/red"
+                    android:textSize="12sp"
+                    android:visibility="invisible"
+                    app:layout_constraintEnd_toEndOf="@+id/fNameMNameLL"
+                    app:layout_constraintTop_toBottomOf="@+id/fNameMNameLL" />
+
+
+                <LinearLayout
+                    android:id="@+id/LL2"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginTop="25dp"
+                    android:orientation="horizontal"
+                    app:layout_constraintTop_toBottomOf="@+id/fNameMNameLL">
+
+
+
+                    <EditText
+                        android:id="@+id/ETlNameSignup"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="2"
+                        android:background="@drawable/input"
+                        android:ems="14"
+                        android:fontFamily="@font/poppins_medium"
+                        android:hint="Last Name"
+                        android:inputType="textPersonName"
+                        android:paddingLeft="15dp"
+                        android:textSize="16sp"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+                    <EditText
+                        android:id="@+id/ETSuffixSignup"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="20dp"
+                        android:layout_weight="5"
+                        android:background="@drawable/input"
+                        android:ems="14"
+                        android:fontFamily="@font/poppins_medium"
+                        android:hint="Suffix"
+                        android:maxLength="5"
+                        android:inputType="text"
+                        android:paddingLeft="15dp"
+                        android:textSize="16sp"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/TVLNameErr"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="10dp"
+                    android:text="Required*"
+                    android:textColor="@color/red"
+                    android:textSize="12sp"
+                    android:visibility="invisible"
+                    app:layout_constraintStart_toStartOf="@+id/LL2"
+                    app:layout_constraintTop_toBottomOf="@+id/LL2" />
+
+                <TextView
+                    android:id="@+id/TVSuffixErr"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginRight="10dp"
+                    android:text="Required*"
+                    android:textColor="@color/red"
+                    android:textSize="12sp"
+                    android:visibility="invisible"
+                    app:layout_constraintEnd_toEndOf="@+id/LL2"
+                    app:layout_constraintTop_toBottomOf="@+id/LL2" />
+
+
+                <LinearLayout
+                    android:id="@+id/LL3"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginTop="25dp"
+                    android:orientation="horizontal"
+                    app:layout_constraintTop_toBottomOf="@+id/LL2">
+
+                    <EditText
+                        android:id="@+id/ETAgeSignup"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginRight="20dp"
+                        android:layout_weight="4"
+                        android:background="@drawable/input"
+                        android:ems="14"
+                        android:fontFamily="@font/poppins_medium"
+                        android:hint="Age"
+                        android:inputType="number"
+                        android:paddingLeft="15dp"
+                        android:textSize="16sp"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <EditText
+                        android:id="@+id/ETContactSignup"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="2"
+                        android:background="@drawable/input"
+                        android:ems="14"
+                        android:fontFamily="@font/poppins_medium"
+                        android:hint="Contact Number"
+                        android:inputType="phone"
+                        android:paddingLeft="15dp"
+                        android:textSize="16sp"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/TVAgeErr"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="10dp"
+                    android:text="Required*"
+                    android:textColor="@color/red"
+                    android:textSize="12sp"
+                    android:visibility="invisible"
+                    app:layout_constraintStart_toStartOf="@+id/LL3"
+                    app:layout_constraintTop_toBottomOf="@+id/LL3" />
+
+                <TextView
+                    android:id="@+id/TVContactErr"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginRight="10dp"
+                    android:text="Required*"
+                    android:textColor="@color/red"
+                    android:textSize="12sp"
+                    android:visibility="invisible"
+                    app:layout_constraintEnd_toEndOf="@+id/LL3"
+                    app:layout_constraintTop_toBottomOf="@+id/LL3" />
+
+                <EditText
+                    android:id="@+id/ETAddressSignup"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="25dp"
+                    android:background="@drawable/input"
+                    android:ems="14"
+                    android:fontFamily="@font/poppins_medium"
+                    android:hint="Address"
+                    android:inputType="textPostalAddress"
+                    android:paddingLeft="15dp"
+                    android:textSize="16sp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/LL3" />
+
+                <TextView
+                    android:id="@+id/TVAddressErr"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginRight="10dp"
+                    android:text="Required*"
+                    android:textColor="@color/red"
+                    android:textSize="12sp"
+                    android:visibility="invisible"
+                    app:layout_constraintEnd_toEndOf="@+id/ETAddressSignup"
+                    app:layout_constraintTop_toBottomOf="@+id/ETAddressSignup" />
+
+
+                <EditText
+                    android:id="@+id/ETemailSignup"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="25dp"
+                    android:background="@drawable/input"
+                    android:ems="14"
+                    android:fontFamily="@font/poppins_medium"
+                    android:hint="Email"
+                    android:inputType="textEmailAddress"
+                    android:paddingLeft="15dp"
+                    android:textSize="16sp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/ETAddressSignup" />
+
+                <TextView
+                    android:id="@+id/TVEmailErr"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginRight="10dp"
+                    android:text="Required*"
+                    android:textColor="@color/red"
+                    android:textSize="12sp"
+                    android:visibility="invisible"
+                    app:layout_constraintEnd_toEndOf="@+id/ETemailSignup"
+                    app:layout_constraintTop_toBottomOf="@+id/ETemailSignup" />
+
+                <EditText
+                    android:id="@+id/ETUsernameSignup"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="25dp"
+                    android:background="@drawable/input"
+                    android:ems="14"
+                    android:fontFamily="@font/poppins_medium"
+                    android:hint="Username"
+                    android:inputType="textEmailAddress"
+                    android:paddingLeft="15dp"
+                    android:textSize="16sp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/ETemailSignup" />
+
+                <TextView
+                    android:id="@+id/TVUsernameErrSignUp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginRight="10dp"
+                    android:text="Required*"
+                    android:textColor="@color/red"
+                    android:textSize="12sp"
+                    android:visibility="invisible"
+                    app:layout_constraintEnd_toEndOf="@+id/ETUsernameSignup"
+                    app:layout_constraintTop_toBottomOf="@+id/ETUsernameSignup" />
+
+
+                <EditText
+                    android:id="@+id/ETpassSignup"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="25dp"
+                    android:background="@drawable/input"
+                    android:ems="14"
+                    android:fontFamily="@font/poppins_medium"
+                    android:hint="Password"
+                    android:inputType="textPassword"
+                    android:paddingLeft="15dp"
+                    android:textSize="16sp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/ETUsernameSignup" />
+
+                <TextView
+                    android:id="@+id/TVPassErrSignUp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginRight="10dp"
+                    android:text="Required*"
+                    android:textColor="@color/red"
+                    android:textSize="12sp"
+                    android:visibility="invisible"
+                    app:layout_constraintEnd_toEndOf="@+id/ETpassSignup"
+                    app:layout_constraintTop_toBottomOf="@+id/ETpassSignup" />
+
+                <EditText
+                    android:id="@+id/ETconPassSignup"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="25dp"
+                    android:background="@drawable/input"
+                    android:ems="14"
+                    android:fontFamily="@font/poppins_medium"
+                    android:hint="Confirm Password"
+                    android:inputType="textPassword"
+                    android:paddingLeft="15dp"
+                    android:textSize="16sp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/ETpassSignup" />
+
+                <TextView
+                    android:id="@+id/TVConPassErr"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginRight="10dp"
+                    android:text="Required*"
+                    android:textColor="@color/red"
+                    android:textSize="12sp"
+                    android:visibility="invisible"
+                    app:layout_constraintEnd_toEndOf="@+id/ETconPassSignup"
+                    app:layout_constraintTop_toBottomOf="@+id/ETconPassSignup" />
+
+                />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </ScrollView>
 
         <Button
             android:id="@+id/BTNsignup"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
+            android:layout_marginBottom="20dp"
             android:background="@drawable/buttonsign_inup"
             android:elevation="20dp"
             android:ems="11"
             android:fontFamily="@font/poppins_semibold"
             android:padding="10dp"
-            android:textSize="20sp"
             android:text="Sign up"
             android:textAllCaps="false"
             android:textColor="@color/white"
+            android:textSize="20sp"
+            app:layout_constraintBottom_toTopOf="@+id/TVloginAcc"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/ETconPassSignup" />
+            app:layout_constraintStart_toStartOf="parent" />
 
         <TextView
             android:id="@+id/TVloginAcc"
             android:layout_width="287dp"
             android:layout_height="27dp"
-            android:layout_marginTop="25dp"
+            android:layout_marginBottom="25dp"
             android:fontFamily="@font/poppins_semibold"
             android:gravity="center"
             android:text="Already have an account"
             android:textColor="@color/grey"
             android:textSize="14sp"
+            app:layout_constraintBottom_toTopOf="@+id/TVtext3"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.501"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/BTNsignup" />
+            app:layout_constraintStart_toStartOf="parent" />
 
         <TextView
             android:id="@+id/TVtext3"
@@ -190,16 +505,14 @@
             android:textSize="14sp"
             app:layout_constraintBottom_toTopOf="@+id/linearLayout"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.501"
-            app:layout_constraintStart_toStartOf="parent"
-            />
+            app:layout_constraintStart_toStartOf="parent" />
 
         <LinearLayout
             android:id="@+id/linearLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center"
             android:layout_marginBottom="20dp"
+            android:gravity="center"
             android:orientation="horizontal"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
@@ -238,6 +551,6 @@
         </LinearLayout>
 
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

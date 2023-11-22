@@ -15,6 +15,7 @@
     <color name="red_blue">#842A50</color>
     <color name="transparent">#00FFFFFF</color>
     <color name="status_color">#5D4A39</color>
+    <color name="red">#FF0606</color>
 
     <color name="control_background">#cc4285f4</color>
     <color name="selection_highlight">#aaaaaa</color>
