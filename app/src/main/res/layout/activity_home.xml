@@ -1,50 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#E6E6E6"
+    android:background="#00E6E6E6"
     tools:context=".Home">
+
+
 
     <FrameLayout
         android:id="@+id/frame_layout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent" >
 
-    <com.google.android.material.bottomappbar.BottomAppBar
-        android:id="@+id/bottomAppBar"
+
+
+
+    </FrameLayout>
+
+
+    <com.etebarian.meowbottomnavigation.MeowBottomNavigation
+        android:id="@+id/bottomNavigation"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:backgroundTint="@color/white"
-        app:fabCradleMargin="8dp"
-        app:fabCradleRoundedCornerRadius="20dp">
-
-        <com.google.android.material.bottomnavigation.BottomNavigationView
-            android:id="@+id/bottomNavigationView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="20dp"
-            android:background="@android:color/transparent"
-            app:elevation="0dp"
-            app:itemIconTint="@color/primary"
-            app:itemTextColor="@color/primary"
-            app:labelVisibilityMode="labeled"
-            app:menu="@menu/bottom_nav_menu" />
-
-    </com.google.android.material.bottomappbar.BottomAppBar>
-
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/menuFab"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:backgroundTint="@color/primary"
-        android:src="@drawable/ic_menu_circle"
-        app:layout_anchor="@id/bottomAppBar"
-        app:maxImageSize="80dp"
-        app:tint="@color/white" />
+        android:layout_alignParentBottom="true"
+        app:mbn_circleColor="@color/primary"
+        app:mbn_backgroundBottomColor="#ffffff"
+        app:mbn_countBackgroundColor="#ff6f00"
+        app:mbn_countTextColor="#ffffff"
+        app:mbn_defaultIconColor="@color/primary"
+        app:mbn_rippleColor="#2f424242"
+        app:mbn_selectedIconColor="@color/white"
+        app:mbn_shadowColor="#1f212121"
+        />
 
 
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+
+
+
+
+</RelativeLayout>

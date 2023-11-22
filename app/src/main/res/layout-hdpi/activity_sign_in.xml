@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#fff"
+    tools:context=".Sign_in">
+
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:id="@+id/BGcircleFill"
+            android:layout_width="360dp"
+            android:layout_height="360dp"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="-130dp"
+            android:layout_marginEnd="-35dp"
+            app:srcCompat="@drawable/bg_ellipse_1" />
+
+        <ImageView
+            android:id="@+id/BGcircleStroke"
+            android:layout_width="460dp"
+            android:layout_height="406dp"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentEnd="true"
+            android:layout_marginStart="21dp"
+            android:layout_marginTop="-154dp"
+            android:layout_marginEnd="-146dp"
+            app:srcCompat="@drawable/bg_ellipse_2" />
+
+        <ImageView
+            android:id="@+id/imageView2"
+            android:layout_width="89dp"
+            android:layout_height="304dp"
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="-80dp"
+            android:layout_marginLeft="-30dp"
+            android:src="@drawable/bg_rectangle_4" />
+
+        <ImageView
+            android:id="@+id/imageView3"
+            android:layout_width="166dp"
+            android:layout_height="289dp"
+            android:layout_alignParentBottom="true"
+            android:layout_marginLeft="-25dp"
+            android:layout_marginBottom="0dp"
+            android:src="@drawable/bg_rectangle_3"
+            app:layout_constraintStart_toStartOf="parent" />
+
+
+    </RelativeLayout>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/constraintLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="195dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="54dp"
+            android:fontFamily="@font/poppins_semibold"
+            android:text="Login Here"
+            android:gravity="center"
+            android:textColor="@color/primary"
+            android:textSize="20sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/textView2"
+            android:layout_width="279dp"
+            android:layout_height="52dp"
+            android:fontFamily="@font/poppins_semibold"
+            android:gravity="center"
+            android:text="Welcome back you’ve been missed!"
+            android:textColor="@color/black"
+            android:textSize="15sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textView" />
+
+        <EditText
+            android:id="@+id/ETemail"
+            android:layout_width="251dp"
+            android:layout_height="46dp"
+            android:layout_marginTop="25dp"
+            android:background="@drawable/input"
+            android:ems="12"
+            android:fontFamily="@font/poppins_medium"
+            android:hint="Email"
+            android:inputType="textPersonName"
+            android:paddingLeft="15dp"
+            android:textSize="12sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textView2" />
+
+        />
+        <EditText
+            android:id="@+id/ETpass"
+            android:layout_width="251dp"
+            android:layout_height="46dp"
+            android:background="@drawable/input"
+            android:ems="12"
+            android:layout_marginTop="20dp"
+            android:hint="Passowrd"
+            android:paddingLeft="15dp"
+            android:inputType="textPassword"
+            android:textSize="12sp"
+            android:fontFamily="@font/poppins_medium"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/ETemail" />
+
+        />
+
+        <TextView
+            android:id="@+id/TVforgot"
+            android:layout_width="251dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="25dp"
+            android:fontFamily="@font/poppins_semibold"
+            android:gravity="right"
+            android:ems="15"
+            android:text="Forgot password?"
+            android:textColor="@color/primary"
+            android:textSize="12sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.50"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/ETpass" />
+
+        <Button
+            android:id="@+id/BTNsignin"
+            android:layout_width="251dp"
+            android:layout_height="46dp"
+            android:layout_marginTop="20dp"
+            android:background="@drawable/buttonsign_inup"
+            android:elevation="20dp"
+            android:ems="11"
+            android:fontFamily="@font/poppins_semibold"
+            android:textSize="15sp"
+            android:text="Sign in"
+            android:textAllCaps="false"
+            android:textColor="@color/white"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/TVforgot" />
+
+        <TextView
+            android:id="@+id/TVcreateAcc"
+            android:layout_width="287dp"
+            android:layout_height="27dp"
+            android:layout_marginTop="15dp"
+            android:fontFamily="@font/poppins_semibold"
+            android:gravity="center"
+            android:text="Create new account"
+            android:textColor="@color/grey"
+            android:textSize="12sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.501"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/BTNsignin" />
+
+        <TextView
+            android:id="@+id/TVtext3"
+            android:layout_width="286dp"
+            android:layout_height="19dp"
+            android:layout_marginBottom="8dp"
+            android:fontFamily="@font/poppins_semibold"
+            android:gravity="center"
+            android:text="or continue with"
+            android:textColor="@color/primary"
+            android:textSize="12sp"
+            app:layout_constraintBottom_toTopOf="@+id/linearLayout"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.501"
+            app:layout_constraintStart_toStartOf="parent"
+            />
+
+        <LinearLayout
+            android:id="@+id/linearLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:layout_marginBottom="20dp"
+            android:orientation="horizontal"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <Button
+                android:id="@+id/BTNgoogle"
+                android:layout_width="39dp"
+                android:layout_height="27dp"
+                android:background="@drawable/ic_google"
+                app:backgroundTint="@null"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/TVtext3"
+                tools:ignore="SpeakableTextPresentCheck,TouchTargetSizeCheck,TouchTargetSizeCheck" />
+
+            <Button
+                android:id="@+id/BTNapple"
+                android:layout_width="39dp"
+                android:layout_height="27dp"
+                android:layout_marginStart="10dp"
+                android:background="@drawable/ic_facebook"
+                app:backgroundTint="@null"
+                app:layout_constraintStart_toEndOf="@+id/BTNgoogle"
+                app:layout_constraintTop_toBottomOf="@+id/TVtext3"
+                tools:ignore="SpeakableTextPresentCheck,TouchTargetSizeCheck" />
+
+            <Button
+                android:id="@+id/BTNfb"
+                android:layout_width="39dp"
+                android:layout_height="27dp"
+                android:layout_marginStart="10dp"
+                app:backgroundTint="@null"
+                android:background="@drawable/ic_apple"
+                app:layout_constraintStart_toEndOf="@+id/BTNapple"
+                app:layout_constraintTop_toBottomOf="@+id/TVtext3"
+                tools:ignore="SpeakableTextPresentCheck,TouchTargetSizeCheck" />
+        </LinearLayout>
+
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

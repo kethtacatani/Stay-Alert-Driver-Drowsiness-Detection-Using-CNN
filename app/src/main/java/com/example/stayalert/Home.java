@@ -14,11 +14,16 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Toast;
 
+import com.etebarian.meowbottomnavigation.MeowBottomNavigation;
 import com.example.stayalert.databinding.ActivityHomeBinding;
+
+import kotlin.Unit;
+import kotlin.jvm.functions.Function1;
 
 public class Home extends AppCompatActivity {
 
     ActivityHomeBinding binding;
+    MeowBottomNavigation bottomNavigation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,40 +36,54 @@ public class Home extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         binding = ActivityHomeBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-        replaceFragment(new HomeFrag());
-        binding.bottomNavigationView.setBackground(null);
-        binding.bottomNavigationView.setOnItemSelectedListener(item -> {
-            switch (item.getItemId()) {
-                case R.id.home:
-                    replaceFragment(new HomeFrag());
-                    break;
-                case R.id.phone:
-                    replaceFragment(new PhoneFrag());
-                    break;
-                case R.id.stats:
-                    replaceFragment(new StatsFrag());
-                    break;
-                case R.id.profile:
-                    replaceFragment(new ProfileFrag());
-                    break;
-            }
-            return true;
-        });
 
-        binding.bottomNavigationView.setItemIconTintList(null);
+        binding.bottomNavigation.add(new MeowBottomNavigation.Model(1, R.drawable.ic_menu));
+        binding.bottomNavigation.add(new MeowBottomNavigation.Model(2, R.drawable.ic_call));
+        binding.bottomNavigation.add(new MeowBottomNavigation.Model(3, R.drawable.ic_home));
+        binding.bottomNavigation.add(new MeowBottomNavigation.Model(4, R.drawable.ic_stats));
+        binding.bottomNavigation.add(new MeowBottomNavigation.Model(5, R.drawable.ic_profile));
 
-        binding.menuFab.setOnClickListener(new View.OnClickListener() {
+        binding.bottomNavigation.show(3,true);
+        binding.bottomNavigation.clearCount(1);
+
+        replaceFragment(new MenuFrag());
+        binding.bottomNavigation.setOnClickMenuListener(new Function1<MeowBottomNavigation.Model, Unit>() {
             @Override
-            public void onClick(View view) {
-                replaceFragment(new MenuFrag());
+            public Unit invoke(MeowBottomNavigation.Model model) {
+                switch (model.getId()){
+                    case 1:
+                        replaceFragment(new MenuFrag());
+                        Toast.makeText(Home.this, "Home", Toast.LENGTH_SHORT).show();
+                        break;
+                    case 2:
+                        replaceFragment(new PhoneFrag());
+                        Toast.makeText(Home.this, "Phone", Toast.LENGTH_SHORT).show();
+
+                        break;
+                    case 3:
+                        replaceFragment(new HomeFrag());
+                        Toast.makeText(Home.this, "Home", Toast.LENGTH_SHORT).show();
+
+                        break;
+                    case 4:
+                        replaceFragment(new StatsFrag());
+                        Toast.makeText(Home.this, "Stats", Toast.LENGTH_SHORT).show();
+
+                        break;
+                    case 5:
+                        replaceFragment(new ProfileFrag());
+                        Toast.makeText(Home.this, "Profile", Toast.LENGTH_SHORT).show();
+
+                        break;
+                }
+                return null;
             }
         });
 
     }
     private void replaceFragment(Fragment fragment) {
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        fragmentTransaction.replace(R.id.frame_layout, fragment);
-        fragmentTransaction.commit();
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        transaction.replace(R.id.frame_layout,fragment);
+        transaction.commit();
     }
 }
