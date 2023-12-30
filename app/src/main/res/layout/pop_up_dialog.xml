@@ -12,10 +12,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:layout_marginTop="10dp"
-        android:layout_marginBottom="5dp"
-        android:layout_marginLeft="10dp"
-        android:layout_marginRight="10dp"
 
 
         >
@@ -26,6 +22,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:fontFamily="@font/poppins_semibold"
+            android:layout_marginTop="10dp"
             android:textColor="@color/black"
             android:textSize="18sp"
             android:gravity="center"
@@ -36,25 +33,28 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@drawable/bg_line_below"
+            android:layout_marginRight="10dp"
+            android:layout_marginLeft="10dp"
             android:fontFamily="@font/poppins_regular"
+            android:paddingRight="10dp"
             android:textColor="@color/black"
             android:textSize="16sp"
             android:gravity="center"
-            android:paddingLeft="10dp"
             android:paddingBottom="5dp"
-            android:paddingRight="10dp"
             android:text="Username or Password is incrorrect" />
-
         <TextView
             android:id="@+id/TVCancel"
+            android:clickable="true"
+            android:background="@drawable/grey_btn_ripple"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="5dp"
             android:fontFamily="@font/poppins_regular"
             android:textColor="@color/primary"
+            android:paddingTop="3dp"
+            android:paddingBottom="2dp"
             android:textSize="16sp"
             android:gravity="center"
-            android:text="Close" />
+            android:text="Okay" />
 
 
     </LinearLayout>

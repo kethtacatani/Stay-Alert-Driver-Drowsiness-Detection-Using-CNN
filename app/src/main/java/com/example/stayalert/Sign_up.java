@@ -15,13 +15,18 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+
 import com.vishnusivadas.advanced_httpurlconnection.PutData;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class Sign_up extends AppCompatActivity {
 
     EditText fName, mName, lName, suffix, age,contact,address,email,username,pass,conPass;
     TextView fNameErr, mNameErr,lNameErr,suffixErr, ageErr,contactErr,addressErr,emailErr, usernameErr,passErr,conPassErr;
     Button signUpBtn;
+    Database db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,6 +37,8 @@ public class Sign_up extends AppCompatActivity {
             View decorView = getWindow().getDecorView();
             decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
         }
+
+        db= new Database();
 
         TextView loginAccTV;
 
@@ -109,6 +116,22 @@ public class Sign_up extends AppCompatActivity {
                         data[7] = email.getText().toString();
                         data[8] = username.getText().toString();
                         data[9] = pass.getText().toString();
+
+//
+//                        Map<String, String> dataMap = new HashMap<>();
+//
+//                        dataMap.put("first_name", fName.getText().toString());
+//                        dataMap.put("middle_name", mName.getText().toString().trim().isEmpty() ? "" : mName.getText().toString());
+//                        dataMap.put("last_name", lName.getText().toString());
+//                        dataMap.put("suffix", suffix.getText().toString().trim().isEmpty() ? "" : suffix.getText().toString());
+//                        dataMap.put("address", address.getText().toString());
+//                        dataMap.put("age", age.getText().toString());
+//                        dataMap.put("contact", contact.getText().toString());
+//                        dataMap.put("email", email.getText().toString());
+//                        dataMap.put("username", username.getText().toString());
+//                        dataMap.put("password", pass.getText().toString());
+
+//                        db.getData() to be continued ror
 
                         if(!fName.getText().toString().trim().isEmpty()  && !lName.getText().toString().trim().isEmpty()
                                 && !address.getText().toString().trim().isEmpty() && !age.getText().toString().trim().isEmpty() && !contact.getText().toString().trim().isEmpty()

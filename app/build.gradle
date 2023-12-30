@@ -7,7 +7,7 @@ android {
 
     defaultConfig {
         applicationId "com.example.stayalert"
-        minSdk 21
+        minSdk 24
         targetSdk 33
         versionCode 1
         versionName "1.0"
@@ -54,4 +54,5 @@ dependencies {
     implementation 'de.hdodenhof:circleimageview:3.1.0'
 
     implementation 'com.github.VishnuSivadasVS:Advanced-HttpURLConnection:1.2'
+    implementation 'com.airbnb.android:lottie:5.2.0'
 }

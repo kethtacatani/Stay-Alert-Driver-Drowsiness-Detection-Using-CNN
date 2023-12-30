@@ -92,6 +92,7 @@
                 android:layout_marginLeft="17dp"
                 android:layout_marginRight="17dp"
                 android:layout_marginTop="20dp"
+                android:layout_marginBottom="5dp"
                 >
 
 
@@ -113,15 +114,18 @@
                 android:id="@+id/profileEdit"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="17dp"
-                android:layout_marginTop="20dp"
-                android:layout_marginRight="17dp">
+                android:clickable="true"
+                android:background="@drawable/grey_btn_ripple"
+                >
 
 
                 <TextView
                     android:id="@+id/textView33"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginLeft="17dp"
+                    android:layout_marginTop="5dp"
+                    android:layout_marginBottom="6dp"
                     android:text="Edit Profile"
                     android:fontFamily="@font/nunito_regular"
                     android:textColor="@color/black"
@@ -134,8 +138,10 @@
                     android:id="@+id/imageButton2"
                     android:layout_width="10dp"
                     android:layout_height="24dp"
+                    android:layout_marginRight="15dp"
                     android:background="@color/transparent"
                     android:src="@drawable/ic_arrow_settings"
+                    app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
                     tools:ignore="TouchTargetSizeCheck" />
@@ -147,15 +153,17 @@
                 android:id="@+id/profileChangePass"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="17dp"
-                android:layout_marginTop="15dp"
-                android:layout_marginRight="17dp">
+                android:clickable="true"
+                android:background="@drawable/grey_btn_ripple">
 
 
                 <TextView
                     android:id="@+id/textView33w"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginLeft="17dp"
+                    android:layout_marginTop="5dp"
+                    android:layout_marginBottom="6dp"
                     android:text="Change password"
                     android:fontFamily="@font/nunito_regular"
                     android:textColor="@color/black"
@@ -168,8 +176,10 @@
                     android:id="@+id/imageButton2w"
                     android:layout_width="10dp"
                     android:layout_height="24dp"
+                    android:layout_marginRight="15dp"
                     android:background="@color/transparent"
                     android:src="@drawable/ic_arrow_settings"
+                    app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
 
@@ -180,16 +190,17 @@
                 android:id="@+id/profileLogout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="17dp"
-                android:layout_marginTop="15dp"
-                android:layout_marginRight="10dp"
-                android:layout_marginBottom="17dp">
+                android:clickable="true"
+                android:background="@drawable/grey_btn_ripple">
 
 
                 <TextView
                     android:id="@+id/textVeiew33w"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginLeft="17dp"
+                    android:layout_marginTop="5dp"
+                    android:layout_marginBottom="6dp"
                     android:text="Logout"
                     android:fontFamily="@font/nunito_regular"
                     android:textColor="#FF0000"
@@ -201,9 +212,11 @@
                 <ImageButton
                     android:id="@+id/imageButtone2w"
                     android:layout_width="wrap_content"
+                    android:layout_marginRight="5dp"
                     android:layout_height="24dp"
                     android:background="@color/transparent"
                     android:src="@drawable/ic_sign_out_squre_light"
+                    app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
                     tools:ignore="TouchTargetSizeCheck" />
@@ -214,9 +227,9 @@
             </androidx.constraintlayout.widget.ConstraintLayout>
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
-                android:layout_height="2dp"
+                android:layout_height="1dp"
                 android:background="@drawable/bg_line_below"
-                android:layout_marginBottom="17dp"
+
                 >
 
             </androidx.constraintlayout.widget.ConstraintLayout>
@@ -226,8 +239,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_marginLeft="17dp"
-                android:layout_marginTop="10dp"
-                android:layout_marginRight="17dp">
+                android:layout_marginRight="17dp"
+                android:layout_marginTop="17dp"
+                android:layout_marginBottom="5dp">
 
 
                 <TextView
@@ -248,15 +262,18 @@
                 android:id="@+id/profileAbout"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_marginLeft="17dp"
-                android:layout_marginTop="20dp"
-                android:layout_marginRight="17dp">
+                android:clickable="true"
+                android:background="@drawable/grey_btn_ripple">
+                >
 
 
                 <TextView
                     android:id="@+id/texstView33"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginLeft="17dp"
+                    android:layout_marginTop="5dp"
+                    android:layout_marginBottom="6dp"
                     android:fontFamily="@font/nunito_regular"
                     android:text="About the App"
                     android:textColor="@color/black"
@@ -274,16 +291,19 @@
                 android:id="@+id/profileAppDevs"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_marginLeft="17dp"
-                android:layout_marginTop="15dp"
-                android:layout_marginBottom="22dp"
-                android:layout_marginRight="17dp">
+                android:layout_marginBottom="10dp"
+                android:clickable="true"
+                android:background="@drawable/grey_btn_ripple">
+                >
 
 
                 <TextView
                     android:id="@+id/textVisew33w"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginLeft="17dp"
+                    android:layout_marginTop="5dp"
+                    android:layout_marginBottom="6dp"
                     android:fontFamily="@font/nunito_regular"
                     android:text="App Developers"
                     android:textColor="@color/black"

@@ -156,15 +156,13 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="25dp"
+            android:clickable="true"
             android:fontFamily="@font/poppins_semibold"
             android:gravity="right"
-            android:ems="15"
             android:text="Forgot password?"
-            android:textColor="@color/primary"
+            android:textColor="@drawable/forgot_pass_button"
             android:textSize="14sp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.50"
-            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="@+id/BTNsignin"
             app:layout_constraintTop_toBottomOf="@+id/ETpass" />
 
         <Button
@@ -185,15 +183,30 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/TVforgot" />
 
+
+        <com.airbnb.lottie.LottieAnimationView
+            android:id="@+id/BTNloading"
+            android:layout_width="300dp"
+            android:layout_height="300dp"
+            android:visibility="gone"
+            android:elevation="10dp"
+            app:layout_constraintBottom_toBottomOf="@+id/BTNsignin"
+            app:layout_constraintEnd_toEndOf="@+id/BTNsignin"
+            app:layout_constraintStart_toStartOf="@+id/BTNsignin"
+            app:layout_constraintTop_toTopOf="@+id/BTNsignin"
+            app:lottie_autoPlay="false"
+            app:lottie_loop="true"
+            app:lottie_rawRes="@raw/loading" />
+
         <TextView
             android:id="@+id/TVcreateAcc"
-            android:layout_width="287dp"
+            android:layout_width="wrap_content"
             android:layout_height="27dp"
             android:layout_marginTop="25dp"
             android:fontFamily="@font/poppins_semibold"
             android:gravity="center"
             android:text="Create new account"
-            android:textColor="@color/grey"
+            android:textColor="@drawable/create_login_text_button"
             android:textSize="14sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.501"
