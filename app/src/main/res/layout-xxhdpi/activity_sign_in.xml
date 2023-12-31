@@ -186,8 +186,9 @@
 
         <com.airbnb.lottie.LottieAnimationView
             android:id="@+id/BTNloading"
-            android:layout_width="300dp"
-            android:layout_height="300dp"
+            android:layout_width="150dp"
+            android:layout_height="50dp"
+            android:layout_marginLeft="3dp"
             android:visibility="gone"
             android:elevation="10dp"
             app:layout_constraintBottom_toBottomOf="@+id/BTNsignin"

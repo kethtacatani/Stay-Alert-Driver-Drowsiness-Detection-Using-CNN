@@ -159,14 +159,15 @@
             app:layout_constraintTop_toBottomOf="@+id/TVforgot" />
 
         <com.airbnb.lottie.LottieAnimationView
-            android:layout_width="200dp"
-            android:layout_height="200dp"
+            android:layout_width="150dp"
+            android:layout_height="50dp"
+            android:layout_marginLeft="3dp"
             android:id="@+id/BTNloading"
             app:lottie_rawRes="@raw/loading"
             app:lottie_autoPlay="false"
             android:elevation="10dp"
             app:lottie_loop="true"
-            android:visibility="gone"
+            android:visibility="visible"
             app:layout_constraintBottom_toBottomOf="@+id/BTNsignin"
             app:layout_constraintEnd_toEndOf="@+id/BTNsignin"
             app:layout_constraintStart_toStartOf="@+id/BTNsignin"

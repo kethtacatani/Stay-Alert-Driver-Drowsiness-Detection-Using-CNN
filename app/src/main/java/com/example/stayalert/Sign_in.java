@@ -37,6 +37,8 @@ public class Sign_in extends AppCompatActivity {
     Database db;
     LottieAnimationView buttonAnimation;
     boolean offlineMode=false;
+    Handler handler;
+    Runnable connectivityCheckRunnable;
 
 
 
@@ -90,7 +92,7 @@ public class Sign_in extends AppCompatActivity {
                 }else{
                     Intent intent = new Intent(getApplicationContext(), DetectorActivity.class);
                     startActivity(intent);
-                    finish();
+                    stopActivity();
                 }
 
             }
@@ -103,6 +105,7 @@ public class Sign_in extends AppCompatActivity {
             public void onClick(View v) {
                 Intent intent = new Intent(getApplicationContext(), Sign_up.class);
                 startActivity(intent);
+                stopActivity();
             }
         });
 
@@ -142,11 +145,11 @@ public class Sign_in extends AppCompatActivity {
                     buttonAnimation.playAnimation();
                     signInBtn.setText("");
 
-                    String result= db.getData("users",dataMap);
+                    String result= db.loginSingupData("users",dataMap);
                     if(result.equals("Login Success")){
                         Intent intent = new Intent(getApplicationContext(), DetectorActivity.class);
                                 startActivity(intent);
-                        finish();
+                        stopActivity();
                         hideLoading();
                     }
                     else if (result.equals("Username or Password is Wrong")){
@@ -180,8 +183,9 @@ public class Sign_in extends AppCompatActivity {
             }
         });
 
-        final Handler handler = new Handler();
-        handler.postDelayed(new Runnable() {
+        handler = new Handler();
+
+        connectivityCheckRunnable = new Runnable() {
             @Override
             public void run() {
                 // Perform database connectivity check
@@ -196,7 +200,6 @@ public class Sign_in extends AppCompatActivity {
                         showDialog("Connection Failed","No database connection.\n Proceed to Offline mode?");
                         System.out.println("showing");
                     }
-
                 } else {
                     if(dialog.isShowing() && offlineMode){
                         dialog.dismiss();
@@ -207,12 +210,8 @@ public class Sign_in extends AppCompatActivity {
                 // Schedule the next check after 3 seconds
                 handler.postDelayed(this, 3000); // 3000 milliseconds = 3 seconds
             }
-        }, 2500);
-
-//        if(!db.isConnected){
-//            showDialog("Connection Failed","No database connection.\n Proceed to Offline mode?");
-//
-//        }
+        };
+        handler.postDelayed(connectivityCheckRunnable, 2500);
 
 
 
@@ -228,6 +227,11 @@ public class Sign_in extends AppCompatActivity {
         buttonAnimation.setVisibility(View.GONE);
         buttonAnimation.pauseAnimation();
         signInBtn.setText("Sign in");
+    }
+
+    private void stopActivity(){
+        handler.removeCallbacks(connectivityCheckRunnable);
+        finish();
     }
 
 

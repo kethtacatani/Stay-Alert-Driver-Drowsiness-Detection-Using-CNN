@@ -25,6 +25,9 @@ public class ProfileFrag extends Fragment {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(getActivity(), Sign_in.class);
+                CameraActivity cameraActivity = (CameraActivity) getActivity();
+                cameraActivity.stopActivity();
+                cameraActivity.ringtone.stop();
                 startActivity(intent);
             }
         });

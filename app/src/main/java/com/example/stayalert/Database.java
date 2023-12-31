@@ -129,12 +129,12 @@ public class Database {
 
     }
 
-    public String getData(String tableName, Map<String, String> mappedData){
+    public String loginSingupData(String tableName, Map<String, String> mappedData){
         mappedData.put("tableName",tableName);
         String[] field = returnArray("tableName",mappedData);
         String[] data = returnArray(tableName,mappedData);
 
-        getResult("login.php","POST",field,data);
+        getResult((mappedData.size()>3) ? "signup.php":"login.php","POST",field,data);
         if (result == null){
             result="No database connection";
             System.out.println("No database connection");

@@ -458,25 +458,58 @@
                 />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
+
+
         </ScrollView>
 
-        <Button
-            android:id="@+id/BTNsignup"
+
+
+
+
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="20dp"
-            android:background="@drawable/buttonsign_inup"
-            android:elevation="20dp"
-            android:ems="11"
-            android:fontFamily="@font/poppins_semibold"
-            android:padding="10dp"
-            android:text="Sign up"
-            android:textAllCaps="false"
-            android:textColor="@color/white"
-            android:textSize="20sp"
             app:layout_constraintBottom_toTopOf="@+id/TVloginAcc"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
+            android:layout_marginBottom="20dp"
+            >
+
+            <Button
+                android:id="@+id/BTNsignup"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/buttonsign_inup"
+                android:elevation="20dp"
+                android:ems="11"
+                android:fontFamily="@font/poppins_semibold"
+                android:padding="10dp"
+                android:text="Sign up"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:textSize="20sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <com.airbnb.lottie.LottieAnimationView
+                android:id="@+id/BTNSign_upLoading"
+                android:layout_width="150dp"
+                android:layout_height="50dp"
+                android:layout_marginLeft="5dp"
+                android:visibility="gone"
+                android:elevation="10dp"
+                app:layout_constraintBottom_toBottomOf="@+id/BTNsignup"
+                app:layout_constraintEnd_toEndOf="@+id/BTNsignup"
+                app:layout_constraintStart_toStartOf="@+id/BTNsignup"
+                app:layout_constraintTop_toTopOf="@+id/BTNsignup"
+                app:lottie_autoPlay="false"
+                app:lottie_loop="true"
+                app:lottie_rawRes="@raw/loading" />
+
+
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+
 
         <TextView
             android:id="@+id/TVloginAcc"

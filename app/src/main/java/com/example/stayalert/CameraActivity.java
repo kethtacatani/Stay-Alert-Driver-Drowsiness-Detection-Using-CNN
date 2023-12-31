@@ -19,6 +19,7 @@ package com.example.stayalert;
 import android.Manifest;
 import android.app.Fragment;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.hardware.Camera;
@@ -126,6 +127,11 @@ public abstract class CameraActivity extends AppCompatActivity
   private int closeCount = 0;
   private Runnable runnableCode;
   boolean ring=false;
+  Ringtone ringtone;
+  boolean offlineMode=false, appStopped=false;
+  Handler schedHandler;
+  Runnable connectivityCheckRunnable;
+  Database db;
 
   ArrayList<String> deviceStrings = new ArrayList<String>();
 
@@ -135,6 +141,7 @@ public abstract class CameraActivity extends AppCompatActivity
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
       View decorView = getWindow().getDecorView();
       decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+
     }
 
     CameraManager cameraManager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
@@ -148,9 +155,11 @@ public abstract class CameraActivity extends AppCompatActivity
     Handler handler = new Handler();
     Uri defaultRingtoneUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
     // Create a Ringtone object from the URI
-    Ringtone ringtone = RingtoneManager.getRingtone(CameraActivity.this, defaultRingtoneUri);
+    ringtone = RingtoneManager.getRingtone(CameraActivity.this, defaultRingtoneUri);
 
 
+    db = new Database();
+    db.isConnected();
 
     bottomNavigation= findViewById(R.id.bottomNavigation);
     backBtn= findViewById(R.id.backBtn);
@@ -162,7 +171,35 @@ public abstract class CameraActivity extends AppCompatActivity
     bottomNavigation.add(new MeowBottomNavigation.Model(5, R.drawable.ic_profile));
 
 
+    schedHandler = new Handler();
 
+    connectivityCheckRunnable = new Runnable() {
+      @Override
+      public void run() {
+        // Perform database connectivity check
+        boolean isConnected = db.isConnected;
+        db.isConnected();
+        System.out.println("main - checking");
+
+        // Handle the result as needed
+//        if (!isConnected) {
+//          offlineMode=true;
+//          if(!dialog.isShowing()){
+//            showDialog("Connection Failed","No database connection.\n Proceed to Offline mode?");
+//            System.out.println("showing");
+//          }
+//        } else {
+//          if(dialog.isShowing() && offlineMode){
+//            dialog.dismiss();
+//            offlineMode=false;
+//          }
+//        }
+
+        // Schedule the next check after 3 seconds
+        schedHandler.postDelayed(this, 3000); // 3000 milliseconds = 3 seconds
+      }
+    };
+    schedHandler.postDelayed(connectivityCheckRunnable, 2500);
     
 
     runnableCode = new Runnable() {
@@ -178,18 +215,17 @@ public abstract class CameraActivity extends AppCompatActivity
         currentIndex = (currentIndex + 1) % 30; // Wrap around to the beginning of the array
         double closePercentage = (closeCount / 30.0) * 100.0;
 
-        if(closePercentage>90 && !ring){
+        if(closePercentage>90 && !ringtone.isPlaying() && !appStopped){
           Toast.makeText(CameraActivity.this, "Please WAKE UP!!!!", Toast.LENGTH_SHORT).show();
 
           // Play the default ringtone
           HomeFrag.statusDriverTV.setText(" SLEEPY ");
           ringtone.play();
-          ring=true;
+          System.out.println("playinh ring");
         }
         else if(closePercentage<90){
           HomeFrag.statusDriverTV.setText(" ACTIVE ");
           ringtone.stop();
-          ring=false;
         }
         // Schedule the next update
 //        System.out.println("looping "+ closePercentage+"\n"+ Arrays.toString(values)+"\n closeCount: "+closeCount);
@@ -374,7 +410,20 @@ public abstract class CameraActivity extends AppCompatActivity
       msTV.setElevation(elevation);
       frameLayout.setElevation(elevation);
     }
+
   }
+  public void stopActivity(){
+    if (ringtone.isPlaying()) {
+      System.out.println("is playinh");
+    }
+    ringtone.stop();
+    appStopped=true;
+    schedHandler.removeCallbacks(connectivityCheckRunnable);
+    handler.removeCallbacks(runnableCode);
+    finish();
+  }
+
+
 
   private void replaceFragment(androidx.fragment.app.Fragment fragment) {
     FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();

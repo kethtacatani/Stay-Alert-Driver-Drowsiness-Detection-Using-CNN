@@ -2,6 +2,7 @@ package com.example.stayalert;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.Dialog;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
@@ -9,6 +10,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -16,6 +18,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 
+import com.airbnb.lottie.LottieAnimationView;
 import com.vishnusivadas.advanced_httpurlconnection.PutData;
 
 import java.util.HashMap;
@@ -27,6 +30,13 @@ public class Sign_up extends AppCompatActivity {
     TextView fNameErr, mNameErr,lNameErr,suffixErr, ageErr,contactErr,addressErr,emailErr, usernameErr,passErr,conPassErr;
     Button signUpBtn;
     Database db;
+    Dialog dialog;
+    TextView dialogOkay, dialogTitle, dialogInfo;
+    LottieAnimationView buttonAnimation;
+    boolean offlineMode=false;
+    Handler handler;
+    Runnable connectivityCheckRunnable;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,8 +49,20 @@ public class Sign_up extends AppCompatActivity {
         }
 
         db= new Database();
+        db.isConnected();
 
         TextView loginAccTV;
+
+        dialog = new Dialog(Sign_up.this);
+        dialog.setContentView(R.layout.pop_up_dialog);
+        dialogOkay = dialog.findViewById(R.id.TVCancel);
+        dialogTitle = dialog.findViewById(R.id.TVTitle);
+        dialogInfo = dialog.findViewById(R.id.TVInfo);
+        buttonAnimation=findViewById(R.id.BTNloading);
+        dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT);
+        dialog.getWindow().setBackgroundDrawable(getDrawable(R.drawable.dialog_bg));
+
+
 
 
         loginAccTV = (TextView)findViewById(R.id.TVloginAcc);
@@ -80,7 +102,19 @@ public class Sign_up extends AppCompatActivity {
         pass.setOnFocusChangeListener((v, hasFocus) -> handleEditTextFocusChange(pass, hasFocus));
         conPass.setOnFocusChangeListener((v, hasFocus) -> handleEditTextFocusChange(conPass, hasFocus));
 
+        dialogOkay.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(db.isConnected){
+                    dialog.dismiss();
+                }else{
+                    Intent intent = new Intent(getApplicationContext(), DetectorActivity.class);
+                    startActivity(intent);
+                    stopActivity();
+                }
 
+            }
+        });
 
         signUpBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -90,46 +124,21 @@ public class Sign_up extends AppCompatActivity {
                 handler.post(new Runnable() {
                     @Override
                     public void run() {
-                        //Starting Write and Read data with URL
-                        //Creating array for parameters
-                        String[] field = new String[10];
-                        field[0] = "first_name";
-                        field[1] = "middle_name";
-                        field[2] = "last_name";
-                        field[3] = "suffix";
-                        field[4] = "address";
-                        field[5] = "age";
-                        field[6] = "contact";
-                        field[7] = "email";
-                        field[8] = "username";
-                        field[9] = "password";
 
-                        //Creating array for data
-                        String[] data = new String[10];
-                        data[0] = fName.getText().toString();
-                        data[1] = mName.getText().toString().trim().isEmpty()?"":mName.getText().toString();
-                        data[2] = lName.getText().toString();
-                        data[3] = suffix.getText().toString().trim().isEmpty()?"":suffix.getText().toString();
-                        data[4] = address.getText().toString();
-                        data[5] = age.getText().toString();
-                        data[6] = contact.getText().toString();
-                        data[7] = email.getText().toString();
-                        data[8] = username.getText().toString();
-                        data[9] = pass.getText().toString();
 
-//
-//                        Map<String, String> dataMap = new HashMap<>();
-//
-//                        dataMap.put("first_name", fName.getText().toString());
-//                        dataMap.put("middle_name", mName.getText().toString().trim().isEmpty() ? "" : mName.getText().toString());
-//                        dataMap.put("last_name", lName.getText().toString());
-//                        dataMap.put("suffix", suffix.getText().toString().trim().isEmpty() ? "" : suffix.getText().toString());
-//                        dataMap.put("address", address.getText().toString());
-//                        dataMap.put("age", age.getText().toString());
-//                        dataMap.put("contact", contact.getText().toString());
-//                        dataMap.put("email", email.getText().toString());
-//                        dataMap.put("username", username.getText().toString());
-//                        dataMap.put("password", pass.getText().toString());
+
+                        Map<String, String> dataMap = new HashMap<>();
+
+                        dataMap.put("first_name", fName.getText().toString());
+                        dataMap.put("middle_name", mName.getText().toString().trim().isEmpty() ? "" : mName.getText().toString());
+                        dataMap.put("last_name", lName.getText().toString());
+                        dataMap.put("suffix", suffix.getText().toString().trim().isEmpty() ? "" : suffix.getText().toString());
+                        dataMap.put("address", address.getText().toString());
+                        dataMap.put("age", age.getText().toString());
+                        dataMap.put("contact", contact.getText().toString());
+                        dataMap.put("email", email.getText().toString());
+                        dataMap.put("username", username.getText().toString());
+                        dataMap.put("password", pass.getText().toString());
 
 //                        db.getData() to be continued ror
 
@@ -138,18 +147,20 @@ public class Sign_up extends AppCompatActivity {
                                 && !email.getText().toString().trim().isEmpty() && !username.getText().toString().trim().isEmpty() && !pass.getText().toString().trim().isEmpty()
                                 && !conPass.getText().toString().trim().isEmpty()){
                             if(pass.getText().toString().trim().equals(conPass.getText().toString().trim())){
-                                PutData putData = new PutData("http://192.168.0.106/StayAlert/signup.php", "POST", field, data);
-                                if (putData.startPut()) {
-                                    if (putData.onComplete()) {
-                                        String result = putData.getResult();
-                                        //End ProgressBar (Set visibility to GONE)
-                                        Log.i("PutData", result);
-                                        System.out.println("sign up: "+result);
-                                        if(result.equals("Sign Up Success")) {
-                                            Intent intent = new Intent(getApplicationContext(), DetectorActivity.class);
-                                            startActivity(intent);
-                                        }
-                                    }
+                                String result= db.loginSingupData("users",dataMap);
+                                if(result.equals("Sign Up Success")) {
+                                    Intent intent = new Intent(getApplicationContext(), DetectorActivity.class);
+                                    startActivity(intent);
+                                }
+                                else if (result.equals("Error: Database connection")){
+                                    showDialog("Login Failed","Error occurred in the database");
+                                    hideLoading();
+                                }
+                                else if (result.equals("No database connection")){
+                                    showDialog("Login Failed","No database connection.\n Proceed to Offline mode?");
+                                    Intent intent = new Intent(getApplicationContext(), DetectorActivity.class);
+//                                startActivity(intent);
+                                    hideLoading();
                                 }
                             }
                             else{
@@ -185,12 +196,58 @@ public class Sign_up extends AppCompatActivity {
             public void onClick(View v) {
                 Intent intent = new Intent(getApplicationContext(), Sign_in.class);
                 startActivity(intent);
+                stopActivity();
             }
         });
 
+        handler = new Handler();
+
+        connectivityCheckRunnable = new Runnable() {
+            @Override
+            public void run() {
+                // Perform database connectivity check
+                boolean isConnected = db.isConnected;
+                db.isConnected();
+                System.out.println("checking");
+
+                // Handle the result as needed
+                if (!isConnected) {
+                    offlineMode=true;
+                    if(!dialog.isShowing()){
+                        showDialog("Connection Failed","No database connection.\n Proceed to Offline mode?");
+                        System.out.println("showing");
+                    }
+                } else {
+                    if(dialog.isShowing() && offlineMode){
+                        dialog.dismiss();
+                        offlineMode=false;
+                    }
+                }
+
+                // Schedule the next check after 3 seconds
+                handler.postDelayed(this, 3000); // 3000 milliseconds = 3 seconds
+            }
+        };
+        handler.postDelayed(connectivityCheckRunnable, 2500);
 
 
+    }
 
+    private void stopActivity(){
+        handler.removeCallbacks(connectivityCheckRunnable);
+        finish();
+    }
+
+    public void showDialog(String title, String info){
+        dialogTitle.setText(title);
+        dialogInfo.setText(info);
+        dialog.show();
+    }
+
+    public void hideLoading(){
+        buttonAnimation.setVisibility(View.GONE);
+        buttonAnimation.pauseAnimation();
+        signUpBtn.setText("Sign in");
     }
 
     private void handleEditTextFocusChange(EditText editText, boolean hasFocus) {
