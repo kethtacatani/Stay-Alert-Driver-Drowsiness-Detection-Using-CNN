@@ -66,7 +66,6 @@ public class DetectorActivity extends com.example.stayalert.CameraActivity imple
     private Integer sensorOrientation;
 
     private YoloV5Classifier detector;
-    private DrowsyDetection detectorAlarm;
 
     private long lastProcessingTimeMs;
     private Bitmap rgbFrameBitmap = null;
@@ -195,8 +194,7 @@ public class DetectorActivity extends com.example.stayalert.CameraActivity imple
                 toast.show();
                 finish();
             }
-
-
+            System.out.println("using "+ device);
             if (device.equals("CPU")) {
                 detector.useCPU();
             } else if (device.equals("GPU")) {
@@ -205,6 +203,7 @@ public class DetectorActivity extends com.example.stayalert.CameraActivity imple
                 detector.useNNAPI();
             }
             detector.setNumThreads(numThreads);
+
 
 
             int cropSize = detector.getInputSize();

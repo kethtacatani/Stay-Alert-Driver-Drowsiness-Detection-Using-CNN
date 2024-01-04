@@ -121,6 +121,8 @@ public abstract class CameraActivity extends AppCompatActivity
   int currentNumThreads = -1;
   FrameLayout frameLayout;
   ImageButton backBtn;
+  boolean rearCam=false;
+
   public static int elevation=0;
   public static String eyeStatus="";
   public static String mouthStatus="";
@@ -168,6 +170,7 @@ public abstract class CameraActivity extends AppCompatActivity
     bottomNavigation= findViewById(R.id.bottomNavigation);
     backBtn= findViewById(R.id.backBtn);
 
+
     bottomNavigation.add(new MeowBottomNavigation.Model(1, R.drawable.ic_menu));
     bottomNavigation.add(new MeowBottomNavigation.Model(2, R.drawable.ic_call));
     bottomNavigation.add(new MeowBottomNavigation.Model(3, R.drawable.ic_home));
@@ -177,33 +180,34 @@ public abstract class CameraActivity extends AppCompatActivity
 
     schedHandler = new Handler();
 
-//    connectivityCheckRunnable = new Runnable() {
-//      @Override
-//      public void run() {
-//        // Perform database connectivity check
-//        boolean isConnected = db.isConnected;
-//        db.isConnected();
-//        System.out.println("main - checking");
-//
-//        // Handle the result as needed
-////        if (!isConnected) {
-////          offlineMode=true;
-////          if(!dialog.isShowing()){
-////            showDialog("Connection Failed","No database connection.\n Proceed to Offline mode?");
-////            System.out.println("showing");
-////          }
-////        } else {
-////          if(dialog.isShowing() && offlineMode){
-////            dialog.dismiss();
-////            offlineMode=false;
-////          }
-////        }
-//
-//        // Schedule the next check after 3 seconds
-//        schedHandler.postDelayed(this, 3000); // 3000 milliseconds = 3 seconds
-//      }
-//    };
-//    schedHandler.postDelayed(connectivityCheckRunnable, 2500);
+    connectivityCheckRunnable = new Runnable() {
+      @Override
+      public void run() {
+        // Perform database connectivity check
+        boolean isConnected = db.isConnected;
+        db.isConnected();
+        System.out.println("main - checking");
+
+
+        // Handle the result as needed
+//        if (!isConnected) {
+//          offlineMode=true;
+//          if(!dialog.isShowing()){
+//            showDialog("Connection Failed","No database connection.\n Proceed to Offline mode?");
+//            System.out.println("showing");
+//          }
+//        } else {
+//          if(dialog.isShowing() && offlineMode){
+//            dialog.dismiss();
+//            offlineMode=false;
+//          }
+//        }
+
+        // Schedule the next check after 3 seconds
+        schedHandler.postDelayed(this, 3000); // 3000 milliseconds = 3 seconds
+      }
+    };
+    schedHandler.postDelayed(connectivityCheckRunnable, 2500);
 //
 //    ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 //    Runnable task = () -> {
@@ -256,6 +260,8 @@ public abstract class CameraActivity extends AppCompatActivity
     bottomNavigation.show(3,true);
     replaceFragment(new HomeFrag());
     bottomNavigation.clearCount(1);
+
+
 
     bottomNavigation.setOnClickMenuListener(new Function1<MeowBottomNavigation.Model, Unit>() {
       @Override
@@ -726,6 +732,7 @@ public abstract class CameraActivity extends AppCompatActivity
             // Fallback to camera1 API for internal cameras that don't have full support.
             // This should help with legacy situations where using the camera2 API causes
             // distorted or otherwise broken previews.
+//            useCamera2API = (facing == CameraCharacteristics.LENS_FACING_EXTERNAL)
             useCamera2API = (facing == CameraCharacteristics.LENS_FACING_EXTERNAL)
                     || isHardwareLevelSupported(
                     characteristics, CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_FULL);
@@ -741,8 +748,12 @@ public abstract class CameraActivity extends AppCompatActivity
     return null;
   }
 
+
   protected void setFragment() {
-    String cameraId = chooseCamera();
+
+//    String cameraId = chooseCamera();
+
+    String cameraId = rearCam ? "0":chooseCamera();
 
     Fragment fragment;
     if (useCamera2API) {
