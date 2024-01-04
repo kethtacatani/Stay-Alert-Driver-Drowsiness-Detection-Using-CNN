@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 public class Database {
-    final String ipAddress= "192.168.56.1";
+    final String ipAddress= "192.168.56.10";
     final String dbLink= "http://"+ipAddress+"/StayAlert/";
     public boolean isConnected=false;
     Thread thread1;
