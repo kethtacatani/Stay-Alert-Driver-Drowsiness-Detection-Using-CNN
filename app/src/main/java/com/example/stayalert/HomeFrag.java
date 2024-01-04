@@ -31,13 +31,14 @@ public class HomeFrag extends Fragment {
         viewDetectionBtn = view.findViewById(R.id.viewDetectionBtn);
         timeofDay = view.findViewById(R.id.timeOfDayTV);
         statusDriverTV= view.findViewById(R.id.statusDriverTV);
+        CameraActivity cameraActivity = (CameraActivity) getActivity();
 
+        statusDriverTV.setText(cameraActivity.statusDriver);
         // Set an OnClickListener for the viewDetectionBtn
         viewDetectionBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 CameraActivity.elevation= 30;
-                CameraActivity cameraActivity = (CameraActivity) getActivity();
                 cameraActivity.changeFrameLayoutElevation();
             }
         });

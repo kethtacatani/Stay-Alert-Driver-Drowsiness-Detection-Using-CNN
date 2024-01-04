@@ -70,6 +70,9 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
@@ -97,7 +100,7 @@ public abstract class CameraActivity extends AppCompatActivity
   private int[] rgbBytes = null;
   private int yRowStride;
   protected int defaultModelIndex = 0;
-  protected int defaultDeviceIndex = 0;
+  protected int defaultDeviceIndex = 1;
   private Runnable postInferenceCallback;
   private Runnable imageConverter;
   protected ArrayList<String> modelStrings = new ArrayList<String>();
@@ -132,6 +135,7 @@ public abstract class CameraActivity extends AppCompatActivity
   Handler schedHandler;
   Runnable connectivityCheckRunnable;
   Database db;
+  String statusDriver=" ACTIVE ";
 
   ArrayList<String> deviceStrings = new ArrayList<String>();
 
@@ -173,39 +177,46 @@ public abstract class CameraActivity extends AppCompatActivity
 
     schedHandler = new Handler();
 
-    connectivityCheckRunnable = new Runnable() {
-      @Override
-      public void run() {
-        // Perform database connectivity check
-        boolean isConnected = db.isConnected;
-        db.isConnected();
-        System.out.println("main - checking");
-
-        // Handle the result as needed
-//        if (!isConnected) {
-//          offlineMode=true;
-//          if(!dialog.isShowing()){
-//            showDialog("Connection Failed","No database connection.\n Proceed to Offline mode?");
-//            System.out.println("showing");
-//          }
-//        } else {
-//          if(dialog.isShowing() && offlineMode){
-//            dialog.dismiss();
-//            offlineMode=false;
-//          }
-//        }
-
-        // Schedule the next check after 3 seconds
-        schedHandler.postDelayed(this, 3000); // 3000 milliseconds = 3 seconds
-      }
-    };
-    schedHandler.postDelayed(connectivityCheckRunnable, 2500);
+//    connectivityCheckRunnable = new Runnable() {
+//      @Override
+//      public void run() {
+//        // Perform database connectivity check
+//        boolean isConnected = db.isConnected;
+//        db.isConnected();
+//        System.out.println("main - checking");
+//
+//        // Handle the result as needed
+////        if (!isConnected) {
+////          offlineMode=true;
+////          if(!dialog.isShowing()){
+////            showDialog("Connection Failed","No database connection.\n Proceed to Offline mode?");
+////            System.out.println("showing");
+////          }
+////        } else {
+////          if(dialog.isShowing() && offlineMode){
+////            dialog.dismiss();
+////            offlineMode=false;
+////          }
+////        }
+//
+//        // Schedule the next check after 3 seconds
+//        schedHandler.postDelayed(this, 3000); // 3000 milliseconds = 3 seconds
+//      }
+//    };
+//    schedHandler.postDelayed(connectivityCheckRunnable, 2500);
+//
+//    ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+//    Runnable task = () -> {
+//      System.out.println("fuck");
+//      db.isConnected();
+//    };
+//    scheduler.scheduleAtFixedRate(task, 0, 6000, TimeUnit.MILLISECONDS);
     
 
     runnableCode = new Runnable() {
       @Override
       public void run() {
-        String newValue = eyeStatus; // Replace with your variable to check
+        String newValue = eyeStatus;
         if ("closed".equals(newValue) && closeCount<30) {
           closeCount++;
         }else if (closeCount>0){
@@ -215,18 +226,23 @@ public abstract class CameraActivity extends AppCompatActivity
         currentIndex = (currentIndex + 1) % 30; // Wrap around to the beginning of the array
         double closePercentage = (closeCount / 30.0) * 100.0;
 
+
         if(closePercentage>90 && !ringtone.isPlaying() && !appStopped){
           Toast.makeText(CameraActivity.this, "Please WAKE UP!!!!", Toast.LENGTH_SHORT).show();
 
           // Play the default ringtone
-          HomeFrag.statusDriverTV.setText(" SLEEPY ");
+          statusDriver=" SLEEPY ";
           ringtone.play();
+          HomeFrag.statusDriverTV.setText(statusDriver);
           System.out.println("playinh ring");
         }
         else if(closePercentage<90){
-          HomeFrag.statusDriverTV.setText(" ACTIVE ");
+          statusDriver=" ACTIVE ";
+          HomeFrag.statusDriverTV.setText(statusDriver);
           ringtone.stop();
+
         }
+
         // Schedule the next update
 //        System.out.println("looping "+ closePercentage+"\n"+ Arrays.toString(values)+"\n closeCount: "+closeCount);
 
@@ -610,7 +626,7 @@ public abstract class CameraActivity extends AppCompatActivity
   @Override
   public synchronized void onPause() {
     LOGGER.d("onPause " + this);
-
+    ringtone.stop();
     handlerThread.quitSafely();
     try {
       handlerThread.join();
