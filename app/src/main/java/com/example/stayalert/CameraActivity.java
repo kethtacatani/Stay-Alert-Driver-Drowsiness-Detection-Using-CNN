@@ -215,6 +215,8 @@ public abstract class CameraActivity extends AppCompatActivity
 //      db.isConnected();
 //    };
 //    scheduler.scheduleAtFixedRate(task, 0, 6000, TimeUnit.MILLISECONDS);
+
+
     
 
     runnableCode = new Runnable() {
@@ -253,9 +255,16 @@ public abstract class CameraActivity extends AppCompatActivity
         handler.postDelayed(this, 100); // Schedule the task to run again after 100 milliseconds
       }
     };
-
-    // Start the task initially
     handler.post(runnableCode);
+
+    Handler delayedExecutionHandler = new Handler();
+    delayedExecutionHandler.postDelayed(new Runnable() {
+      @Override
+      public void run() {
+        minusImageView.performClick();
+        updateActiveModel();
+      }
+    }, 3000);
 
     bottomNavigation.show(3,true);
     replaceFragment(new HomeFrag());
