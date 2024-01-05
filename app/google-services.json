@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "451115935259",
+    "project_id": "stayalert-8990d",
+    "storage_bucket": "stayalert-8990d.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:451115935259:android:ddc38ffe0b5d14f7493abe",
+        "android_client_info": {
+          "package_name": "com.example.stayalert"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDBVpRDxWqacenwCmpuvpWdqgoG9mzGHa8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
+

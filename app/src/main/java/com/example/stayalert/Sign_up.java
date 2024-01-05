@@ -19,6 +19,7 @@ import android.widget.TextView;
 
 
 import com.airbnb.lottie.LottieAnimationView;
+import com.google.firebase.auth.FirebaseAuth;
 import com.vishnusivadas.advanced_httpurlconnection.PutData;
 
 import java.util.HashMap;
@@ -36,6 +37,7 @@ public class Sign_up extends AppCompatActivity {
     boolean offlineMode=false;
     Handler handler;
     Runnable connectivityCheckRunnable;
+    FirebaseAuth auth;
 
 
     @Override
@@ -120,10 +122,12 @@ public class Sign_up extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
+
                 Handler handler = new Handler(Looper.getMainLooper());
                 handler.post(new Runnable() {
                     @Override
                     public void run() {
+
 
 
 

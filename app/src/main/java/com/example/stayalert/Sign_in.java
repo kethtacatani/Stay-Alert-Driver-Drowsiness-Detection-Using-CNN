@@ -1,5 +1,6 @@
 package com.example.stayalert;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
@@ -21,6 +22,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.airbnb.lottie.LottieAnimationView;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
+import com.google.firebase.auth.FirebaseAuthInvalidUserException;
 import com.vishnusivadas.advanced_httpurlconnection.PutData;
 
 import java.util.HashMap;
@@ -39,6 +48,10 @@ public class Sign_in extends AppCompatActivity {
     boolean offlineMode=false;
     Handler handler;
     Runnable connectivityCheckRunnable;
+    private FirebaseAuth mAuth;
+    TextView creatAccTV, usernameErrTV, passErrTV;
+
+    EditText username, password;
 
 
 
@@ -58,14 +71,14 @@ public class Sign_in extends AppCompatActivity {
         //
         //#####################################################################
 
-        db = new Database();
-        db.isConnected();
+//        db = new Database();
+//        db.isConnected();
 //        db.checkConnection();
 
+        mAuth = FirebaseAuth.getInstance();
 
-        TextView creatAccTV, usernameErrTV, passErrTV;
 
-        EditText username, password;
+
 
         creatAccTV = (TextView)findViewById(R.id.TVcreateAcc);
         signInBtn = ( Button)findViewById(R.id.BTNsignin);
@@ -87,13 +100,14 @@ public class Sign_in extends AppCompatActivity {
         dialogOkay.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(db.isConnected){
-                    dialog.dismiss();
-                }else{
-                    Intent intent = new Intent(getApplicationContext(), DetectorActivity.class);
-                    startActivity(intent);
-                    stopActivity();
-                }
+                dialog.dismiss();
+//                if(db.isConnected){
+//                    dialog.dismiss();
+//                }else{
+//                    Intent intent = new Intent(getApplicationContext(), DetectorActivity.class);
+//                    startActivity(intent);
+//                    stopActivity();
+//                }
 
             }
         });
@@ -131,13 +145,12 @@ public class Sign_in extends AppCompatActivity {
         signInBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                String email = username.getText().toString().trim();
+                String pass = password.getText().toString().trim();
+                System.out.println("tentn"+mAuth.getTenantId());
 
 
 
-                Map<String, String> dataMap = new HashMap<>();
-
-                dataMap.put("username", username.getText().toString());
-                dataMap.put("password", password.getText().toString());
 
                 if(!username.getText().toString().trim().isEmpty() && !password.getText().toString().trim().isEmpty()){
 //                            PutData putData = new PutData("http://192.168.0.106/StayAlert/login.php", "POST", field, data);
@@ -145,31 +158,36 @@ public class Sign_in extends AppCompatActivity {
                     buttonAnimation.playAnimation();
                     signInBtn.setText("");
 
-                    String result= db.loginSingupData("users",dataMap);
-                    if(result.equals("Login Success")){
-                        Intent intent = new Intent(getApplicationContext(), DetectorActivity.class);
-                                startActivity(intent);
-                        stopActivity();
-                        hideLoading();
-                    }
-                    else if (result.equals("Username or Password is Wrong")){
-                        showDialog("Login Failed","Username or password is incrorrect");
-                        hideLoading();
-                    }
-                    else if (result.equals("No account exist")){
-                        showDialog("Login Failed","Account does not exist");
-                        hideLoading();
-                    }
-                    else if (result.equals("Error: Database connection")){
-                        showDialog("Login Failed","Error occurred in the database");
-                        hideLoading();
-                    }
-                    else if (result.equals("No database connection")){
-                        showDialog("Login Failed","No database connection.\n Proceed to Offline mode?");
-                        Intent intent = new Intent(getApplicationContext(), DetectorActivity.class);
-//                                startActivity(intent);
-                        hideLoading();
-                    }
+                    mAuth.signInWithEmailAndPassword(email, pass)
+                            .addOnCompleteListener(Sign_in.this, new OnCompleteListener<AuthResult>() {
+                                @Override
+                                public void onComplete(@NonNull Task<AuthResult> task) {
+                                    if (task.isSuccessful()) {
+                                        // Sign in success, update UI with the signed-in user's information
+                                        Toast.makeText(Sign_in.this, "Succ", Toast.LENGTH_SHORT).show();
+                                        Intent intent = new Intent(getApplicationContext(), DetectorActivity.class);
+
+                                        startActivity(intent);
+                                        stopActivity();
+                                    } else {
+                                        // If sign in fails, handle different error scenarios
+                                        Exception exception = task.getException();
+                                        if (exception instanceof FirebaseAuthInvalidUserException) {
+                                            // Invalid user (user doesn't exist or is disabled)
+                                            showDialog("Login Failed", "No account exist");
+                                            hideLoading();
+                                        } else if (exception instanceof FirebaseAuthInvalidCredentialsException) {
+                                            // Invalid credentials provided (wrong password, etc.)
+                                            showDialog("Login Failed", "Invalid username or password");
+                                            hideLoading();
+                                        } else {
+                                            // Other errors occurred during sign-in
+                                            showDialog("Login Failed", "No connection to database");
+                                            hideLoading();
+                                        }
+                                    }
+                                }
+                            });
 
                 }
                 else{
@@ -182,36 +200,6 @@ public class Sign_in extends AppCompatActivity {
 
             }
         });
-
-        handler = new Handler();
-
-        connectivityCheckRunnable = new Runnable() {
-            @Override
-            public void run() {
-                // Perform database connectivity check
-                boolean isConnected = db.isConnected;
-                db.isConnected();
-                System.out.println("checking");
-
-                // Handle the result as needed
-                if (!isConnected) {
-                    offlineMode=true;
-                    if(!dialog.isShowing()){
-                        showDialog("Connection Failed","No database connection.\n Proceed to Offline mode?");
-                        System.out.println("showing");
-                    }
-                } else {
-                    if(dialog.isShowing() && offlineMode){
-                        dialog.dismiss();
-                        offlineMode=false;
-                    }
-                }
-
-                // Schedule the next check after 3 seconds
-                handler.postDelayed(this, 3000); // 3000 milliseconds = 3 seconds
-            }
-        };
-        handler.postDelayed(connectivityCheckRunnable, 2500);
 
 
 
@@ -233,6 +221,7 @@ public class Sign_in extends AppCompatActivity {
         handler.removeCallbacks(connectivityCheckRunnable);
         finish();
     }
+
 
 
 

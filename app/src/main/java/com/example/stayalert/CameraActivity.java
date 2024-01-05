@@ -178,44 +178,6 @@ public abstract class CameraActivity extends AppCompatActivity
     bottomNavigation.add(new MeowBottomNavigation.Model(5, R.drawable.ic_profile));
 
 
-    schedHandler = new Handler();
-
-    connectivityCheckRunnable = new Runnable() {
-      @Override
-      public void run() {
-        // Perform database connectivity check
-        boolean isConnected = db.isConnected;
-        db.isConnected();
-        System.out.println("main - checking");
-
-
-        // Handle the result as needed
-//        if (!isConnected) {
-//          offlineMode=true;
-//          if(!dialog.isShowing()){
-//            showDialog("Connection Failed","No database connection.\n Proceed to Offline mode?");
-//            System.out.println("showing");
-//          }
-//        } else {
-//          if(dialog.isShowing() && offlineMode){
-//            dialog.dismiss();
-//            offlineMode=false;
-//          }
-//        }
-
-        // Schedule the next check after 3 seconds
-        schedHandler.postDelayed(this, 3000); // 3000 milliseconds = 3 seconds
-      }
-    };
-    schedHandler.postDelayed(connectivityCheckRunnable, 2500);
-//
-//    ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-//    Runnable task = () -> {
-//      System.out.println("fuck");
-//      db.isConnected();
-//    };
-//    scheduler.scheduleAtFixedRate(task, 0, 6000, TimeUnit.MILLISECONDS);
-
 
     
 
