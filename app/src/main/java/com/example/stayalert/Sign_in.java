@@ -1,59 +1,80 @@
 package com.example.stayalert;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 
 import android.app.Dialog;
 import android.content.Intent;
-import android.graphics.Color;
 import android.os.Build;
 import android. os.Bundle;
 import android.os.Handler;
-import android.os.Looper;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.airbnb.lottie.LottieAnimationView;
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.FirebaseApp;
+import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
-import com.google.firebase.auth.FirebaseAuthInvalidUserException;
-import com.vishnusivadas.advanced_httpurlconnection.PutData;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.GoogleAuthProvider;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 
-import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+
+import firebase.classes.FirebaseDatabase;
 
 public class Sign_in extends AppCompatActivity {
 
     Dialog dialog;
     TextView dialogOkay, dialogTitle, dialogInfo;
-    Button signInBtn;
-    Database db;
+    Button signInBtn,googleBtn;
+    FirebaseFirestore db;
     LottieAnimationView buttonAnimation;
     boolean offlineMode=false;
     Handler handler;
     Runnable connectivityCheckRunnable;
-    private FirebaseAuth mAuth;
+    FirebaseAuth mAuth;
+    FirebaseUser user;
     TextView creatAccTV, usernameErrTV, passErrTV;
-
+    GoogleSignInClient googleSignInClient;
+    CollectionReference collection;
     EditText username, password;
+    GoogleSignInAccount account;
+    FirebaseDatabase firebaseDB;
+    Map<String, Object> userData;
 
+    @Override
+    public void onStart() {
+        super.onStart();
+        // Check if user is signed in (non-null) and update UI accordingly.
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if(currentUser != null){
+            userData = firebaseDB.getUserInfo();
+            if(userData.isEmpty()){
+                System.out.println("no info");
+                signUpUser(currentUser.getEmail());
+            }else{
+                signInUser();
+            }
 
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,17 +87,20 @@ public class Sign_in extends AppCompatActivity {
         }
 
 
-
-        //ADD CONNECTION CHECKER TO MYSQL DB
-        //
-        //#####################################################################
-
-//        db = new Database();
-//        db.isConnected();
-//        db.checkConnection();
-
         mAuth = FirebaseAuth.getInstance();
+        db = FirebaseFirestore.getInstance();
+        firebaseDB = new FirebaseDatabase();
 
+        user = FirebaseAuth.getInstance().getCurrentUser();
+
+
+
+        GoogleSignInOptions options = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(getString(R.string.default_web_client_id))
+                .requestEmail()
+                .build();
+        googleSignInClient = GoogleSignIn.getClient(this,options);
+        googleBtn= findViewById(R.id.BTNgoogle);
 
 
 
@@ -112,14 +136,21 @@ public class Sign_in extends AppCompatActivity {
             }
         });
 
+        googleBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = googleSignInClient.getSignInIntent();
+                startActivityForResult(intent,1234);
+            }
+        });
+
+
 
 
         creatAccTV.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(getApplicationContext(), Sign_up.class);
-                startActivity(intent);
-                stopActivity();
+                signUpUser("");
             }
         });
 
@@ -145,47 +176,38 @@ public class Sign_in extends AppCompatActivity {
         signInBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
+
                 String email = username.getText().toString().trim();
                 String pass = password.getText().toString().trim();
-                System.out.println("tentn"+mAuth.getTenantId());
 
 
 
 
                 if(!username.getText().toString().trim().isEmpty() && !password.getText().toString().trim().isEmpty()){
 //                            PutData putData = new PutData("http://192.168.0.106/StayAlert/login.php", "POST", field, data);
-                    buttonAnimation.setVisibility(View.VISIBLE);
-                    buttonAnimation.playAnimation();
-                    signInBtn.setText("");
-
+                    playLoadingAnim();
                     mAuth.signInWithEmailAndPassword(email, pass)
                             .addOnCompleteListener(Sign_in.this, new OnCompleteListener<AuthResult>() {
                                 @Override
                                 public void onComplete(@NonNull Task<AuthResult> task) {
                                     if (task.isSuccessful()) {
                                         // Sign in success, update UI with the signed-in user's information
-                                        Toast.makeText(Sign_in.this, "Succ", Toast.LENGTH_SHORT).show();
-                                        Intent intent = new Intent(getApplicationContext(), DetectorActivity.class);
-
-                                        startActivity(intent);
-                                        stopActivity();
-                                    } else {
+                                        signInUser();
+                                    } else if (!task.getException().getLocalizedMessage().contains("network error")){
                                         // If sign in fails, handle different error scenarios
-                                        Exception exception = task.getException();
-                                        if (exception instanceof FirebaseAuthInvalidUserException) {
-                                            // Invalid user (user doesn't exist or is disabled)
-                                            showDialog("Login Failed", "No account exist");
-                                            hideLoading();
-                                        } else if (exception instanceof FirebaseAuthInvalidCredentialsException) {
-                                            // Invalid credentials provided (wrong password, etc.)
-                                            showDialog("Login Failed", "Invalid username or password");
-                                            hideLoading();
-                                        } else {
-                                            // Other errors occurred during sign-in
-                                            showDialog("Login Failed", "No connection to database");
-                                            hideLoading();
-                                        }
+                                        showDialog("Sign in Failed", firebaseDB.failureDialog(task));
+                                        hideLoading();
+
                                     }
+                                }
+                            })
+                            .addOnFailureListener(new OnFailureListener() {
+                                @Override
+                                public void onFailure(@NonNull Exception e) {
+                                    showDialog("Login Failed", "No connection to the database");
+                                    hideLoading();
+                                    System.out.println("error "+e.getMessage());
                                 }
                             });
 
@@ -205,6 +227,98 @@ public class Sign_in extends AppCompatActivity {
 
     }
 
+    private void playLoadingAnim() {
+
+        Handler handler = new Handler(); // write in onCreate function
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                buttonAnimation.setVisibility(View.VISIBLE);
+                buttonAnimation.playAnimation();
+                signInBtn.setText("");
+            }
+        });
+    }
+
+    private void signUpUser(String email) {
+        Intent intent = new Intent(getApplicationContext(), Sign_up.class);
+        intent.putExtra("email",email);
+        startActivity(intent);
+        stopActivity();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(requestCode == 1234){
+            Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
+            try {
+
+                account = task.getResult(ApiException.class);
+
+                AuthCredential credential = GoogleAuthProvider.getCredential(account.getIdToken(),null);
+                FirebaseAuth.getInstance().signInWithCredential(credential)
+                        .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+                            @Override
+                            public void onComplete(@NonNull Task<AuthResult> task) {
+                                if(task.isSuccessful()){
+                                    isUserInfoExists();
+                                    playLoadingAnim();
+                                }else if (!task.getException().getLocalizedMessage().contains("network error")){
+                                    // If sign in fails, handle different error scenarios
+                                    showDialog("Sign in Failed", firebaseDB.failureDialog(task));
+                                    hideLoading();
+
+                                }
+
+                            }
+                        }).addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                showDialog("Sign in Failed", firebaseDB.onFailureDialog(e));
+                                hideLoading();
+                            }
+                        });
+
+            } catch (ApiException e) {
+                e.printStackTrace();
+
+            }
+
+        }
+
+    }
+
+    public void isUserInfoExists(){
+        DocumentReference docIdRef = db.collection("users").document(mAuth.getUid());
+        docIdRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                if (task.isSuccessful()) {
+                    DocumentSnapshot document = task.getResult();
+                    if (document.exists()) {
+                        signInUser();
+                    } else {
+                        System.out.println("doesnt exists");
+                        signUpUser(account.getEmail());
+                    }
+                }
+            }
+        });
+    }
+
+
+
+
+    public void signInUser(){
+        user = mAuth.getCurrentUser();
+        Intent intent = new Intent(getApplicationContext(), DetectorActivity.class);
+        startActivity(intent);
+        stopActivity();
+    }
+
+
+
     public void showDialog(String title, String info){
         dialogTitle.setText(title);
         dialogInfo.setText(info);
@@ -212,13 +326,13 @@ public class Sign_in extends AppCompatActivity {
     }
 
     public void hideLoading(){
+        Toast.makeText(this, "hide", Toast.LENGTH_SHORT).show();
         buttonAnimation.setVisibility(View.GONE);
         buttonAnimation.pauseAnimation();
         signInBtn.setText("Sign in");
     }
 
     private void stopActivity(){
-        handler.removeCallbacks(connectivityCheckRunnable);
         finish();
     }
 

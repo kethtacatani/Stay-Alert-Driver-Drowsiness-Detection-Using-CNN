@@ -11,6 +11,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.firebase.auth.FirebaseAuth;
+
 
 public class ProfileFrag extends Fragment {
     ConstraintLayout profileLogout;
@@ -22,37 +27,10 @@ public class ProfileFrag extends Fragment {
         View view = inflater.inflate(R.layout.fragment_profile, container, false);
 
         profileLogout =view.findViewById(R.id.profileLogout);
-        cpuBtn=view.findViewById(R.id.cpu);
-        gpuBtn=view.findViewById(R.id.gpu);
-        nnapiBtn=view.findViewById(R.id.nnapi);
 
         CameraActivity cameraActivity = (CameraActivity) getActivity();
+        GoogleSignInClient googleSignInClient = GoogleSignIn.getClient(cameraActivity, GoogleSignInOptions.DEFAULT_SIGN_IN);
 
-        cpuBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                cameraActivity.defaultDeviceIndex=0;
-                cameraActivity.updateActiveModel();
-            }
-        });
-        gpuBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-//                cameraActivity.defaultDeviceIndex=1;
-//                cameraActivity.updateActiveModel();
-                gpuBtn.setText("Switch Cam");
-                cameraActivity.rearCam=cameraActivity.rearCam?false:true;
-                cameraActivity.setFragment();
-
-            }
-        });
-        nnapiBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                cameraActivity.defaultDeviceIndex=2;
-                cameraActivity.updateActiveModel();
-            }
-        });
 
         profileLogout.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -62,6 +40,8 @@ public class ProfileFrag extends Fragment {
                 cameraActivity.stopActivity();
                 cameraActivity.ringtone.stop();
                 startActivity(intent);
+                FirebaseAuth.getInstance().signOut();
+                googleSignInClient.signOut();
             }
         });
 

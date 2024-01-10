@@ -64,16 +64,21 @@ import com.example.stayalert.databinding.ActivityHomeBinding;
 import com.example.stayalert.env.ImageUtils;
 import com.example.stayalert.env.Logger;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import firebase.classes.FirebaseDatabase;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
 
@@ -100,7 +105,7 @@ public abstract class CameraActivity extends AppCompatActivity
   private int[] rgbBytes = null;
   private int yRowStride;
   protected int defaultModelIndex = 0;
-  protected int defaultDeviceIndex = 1;
+  protected int defaultDeviceIndex = 0;
   private Runnable postInferenceCallback;
   private Runnable imageConverter;
   protected ArrayList<String> modelStrings = new ArrayList<String>();
@@ -136,8 +141,10 @@ public abstract class CameraActivity extends AppCompatActivity
   boolean offlineMode=false, appStopped=false;
   Handler schedHandler;
   Runnable connectivityCheckRunnable;
-  Database db;
   String statusDriver=" ACTIVE ";
+  FirebaseUser user;
+  FirebaseFirestore db;
+  FirebaseDatabase firebaseDB;
 
   ArrayList<String> deviceStrings = new ArrayList<String>();
 
@@ -149,6 +156,9 @@ public abstract class CameraActivity extends AppCompatActivity
       decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
 
     }
+
+    firebaseDB= new FirebaseDatabase();
+    user = FirebaseAuth.getInstance().getCurrentUser();
 
     CameraManager cameraManager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
 
@@ -164,9 +174,6 @@ public abstract class CameraActivity extends AppCompatActivity
     ringtone = RingtoneManager.getRingtone(CameraActivity.this, defaultRingtoneUri);
 
 
-    db = new Database();
-    db.isConnected();
-
     bottomNavigation= findViewById(R.id.bottomNavigation);
     backBtn= findViewById(R.id.backBtn);
 
@@ -179,7 +186,9 @@ public abstract class CameraActivity extends AppCompatActivity
 
 
 
-    
+    bottomNavigation.show(3,true);
+    replaceFragment(new HomeFrag());
+    bottomNavigation.clearCount(1);
 
     runnableCode = new Runnable() {
       @Override
@@ -228,9 +237,7 @@ public abstract class CameraActivity extends AppCompatActivity
       }
     }, 3000);
 
-    bottomNavigation.show(3,true);
-    replaceFragment(new HomeFrag());
-    bottomNavigation.clearCount(1);
+
 
 
 
@@ -382,14 +389,6 @@ public abstract class CameraActivity extends AppCompatActivity
     plusImageView.setOnClickListener(this);
     minusImageView.setOnClickListener(this);
 
-
-
-    handler.postDelayed(new Runnable() {
-      @Override
-      public void run() {
-        minusImageView.performClick();
-      }
-    }, 3000);
   }
 
   ////////////////////////////////////////////
@@ -411,7 +410,6 @@ public abstract class CameraActivity extends AppCompatActivity
     }
     ringtone.stop();
     appStopped=true;
-    schedHandler.removeCallbacks(connectivityCheckRunnable);
     handler.removeCallbacks(runnableCode);
     finish();
   }

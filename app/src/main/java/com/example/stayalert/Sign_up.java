@@ -1,5 +1,7 @@
 package com.example.stayalert;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.Dialog;
@@ -7,38 +9,62 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Looper;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 
 import com.airbnb.lottie.LottieAnimationView;
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.Task;
+import com.google.android.material.textfield.TextInputLayout;
+import com.google.firebase.auth.AuthCredential;
+import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
-import com.vishnusivadas.advanced_httpurlconnection.PutData;
+import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.GoogleAuthProvider;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
+
+import firebase.classes.FirebaseDatabase;
 
 public class Sign_up extends AppCompatActivity {
 
-    EditText fName, mName, lName, suffix, age,contact,address,email,username,pass,conPass;
-    TextView fNameErr, mNameErr,lNameErr,suffixErr, ageErr,contactErr,addressErr,emailErr, usernameErr,passErr,conPassErr;
+    EditText fName, mName, lName, suffix, age,contact,address,email,pass,conPass;
+    TextView fNameErr, mNameErr,lNameErr,suffixErr, ageErr,contactErr,addressErr,emailErr,passErr,conPassErr;
+    TextInputLayout emailLayout, passLayout, conPassLayout;
     Button signUpBtn;
-    Database db;
     Dialog dialog;
     TextView dialogOkay, dialogTitle, dialogInfo;
     LottieAnimationView buttonAnimation;
     boolean offlineMode=false;
     Handler handler;
-    Runnable connectivityCheckRunnable;
     FirebaseAuth auth;
-
+    FirebaseFirestore db;
+    Timer timer = new Timer();
+    int signInRetries=0;
+    String userId;
+    GoogleSignInClient googleSignInClient;
+    Button googleSignUp;
+    private static final int REQ_ONE_TAP = 2;  // Can be any integer unique to the Activity.
+    private boolean showOneTapUI = true;
+    String signUpMethod="email";
+    String userEmail="";
+    FirebaseDatabase firebaseDB;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,8 +76,16 @@ public class Sign_up extends AppCompatActivity {
             decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
         }
 
-        db= new Database();
-        db.isConnected();
+        firebaseDB = new FirebaseDatabase();
+        db = FirebaseFirestore.getInstance();
+        auth = FirebaseAuth.getInstance();
+        GoogleSignInOptions options = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(getString(R.string.default_web_client_id))
+                .requestEmail()
+                .build();
+        googleSignInClient = GoogleSignIn.getClient(this,options);
+
+
 
         TextView loginAccTV;
 
@@ -60,7 +94,7 @@ public class Sign_up extends AppCompatActivity {
         dialogOkay = dialog.findViewById(R.id.TVCancel);
         dialogTitle = dialog.findViewById(R.id.TVTitle);
         dialogInfo = dialog.findViewById(R.id.TVInfo);
-        buttonAnimation=findViewById(R.id.BTNloading);
+        buttonAnimation=findViewById(R.id.BTNSign_upLoading);
         dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT);
         dialog.getWindow().setBackgroundDrawable(getDrawable(R.drawable.dialog_bg));
 
@@ -69,6 +103,7 @@ public class Sign_up extends AppCompatActivity {
 
         loginAccTV = (TextView)findViewById(R.id.TVloginAcc);
         signUpBtn =  findViewById(R.id.BTNsignup);
+        googleSignUp= findViewById(R.id.BTNgoogleSignup);
 
         fName = findViewById(R.id.ETfNameSignup);
         mName= findViewById(R.id.ETmInitialSignup);
@@ -78,19 +113,19 @@ public class Sign_up extends AppCompatActivity {
         contact= findViewById(R.id.ETContactSignup);
         address= findViewById(R.id.ETAddressSignup);
         email= findViewById(R.id.ETemailSignup);
-        username= findViewById(R.id.ETUsernameSignup);
         pass= findViewById(R.id.ETpassSignup);
         conPass= findViewById(R.id.ETconPassSignup);
+        emailLayout=findViewById(R.id.ETemailSignupLayout);
+        passLayout= findViewById(R.id.ETpassSignupLayout);
+        conPassLayout= findViewById(R.id.ETconPassSignupLayout);
 
         fNameErr=findViewById(R.id.TVFNameErr);
         mNameErr=findViewById(R.id.TVMNameErr);
         lNameErr=findViewById(R.id.TVLNameErr);
         suffixErr=findViewById(R.id.TVSuffixErr);
         ageErr=findViewById(R.id.TVAgeErr);
-        contactErr=findViewById(R.id.TVContactErr);
         addressErr=findViewById(R.id.TVAddressErr);
         emailErr=findViewById(R.id.TVEmailErr);
-        usernameErr=findViewById(R.id.TVUsernameErrSignUp);
         passErr=findViewById(R.id.TVPassErrSignUp);
         conPassErr=findViewById(R.id.TVConPassErr);
 
@@ -100,95 +135,108 @@ public class Sign_up extends AppCompatActivity {
         address.setOnFocusChangeListener((v, hasFocus) -> handleEditTextFocusChange(address, hasFocus));
         contact.setOnFocusChangeListener((v, hasFocus) -> handleEditTextFocusChange(contact, hasFocus));
         email.setOnFocusChangeListener((v, hasFocus) -> handleEditTextFocusChange(email, hasFocus));
-        username.setOnFocusChangeListener((v, hasFocus) -> handleEditTextFocusChange(username, hasFocus));
         pass.setOnFocusChangeListener((v, hasFocus) -> handleEditTextFocusChange(pass, hasFocus));
         conPass.setOnFocusChangeListener((v, hasFocus) -> handleEditTextFocusChange(conPass, hasFocus));
 
         dialogOkay.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(db.isConnected){
-                    dialog.dismiss();
-                }else{
-                    Intent intent = new Intent(getApplicationContext(), DetectorActivity.class);
-                    startActivity(intent);
-                    stopActivity();
-                }
+                dialog.dismiss();
 
             }
         });
+
+        googleSignUp.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                auth.signOut();
+                googleSignInClient.signOut();
+                if(!email.isEnabled()){creatAccountWithEmail();}
+                Intent intent = googleSignInClient.getSignInIntent();
+                startActivityForResult(intent,1234);
+            }
+        });
+
+
 
         signUpBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
+                Map<String, Object> userData = new HashMap<>();
 
-                Handler handler = new Handler(Looper.getMainLooper());
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
+                userData.put("first_name", fName.getText().toString());
+                userData.put("middle_name", mName.getText().toString().trim().isEmpty() ? "" : mName.getText().toString());
+                userData.put("last_name", lName.getText().toString());
+                userData.put("suffix", suffix.getText().toString().trim().isEmpty() ? "" : suffix.getText().toString());
+                userData.put("contact", "");
+                userData.put("address", address.getText().toString());
+                userData.put("age", age.getText().toString());
+                userData.put("email", email.getText().toString());
+                userData.put("password", pass.getText().toString());
+                userData.put("sign_in_method", signUpMethod);
 
 
-
-
-                        Map<String, String> dataMap = new HashMap<>();
-
-                        dataMap.put("first_name", fName.getText().toString());
-                        dataMap.put("middle_name", mName.getText().toString().trim().isEmpty() ? "" : mName.getText().toString());
-                        dataMap.put("last_name", lName.getText().toString());
-                        dataMap.put("suffix", suffix.getText().toString().trim().isEmpty() ? "" : suffix.getText().toString());
-                        dataMap.put("address", address.getText().toString());
-                        dataMap.put("age", age.getText().toString());
-                        dataMap.put("contact", contact.getText().toString());
-                        dataMap.put("email", email.getText().toString());
-                        dataMap.put("username", username.getText().toString());
-                        dataMap.put("password", pass.getText().toString());
-
-//                        db.getData() to be continued ror
-
-                        if(!fName.getText().toString().trim().isEmpty()  && !lName.getText().toString().trim().isEmpty()
-                                && !address.getText().toString().trim().isEmpty() && !age.getText().toString().trim().isEmpty() && !contact.getText().toString().trim().isEmpty()
-                                && !email.getText().toString().trim().isEmpty() && !username.getText().toString().trim().isEmpty() && !pass.getText().toString().trim().isEmpty()
-                                && !conPass.getText().toString().trim().isEmpty()){
-                            if(pass.getText().toString().trim().equals(conPass.getText().toString().trim())){
-                                String result= db.loginSingupData("users",dataMap);
-                                if(result.equals("Sign Up Success")) {
-                                    Intent intent = new Intent(getApplicationContext(), DetectorActivity.class);
-                                    startActivity(intent);
-                                }
-                                else if (result.equals("Error: Database connection")){
-                                    showDialog("Login Failed","Error occurred in the database");
-                                    hideLoading();
-                                }
-                                else if (result.equals("No database connection")){
-                                    showDialog("Login Failed","No database connection.\n Proceed to Offline mode?");
-                                    Intent intent = new Intent(getApplicationContext(), DetectorActivity.class);
-//                                startActivity(intent);
-                                    hideLoading();
-                                }
+                if(!fName.getText().toString().trim().isEmpty()  && !lName.getText().toString().trim().isEmpty()
+                        && !address.getText().toString().trim().isEmpty() && !age.getText().toString().trim().isEmpty()
+                        && !email.getText().toString().trim().isEmpty()  && (!pass.getText().toString().trim().isEmpty() || passLayout.getVisibility()==View.GONE)
+                        && (!conPass.getText().toString().trim().isEmpty() || conPassLayout.getVisibility()==View.GONE)){
+                    Toast.makeText(Sign_up.this, "Pass", Toast.LENGTH_SHORT).show();
+                    if(pass.getText().toString().trim().equals(conPass.getText().toString().trim())){
+                        playLoadingAnim();
+                        if(signInRetries<3){
+                            switch (signUpMethod){
+                                case "email":
+                                    auth.createUserWithEmailAndPassword(email.getText().toString().trim(),pass.getText().toString().trim()).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+                                        @Override
+                                        public void onComplete(@NonNull Task<AuthResult> task) {
+                                            if(task.isSuccessful()){
+                                                writeUserInfo(userData);
+                                            }
+                                            else if (!task.getException().getLocalizedMessage().contains("network error")){
+                                                // If sign in fails, handle different error scenarios
+                                                firebaseDB.failureDialog(task);
+                                                hideLoading();
+                                            }
+                                        }
+                                    }).addOnFailureListener(new OnFailureListener() {
+                                        @Override
+                                        public void onFailure(@NonNull Exception e) {
+                                            firebaseDB.onFailureDialog(e);
+                                            hideLoading();
+                                        }
+                                    });
+                                    break;
+                                case "google":
+                                    writeUserInfo(userData);
+                                    break;
                             }
-                            else{
-                                passErr.setText("Password do not match*");
-                                conPassErr.setText("Password do not match*");
-                                passErr.setVisibility(View.VISIBLE);
-                                conPassErr.setVisibility(View.VISIBLE);
-                            }
+
                         }
                         else{
-                            fNameErr.setVisibility(fName.getText().toString().trim().isEmpty()?View.VISIBLE:View.GONE);
-                            lNameErr.setVisibility(lName.getText().toString().trim().isEmpty()?View.VISIBLE:View.GONE);
-                            ageErr.setVisibility(age.getText().toString().trim().isEmpty()?View.VISIBLE:View.GONE);
-                            contactErr.setVisibility(contact.getText().toString().trim().isEmpty()?View.VISIBLE:View.GONE);
-                            addressErr.setVisibility(address.getText().toString().trim().isEmpty()?View.VISIBLE:View.GONE);
-                            emailErr.setVisibility(email.getText().toString().trim().isEmpty()?View.VISIBLE:View.GONE);
-                            usernameErr.setVisibility(username.getText().toString().trim().isEmpty()?View.VISIBLE:View.GONE);
-                            passErr.setVisibility(pass.getText().toString().trim().isEmpty()?View.VISIBLE:View.GONE);
-                            conPassErr.setVisibility(conPass.getText().toString().trim().isEmpty()?View.VISIBLE:View.GONE);
-
+                            showDialog("Sign up Failed","Too much requests, please try again later");
                         }
-                        //End Write and Read data with URL
                     }
-                });
+                    else{
+                        passErr.setText("Password do not match*");
+                        conPassErr.setText("Password do not match*");
+                        passErr.setVisibility(View.VISIBLE);
+                        conPassErr.setVisibility(View.VISIBLE);
+                    }
+                }
+                else{
+                    fNameErr.setVisibility(fName.getText().toString().trim().isEmpty()?View.VISIBLE:View.GONE);
+                    lNameErr.setVisibility(lName.getText().toString().trim().isEmpty()?View.VISIBLE:View.GONE);
+                    ageErr.setVisibility(age.getText().toString().trim().isEmpty()?View.VISIBLE:View.GONE);
+                    addressErr.setVisibility(address.getText().toString().trim().isEmpty()?View.VISIBLE:View.GONE);
+                    emailErr.setVisibility(email.getText().toString().trim().isEmpty()?View.VISIBLE:View.GONE);
+                    passErr.setVisibility(pass.getText().toString().trim().isEmpty()?View.VISIBLE:View.GONE);
+                    conPassErr.setVisibility(conPass.getText().toString().trim().isEmpty()?View.VISIBLE:View.GONE);
+
+                }
+
+
+
 
 
 
@@ -200,45 +248,120 @@ public class Sign_up extends AppCompatActivity {
             public void onClick(View v) {
                 Intent intent = new Intent(getApplicationContext(), Sign_in.class);
                 startActivity(intent);
+                auth.signOut();
+                googleSignInClient.signOut();
                 stopActivity();
             }
         });
 
-        handler = new Handler();
+        String email =getIntent().getStringExtra("email");
+        if (!email.equals("")){
+            createAccountWithGoogle(email);
+        }
 
-        connectivityCheckRunnable = new Runnable() {
-            @Override
-            public void run() {
-                // Perform database connectivity check
-                boolean isConnected = db.isConnected;
-                db.isConnected();
-                System.out.println("checking");
-
-                // Handle the result as needed
-                if (!isConnected) {
-                    offlineMode=true;
-                    if(!dialog.isShowing()){
-                        showDialog("Connection Failed","No database connection.\n Proceed to Offline mode?");
-                        System.out.println("showing");
-                    }
-                } else {
-                    if(dialog.isShowing() && offlineMode){
-                        dialog.dismiss();
-                        offlineMode=false;
-                    }
-                }
-
-                // Schedule the next check after 3 seconds
-                handler.postDelayed(this, 3000); // 3000 milliseconds = 3 seconds
-            }
-        };
-        handler.postDelayed(connectivityCheckRunnable, 2500);
 
 
     }
 
+
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(requestCode == 1234){
+            Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
+            try {
+                GoogleSignInAccount account = task.getResult(ApiException.class);
+                userEmail = account.getEmail();
+                AuthCredential credential = GoogleAuthProvider.getCredential(account.getIdToken(),null);
+                FirebaseAuth.getInstance().signInWithCredential(credential)
+                        .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+                            @Override
+                            public void onComplete(@NonNull Task<AuthResult> task) {
+                                if(task.isSuccessful()){
+                                    createAccountWithGoogle(userEmail);
+                                }else if (!task.getException().getLocalizedMessage().contains("network error")){
+                                    // If sign in fails, handle different error scenarios
+                                    showDialog("Sign up Failed",firebaseDB.failureDialog(task));
+                                }
+
+                            }
+                        }).addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                showDialog("Sign up Failed",firebaseDB.onFailureDialog(e));
+                            }
+                        });
+
+            } catch (ApiException e) {
+                e.printStackTrace();
+            }
+
+        }
+
+    }
+
+    private void playLoadingAnim() {
+
+        Handler handler = new Handler(); // write in onCreate function
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                buttonAnimation.setVisibility(View.VISIBLE);
+                buttonAnimation.playAnimation();
+                signUpBtn.setText("");
+
+            }
+        });
+
+
+    }
+
+
+    public void createAccountWithGoogle(String email){
+        passLayout.setVisibility(View.GONE);
+        conPassLayout.setVisibility(View.GONE);
+        this.email.setText(email);
+        emailLayout.setEnabled(false);
+        signUpMethod="google";
+        showDialog("Register Account","Set up your account information");
+
+    }
+
+    private  void creatAccountWithEmail(){
+        passLayout.setVisibility(View.VISIBLE);
+        conPassLayout.setVisibility(View.VISIBLE);
+        this.email.setText("");
+        emailLayout.setEnabled(true);
+        signUpMethod="email";
+    }
+
+
+    public void writeUserInfo(Map userData){
+        userId= auth.getUid();
+        db.collection("users").document(userId).set(userData)
+                .addOnSuccessListener(aVoid -> {
+                    System.out.println("success");
+                    signInUser();
+                }).addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        hideLoading();
+                        showDialog("Sign up Failed",firebaseDB.onFailureDialog(e));
+                        System.out.println("error user "+ e);
+                    }
+                });
+    }
+
+
+
+    public void signInUser(){
+        Intent intent = new Intent(getApplicationContext(), DetectorActivity.class);
+        startActivity(intent);
+        stopActivity();
+    }
+
     private void stopActivity(){
-        handler.removeCallbacks(connectivityCheckRunnable);
         finish();
     }
 
@@ -252,6 +375,15 @@ public class Sign_up extends AppCompatActivity {
         buttonAnimation.setVisibility(View.GONE);
         buttonAnimation.pauseAnimation();
         signUpBtn.setText("Sign in");
+    }
+
+   public void stopSignInTimeout(){
+       timer.schedule(new TimerTask() {
+           @Override
+           public void run() {
+               signInRetries=0;
+           }
+       }, 10000);
     }
 
     private void handleEditTextFocusChange(EditText editText, boolean hasFocus) {
@@ -274,9 +406,6 @@ public class Sign_up extends AppCompatActivity {
                     break;
                 case R.id.ETemailSignup:
                     emailErr.setVisibility(View.GONE);
-                    break;
-                case R.id.ETUsernameSignup:
-                    usernameErr.setVisibility(View.GONE);
                     break;
                 case R.id.ETpassSignup:
                     passErr.setVisibility(View.GONE);

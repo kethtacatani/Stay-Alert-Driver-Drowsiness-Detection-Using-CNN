@@ -12,7 +12,20 @@
           "package_name": "com.example.stayalert"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "451115935259-v873g05k0vd59l9qbqqh90f46min31ae.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.stayalert",
+            "certificate_hash": "9dad5543d47de431ab24139248936b1edc0af26c"
+          }
+        },
+        {
+          "client_id": "451115935259-f4nigku2ip7nbkeo8ac76oicg6npplss.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDBVpRDxWqacenwCmpuvpWdqgoG9mzGHa8"
@@ -20,11 +33,15 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "451115935259-f4nigku2ip7nbkeo8ac76oicg6npplss.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
   ],
   "configuration_version": "1"
 }
-

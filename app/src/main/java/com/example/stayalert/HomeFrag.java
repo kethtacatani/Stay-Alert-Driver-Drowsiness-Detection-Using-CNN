@@ -11,6 +11,9 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 
 import java.util.Calendar;
+import java.util.Map;
+
+import firebase.classes.FirebaseDatabase;
 
 ///**
 // * A simple {@link Fragment} subclass.
@@ -21,25 +24,36 @@ public class HomeFrag extends Fragment {
 
     public static ImageButton viewDetectionBtn;
     TextView timeofDay;
-    public static TextView statusDriverTV;
+    public static TextView statusDriverTV, nameDriverTV;
+    Map<String, Object> userData;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_home, container, false);
 
+        FirebaseDatabase firebaseDB = new FirebaseDatabase();
+        userData= firebaseDB.getUserInfo();
+
+
         viewDetectionBtn = view.findViewById(R.id.viewDetectionBtn);
         timeofDay = view.findViewById(R.id.timeOfDayTV);
         statusDriverTV= view.findViewById(R.id.statusDriverTV);
+        nameDriverTV=view.findViewById(R.id.nameDriverTV);
         CameraActivity cameraActivity = (CameraActivity) getActivity();
 
-        statusDriverTV.setText(cameraActivity.statusDriver);
+
+        nameDriverTV.setText((String) userData.get("first_name"));
+        statusDriverTV.setText( cameraActivity.statusDriver);
         // Set an OnClickListener for the viewDetectionBtn
         viewDetectionBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 CameraActivity.elevation= 30;
                 cameraActivity.changeFrameLayoutElevation();
+
+
+
             }
         });
 
