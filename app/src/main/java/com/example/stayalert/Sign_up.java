@@ -3,12 +3,17 @@ package com.example.stayalert;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
+import android.Manifest;
 import android.app.Dialog;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -33,6 +38,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.HashMap;
@@ -44,6 +50,8 @@ import firebase.classes.FirebaseDatabase;
 
 public class Sign_up extends AppCompatActivity {
 
+
+    private static final String TAG = "Sign_up";
     EditText fName, mName, lName, suffix, age,contact,address,email,pass,conPass;
     TextView fNameErr, mNameErr,lNameErr,suffixErr, ageErr,contactErr,addressErr,emailErr,passErr,conPassErr;
     TextInputLayout emailLayout, passLayout, conPassLayout;
@@ -65,6 +73,7 @@ public class Sign_up extends AppCompatActivity {
     String signUpMethod="email";
     String userEmail="";
     FirebaseDatabase firebaseDB;
+    boolean cameraPermissionDialog=false, userDataExist=false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -141,6 +150,10 @@ public class Sign_up extends AppCompatActivity {
         dialogOkay.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if(cameraPermissionDialog){
+                    viewCameraPermission();
+                    cameraPermissionDialog=false;
+                }
                 dialog.dismiss();
 
             }
@@ -279,7 +292,8 @@ public class Sign_up extends AppCompatActivity {
                             @Override
                             public void onComplete(@NonNull Task<AuthResult> task) {
                                 if(task.isSuccessful()){
-                                    createAccountWithGoogle(userEmail);
+                                    playLoadingAnim();
+                                    isUserHasInfo();
                                 }else if (!task.getException().getLocalizedMessage().contains("network error")){
                                     // If sign in fails, handle different error scenarios
                                     showDialog("Sign up Failed",firebaseDB.failureDialog(task));
@@ -295,9 +309,45 @@ public class Sign_up extends AppCompatActivity {
 
             } catch (ApiException e) {
                 e.printStackTrace();
+                Log.e("Sign up",e.getMessage());
+                if(e.getStatusCode()==12500){
+                    showDialog("Sign in Failed", "No google play services installed");
+                    hideLoading();
+                }
+                else if(e.getStatusCode()!=12501){
+                    showDialog("Sign in Failed", firebaseDB.onFailureDialog(e));
+                    hideLoading();
+                }
+
             }
 
         }
+
+    }
+
+    private void isUserHasInfo(){
+        firebaseDB.readData("users", auth.getUid(),"default", new FirebaseDatabase.OnGetDataListener() {
+            @Override
+            public void onSuccess(DocumentSnapshot documentSnapshot) {
+                Log.d(TAG, "DocumentSnapshot datas: " + documentSnapshot.getData());
+                if(documentSnapshot.getData().isEmpty()){
+                    createAccountWithGoogle(userEmail);
+                    hideLoading();
+                }else{
+                    signInUser();
+                }
+            }
+
+            @Override
+            public void onStart() {
+                Log.d(TAG, "Start getting user info");
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                Log.d(TAG,"Failed getting user info: "+e);
+            }
+        });
 
     }
 
@@ -343,6 +393,7 @@ public class Sign_up extends AppCompatActivity {
                 .addOnSuccessListener(aVoid -> {
                     System.out.println("success");
                     signInUser();
+                    userDataExist=true;
                 }).addOnFailureListener(new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception e) {
@@ -356,9 +407,15 @@ public class Sign_up extends AppCompatActivity {
 
 
     public void signInUser(){
-        Intent intent = new Intent(getApplicationContext(), DetectorActivity.class);
-        startActivity(intent);
-        stopActivity();
+        if(ifHasCameraPermission()){
+            Intent intent = new Intent(getApplicationContext(), DetectorActivity.class);
+            startActivity(intent);
+            stopActivity();
+        }else{
+            showDialog("Sign up Failed", "You need to allow permission for camera usage as it is required for detection");
+            hideLoading();
+            cameraPermissionDialog=true;
+        }
     }
 
     private void stopActivity(){
@@ -416,6 +473,35 @@ public class Sign_up extends AppCompatActivity {
                     conPassErr.setText("Required*");
                     break;
 
+            }
+        }
+    }
+
+    public boolean ifHasCameraPermission(){
+        if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.CAMERA)
+                == PackageManager.PERMISSION_DENIED){
+            return false;
+        }
+        return true;
+    }
+
+    public void viewCameraPermission(){
+        ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.CAMERA},100);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 100) {
+            System.out.println("ok cam");
+            // Check if the CAMERA permission is granted after the user responds to the permission request
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                if(userDataExist){
+                    signInUser();
+                }
+            } else {
+                showDialog("Sign up Failed", "You need to allow permission for camera usage as it is required for detection");
+                hideLoading();
             }
         }
     }

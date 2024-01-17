@@ -39,6 +39,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Trace;
+import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
 import android.view.View;
@@ -57,6 +58,8 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.etebarian.meowbottomnavigation.MeowBottomNavigation;
@@ -66,6 +69,7 @@ import com.example.stayalert.env.Logger;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.io.IOException;
@@ -73,6 +77,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -89,7 +94,7 @@ public abstract class CameraActivity extends AppCompatActivity
         View.OnClickListener {
   MeowBottomNavigation bottomNavigation;
   private static final Logger LOGGER = new Logger();
-
+  private static final String TAG = "CameraActivity";
   private static final int PERMISSIONS_REQUEST = 1;
 
   private static final String PERMISSION_CAMERA = Manifest.permission.CAMERA;
@@ -145,8 +150,10 @@ public abstract class CameraActivity extends AppCompatActivity
   FirebaseUser user;
   FirebaseFirestore db;
   FirebaseDatabase firebaseDB;
+  Map<String, Object> userInfo = new HashMap<>();
 
   ArrayList<String> deviceStrings = new ArrayList<String>();
+
 
   @Override
   protected void onCreate(final Bundle savedInstanceState) {
@@ -156,9 +163,10 @@ public abstract class CameraActivity extends AppCompatActivity
       decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
 
     }
-
     firebaseDB= new FirebaseDatabase();
+    db = FirebaseFirestore.getInstance();
     user = FirebaseAuth.getInstance().getCurrentUser();
+    getUserInfo();
 
     CameraManager cameraManager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
 
@@ -186,9 +194,7 @@ public abstract class CameraActivity extends AppCompatActivity
 
 
 
-    bottomNavigation.show(3,true);
-    replaceFragment(new HomeFrag());
-    bottomNavigation.clearCount(1);
+
 
     runnableCode = new Runnable() {
       @Override
@@ -213,7 +219,7 @@ public abstract class CameraActivity extends AppCompatActivity
           HomeFrag.statusDriverTV.setText(statusDriver);
           System.out.println("playinh ring");
         }
-        else if(closePercentage<90){
+        else if(closePercentage<90 && HomeFrag.statusDriverTV!=null){
           statusDriver=" ACTIVE ";
           HomeFrag.statusDriverTV.setText(statusDriver);
           ringtone.stop();
@@ -232,10 +238,12 @@ public abstract class CameraActivity extends AppCompatActivity
     delayedExecutionHandler.postDelayed(new Runnable() {
       @Override
       public void run() {
-        minusImageView.performClick();
-        updateActiveModel();
+          minusImageView.performClick();
+          updateActiveModel();
+
       }
     }, 3000);
+
 
 
 
@@ -389,9 +397,38 @@ public abstract class CameraActivity extends AppCompatActivity
     plusImageView.setOnClickListener(this);
     minusImageView.setOnClickListener(this);
 
+
   }
 
   ////////////////////////////////////////////
+
+  private void getUserInfo(){
+    firebaseDB.readData("users", user.getUid(),"cache", new FirebaseDatabase.OnGetDataListener() {
+      @Override
+      public void onSuccess(DocumentSnapshot documentSnapshot) {
+        Log.d(TAG, "DocumentSnapshot datas: " + documentSnapshot.getData());
+        userInfo = documentSnapshot.getData();
+        bottomNavigation.show(3,true);
+        replaceFragment(new HomeFrag());
+        bottomNavigation.clearCount(1);
+      }
+
+      @Override
+      public void onStart() {
+        Log.d(TAG, "Start getting user info");
+      }
+
+      @Override
+      public void onFailure(Exception e) {
+        Log.d(TAG,"Failed getting user info: "+e);
+        Toast.makeText(CameraActivity.this, "Unable to load user information", Toast.LENGTH_SHORT).show();
+        bottomNavigation.show(3,true);
+        replaceFragment(new HomeFrag());
+        bottomNavigation.clearCount(1);
+      }
+    });
+
+  }
 
 
   @Override
@@ -667,7 +704,7 @@ public abstract class CameraActivity extends AppCompatActivity
       if (shouldShowRequestPermissionRationale(PERMISSION_CAMERA)) {
         Toast.makeText(
                 CameraActivity.this,
-                "Camera permission is required for this demo",
+                "Camera permission is required",
                 Toast.LENGTH_LONG)
             .show();
       }

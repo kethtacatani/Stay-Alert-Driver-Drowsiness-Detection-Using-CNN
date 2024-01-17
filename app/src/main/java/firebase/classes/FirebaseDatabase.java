@@ -1,23 +1,32 @@
 package firebase.classes;
 
+import android.util.Log;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+
 import com.example.stayalert.env.Logger;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Source;
 
+import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
 
 public class FirebaseDatabase {
-    private static final Logger LOGGER = new Logger();
+    private static final String TAG = "FirebaseDatabase";
     FirebaseAuth mAuth;
     FirebaseUser user;
     GoogleSignInClient googleSignInClient;
@@ -25,12 +34,52 @@ public class FirebaseDatabase {
     FirebaseFirestore db;
     DocumentReference ref;
     String userID;
-    Map<String, Object> userData=null;
+    Map<String, Object> userData=new HashMap<>();;
 
     public FirebaseDatabase(){
         db = FirebaseFirestore.getInstance();
         mAuth = FirebaseAuth.getInstance();
         userID = mAuth.getUid();
+    }
+
+
+
+
+    public interface OnGetDataListener {
+        //this is for callbacks
+        void onSuccess(DocumentSnapshot documentSnapshot);
+        void onStart();
+        void onFailure(Exception e);
+    }
+
+    public void readData(String collection, String document, String source, final OnGetDataListener listener) {
+
+        Source sourceData;
+        if(source.equals("cache")){
+            sourceData= Source.CACHE;
+        }else if(source.equals("server")){
+            sourceData=Source.SERVER;
+        }else{
+            sourceData=Source.DEFAULT;
+        }
+
+        listener.onStart();
+
+        db.collection(collection)
+                .document(document)
+                .get(sourceData)
+                .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+                    @Override
+                    public void onSuccess(DocumentSnapshot documentSnapshot) {
+                        listener.onSuccess(documentSnapshot);
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        listener.onFailure(e);
+                    }
+                });
     }
 
 
@@ -52,21 +101,28 @@ public class FirebaseDatabase {
         }
     }
 
-    public Map<String, Object>  getUserInfo(){
-        userData= new IdentityHashMap<>();
-        ref = db.collection("users").document(userID);
-        System.out.println("id "+userID);
-        ref.get().addOnSuccessListener(documentSnapshot -> {
-            if (documentSnapshot.exists()) {
-                System.out.println("exist");
-                userData = documentSnapshot.getData();
-            }else{
+    public Map<String, Object>  getUserInfo(String source){
 
+        DocumentReference docRef = db.collection("users").document(userID);
+        docRef.get((source =="server" || source =="SERVER")?Source.SERVER:Source.CACHE).addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                if (task.isSuccessful()) {
+                    DocumentSnapshot document = task.getResult();
+                    if (document.exists()) {
+                        Log.d(TAG, "DocumentSnapshot data: " + document.getData());
+                        userData=document.getData();
+                    } else {
+                        Log.d(TAG, "No such document");
+                    }
+                } else {
+                    Log.d(TAG, "get failed with ", task.getException());
+                }
             }
-        }).addOnFailureListener(e -> {
-            System.out.println("Error" +onFailureDialog(e));
         });
+
         return userData;
+
     }
 
     public boolean insertDB(String collection){
