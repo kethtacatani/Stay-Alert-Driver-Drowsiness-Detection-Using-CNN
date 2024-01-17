@@ -119,36 +119,60 @@
                     android:orientation="horizontal"
                     app:layout_constraintTop_toTopOf="parent">
 
-                    <EditText
-                        android:id="@+id/ETfNameSignup"
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/ETfNameSignupLayout"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:background="@drawable/input"
-                        android:ems="14"
-                        android:fontFamily="@font/poppins_medium"
-                        android:hint="First Name"
-                        android:inputType="textPersonName"
-                        android:paddingLeft="15dp"
-                        android:textSize="16sp"
-                        />
-                    <EditText
-                        android:id="@+id/ETmInitialSignup"
+                        app:endIconMode="clear_text"
+                        android:textColorHint="@color/selection_highlight"
+                        app:boxStrokeWidth="0dp"
+                        app:boxStrokeWidthFocused="0dp"
+                        android:layout_weight="1">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/ETfNameSignup"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="2"
+                            android:background="@drawable/input"
+                            android:fontFamily="@font/poppins_medium"
+                            android:hint="First Name"
+                            android:inputType="textPersonName"
+                            android:paddingLeft="15dp"
+                            android:textSize="16sp"
+                            />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/ETmInitialSignupLayout"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginLeft="20dp"
-                        android:layout_weight="6"
-                        android:background="@drawable/input"
-                        android:ems="14"
-                        android:fontFamily="@font/poppins_medium"
-                        android:hint="M.I"
-                        android:maxLength="1"
-                        android:inputType="textCapCharacters"
-                        android:paddingLeft="15dp"
-                        android:textSize="16sp"
+                        app:endIconMode="clear_text"
+                        android:textColorHint="@color/selection_highlight"
+                        app:boxStrokeWidth="0dp"
+                        app:boxStrokeWidthFocused="0dp"
+                        android:layout_weight="3"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent" />
+                        app:layout_constraintTop_toTopOf="parent">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/ETmInitialSignup"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginLeft="20dp"
+                            android:layout_weight="6"
+                            android:background="@drawable/input"
+                            android:ems="14"
+                            android:fontFamily="@font/poppins_medium"
+                            android:hint="M.I"
+                            android:maxLength="1"
+                            android:inputType="textCapCharacters"
+                            android:paddingLeft="15dp"
+                            android:textSize="16sp"
+                            />
+                    </com.google.android.material.textfield.TextInputLayout>
+
                 </LinearLayout>
 
                 <TextView
@@ -186,22 +210,29 @@
 
 
 
-                    <EditText
-                        android:id="@+id/ETlNameSignup"
-                        android:layout_width="wrap_content"
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/ETlNameSignupLayout"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="2"
-                        android:background="@drawable/input"
-                        android:ems="14"
-                        android:fontFamily="@font/poppins_medium"
-                        android:hint="Last Name"
-                        android:inputType="textPersonName"
-                        android:paddingLeft="15dp"
-                        android:textSize="16sp"
+                        app:endIconMode="clear_text"
+                        android:textColorHint="@color/selection_highlight"
+                        app:boxStrokeWidth="0dp"
+                        app:boxStrokeWidthFocused="0dp"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent" />
+                        app:layout_constraintTop_toTopOf="parent">
 
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/ETlNameSignup"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/input"
+                            android:fontFamily="@font/poppins_medium"
+                            android:hint="Last Name"
+                            android:inputType="textPersonName"
+                            android:textSize="16sp"
+                            />
+                    </com.google.android.material.textfield.TextInputLayout>
 
                 </LinearLayout>
 
@@ -227,40 +258,62 @@
                     android:orientation="horizontal"
                     app:layout_constraintTop_toBottomOf="@+id/LL2">
 
-                    <EditText
-                        android:id="@+id/ETSuffixSignup"
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/ETSuffixSignupLayout"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_weight="5"
-                        android:layout_marginRight="20dp"
-                        android:background="@drawable/input"
-                        android:ems="14"
-                        android:fontFamily="@font/poppins_medium"
-                        android:hint="Suffix"
-                        android:maxLength="5"
-                        android:inputType="text"
-                        android:paddingLeft="15dp"
-                        android:textSize="16sp"
+                        app:endIconMode="clear_text"
+                        android:layout_weight="1"
+                        android:textColorHint="@color/selection_highlight"
+                        app:boxStrokeWidth="0dp"
+                        app:boxStrokeWidthFocused="0dp"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent" />
+                        app:layout_constraintTop_toTopOf="parent">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/ETSuffixSignup"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginRight="20dp"
+                            android:background="@drawable/input"
+                            android:fontFamily="@font/poppins_medium"
+                            android:hint="Suffix"
+                            android:maxLength="5"
+                            android:inputType="text"
+                            android:paddingLeft="15dp"
+                            android:textSize="16sp"
+                            />
+                    </com.google.android.material.textfield.TextInputLayout>
 
 
-                    <EditText
-                        android:id="@+id/ETAgeSignup"
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/ETAgeSignupLayout"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_weight="4"
-                        android:background="@drawable/input"
-                        android:ems="14"
-                        android:fontFamily="@font/poppins_medium"
-                        android:hint="Age"
-                        android:inputType="number"
-                        android:paddingLeft="15dp"
-                        android:textSize="16sp"
+                        app:endIconMode="clear_text"
+                        android:layout_weight="1"
+                        app:boxStrokeWidth="0dp"
+                        app:boxStrokeWidthFocused="0dp"
+                        android:textColorHint="@color/selection_highlight"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent" />
+                        app:layout_constraintTop_toTopOf="parent">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/ETAgeSignup"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/input"
+                            android:fontFamily="@font/poppins_medium"
+                            android:hint="Age"
+                            android:inputType="number"
+                            android:paddingLeft="15dp"
+                            android:textSize="16sp"
+                            />
+                    </com.google.android.material.textfield.TextInputLayout>
+
 
                     <EditText
                         android:id="@+id/ETContactSignup"
@@ -305,21 +358,34 @@
                     android:visibility="invisible"
                     app:layout_constraintEnd_toEndOf="@+id/LL3"
                     app:layout_constraintTop_toBottomOf="@+id/LL3" />
-                <EditText
-                    android:id="@+id/ETAddressSignup"
+
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/ETAddressSignupLayout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="25dp"
-                    android:background="@drawable/input"
-                    android:ems="14"
-                    android:fontFamily="@font/poppins_medium"
-                    android:hint="Address"
-                    android:inputType="textPostalAddress"
-                    android:paddingLeft="15dp"
-                    android:textSize="16sp"
+                    android:textColorHint="@color/selection_highlight"
+                    app:boxStrokeWidth="0dp"
+                    app:endIconMode="clear_text"
+                    app:boxStrokeWidthFocused="0dp"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/LL3" />
+                    app:layout_constraintTop_toBottomOf="@+id/LL3">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/ETAddressSignup"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/input"
+                        android:fontFamily="@font/poppins_medium"
+                        android:hint="Address"
+                        android:ems="14"
+                        android:inputType="textPostalAddress"
+                        android:paddingLeft="15dp"
+                        android:textSize="16sp"
+                        />
+                </com.google.android.material.textfield.TextInputLayout>
 
                 <TextView
                     android:id="@+id/TVAddressErr"
@@ -330,9 +396,8 @@
                     android:textColor="@color/red"
                     android:textSize="12sp"
                     android:visibility="invisible"
-                    app:layout_constraintEnd_toEndOf="@+id/ETAddressSignup"
-                    app:layout_constraintTop_toBottomOf="@+id/ETAddressSignup" />
-
+                    app:layout_constraintEnd_toEndOf="@+id/ETAddressSignupLayout"
+                    app:layout_constraintTop_toBottomOf="@+id/ETAddressSignupLayout" />
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/ETemailSignupLayout"
@@ -346,7 +411,7 @@
                     app:boxStrokeWidthFocused="0dp"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/ETAddressSignup">
+                    app:layout_constraintTop_toBottomOf="@+id/ETAddressSignupLayout">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/ETemailSignup"

@@ -71,6 +71,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.storage.FirebaseStorage;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -150,6 +151,7 @@ public abstract class CameraActivity extends AppCompatActivity
   FirebaseUser user;
   FirebaseFirestore db;
   FirebaseDatabase firebaseDB;
+  FirebaseStorage storage = FirebaseStorage.getInstance();
   Map<String, Object> userInfo = new HashMap<>();
 
   ArrayList<String> deviceStrings = new ArrayList<String>();
