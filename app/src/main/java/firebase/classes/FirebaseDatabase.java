@@ -143,6 +143,25 @@ public class FirebaseDatabase {
         return onFailureDialog(exception);
     }
 
+    public  String upddateUserInfo(Map userData){
+        db.collection("users").document(userID).update(userData)
+                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        if (task.isSuccessful()) {
+                            return;
+                        }
+                    }
+                }).addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        exception = e;
+                        System.out.println("error user "+ e);
+                    }
+                });
+        return  onFailureDialog(exception);
+    }
+
     public boolean insertDB(String collection){
         return false;
     }

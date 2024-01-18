@@ -141,10 +141,10 @@ public class ProfileFrag extends Fragment {
 
                 if(!fName.getText().toString().trim().isEmpty()  && !lName.getText().toString().trim().isEmpty()
                         && !address.getText().toString().trim().isEmpty() && !age.getText().toString().trim().isEmpty()){
-                    String result=firebaseDB.writeUserInfo(userData);
+                    String result=firebaseDB.upddateUserInfo(userData);
                     if(result=="success"){
                         displayTBG();
-                        saveUserInfo();
+                        getUserInfo();
                     }else{
                         Toast.makeText(cameraActivity, "Error "+result, Toast.LENGTH_SHORT).show();
                     }
@@ -180,7 +180,7 @@ public class ProfileFrag extends Fragment {
 
     }
 
-    public void saveUserInfo(){
+    public void getUserInfo(){
         firebaseDB.readData("users", auth.getUid(),"cache", new FirebaseDatabase.OnGetDataListener() {
             @Override
             public void onSuccess(DocumentSnapshot documentSnapshot) {
