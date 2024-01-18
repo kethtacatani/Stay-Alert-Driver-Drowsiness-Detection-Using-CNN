@@ -34,7 +34,8 @@ public class FirebaseDatabase {
     FirebaseFirestore db;
     DocumentReference ref;
     String userID;
-    Map<String, Object> userData=new HashMap<>();;
+    Map<String, Object> userData=new HashMap<>();
+    Exception exception =null;
 
     public FirebaseDatabase(){
         db = FirebaseFirestore.getInstance();
@@ -84,6 +85,10 @@ public class FirebaseDatabase {
 
 
     public String onFailureDialog(Exception e) {
+        if(e==null){
+            exception=null;
+            return "success";
+        }
         System.err.println("error "+e.getMessage());
         return "No connection to the database";
 
@@ -122,7 +127,20 @@ public class FirebaseDatabase {
         });
 
         return userData;
+    }
 
+    public String writeUserInfo(Map userData){
+        db.collection("users").document(userID).set(userData)
+                .addOnSuccessListener(aVoid -> {
+                    return;
+                }).addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        exception = e;
+                        System.out.println("error user "+ e);
+                    }
+                });
+        return onFailureDialog(exception);
     }
 
     public boolean insertDB(String collection){
@@ -143,7 +161,7 @@ public class FirebaseDatabase {
                 break;
 
             case "ERROR_INVALID_CREDENTIAL":
-                errorMessage="Wrong email or password";
+                errorMessage="Account does not exist or wrong email or password";
                 break;
 
             case "ERROR_INVALID_EMAIL":

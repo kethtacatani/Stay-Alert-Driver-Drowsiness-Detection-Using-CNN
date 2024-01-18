@@ -152,7 +152,7 @@ public abstract class CameraActivity extends AppCompatActivity
   FirebaseFirestore db;
   FirebaseDatabase firebaseDB;
   FirebaseStorage storage = FirebaseStorage.getInstance();
-  Map<String, Object> userInfo = new HashMap<>();
+  public Map<String, Object> userInfo = new HashMap<>();
 
   ArrayList<String> deviceStrings = new ArrayList<String>();
 
@@ -404,7 +404,7 @@ public abstract class CameraActivity extends AppCompatActivity
 
   ////////////////////////////////////////////
 
-  private void getUserInfo(){
+  public void getUserInfo(){
     firebaseDB.readData("users", user.getUid(),"cache", new FirebaseDatabase.OnGetDataListener() {
       @Override
       public void onSuccess(DocumentSnapshot documentSnapshot) {

@@ -14,6 +14,7 @@ import android.os.Build;
 import android. os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.util.Patterns;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -173,6 +174,15 @@ public class Sign_in extends AppCompatActivity {
             }
         });
 
+        username.setOnFocusChangeListener((v, hasFocus) -> handleEditTextFocusChange(username, hasFocus));
+        password.setOnFocusChangeListener((v, hasFocus) -> handleEditTextFocusChange(password, hasFocus));
+        password.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                passErrTV.setVisibility(View.GONE);
+            }
+        });
+
 
         signInBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -182,10 +192,12 @@ public class Sign_in extends AppCompatActivity {
                 String email = username.getText().toString().trim();
                 String pass = password.getText().toString().trim();
 
-
-
-
-                if(!username.getText().toString().trim().isEmpty() && !password.getText().toString().trim().isEmpty()){
+                if(pass.length()<6){
+                    if(pass.length()<6){
+                        passErrTV.setText("Password must be atleast 6 characters long*");
+                        passErrTV.setVisibility(View.VISIBLE);
+                    }
+                }else if(!username.getText().toString().trim().isEmpty() && !password.getText().toString().trim().isEmpty()){
 //                            PutData putData = new PutData("http://192.168.0.106/StayAlert/login.php", "POST", field, data);
                     playLoadingAnim();
                     mAuth.signInWithEmailAndPassword(email, pass)
@@ -195,20 +207,14 @@ public class Sign_in extends AppCompatActivity {
                                     if (task.isSuccessful()) {
                                         // Sign in success, update UI with the signed-in user's information
                                         signInUser();
-                                    } else if (!task.getException().getLocalizedMessage().contains("network error")){
+                                    } else if (task.getException().getLocalizedMessage().contains("network error")){
                                         // If sign in fails, handle different error scenarios
+                                        showDialog("Sign in Failed", "No connection to the database");
+                                        hideLoading();
+                                    }else{
                                         showDialog("Sign in Failed", firebaseDB.failureDialog(task));
                                         hideLoading();
-
                                     }
-                                }
-                            })
-                            .addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull Exception e) {
-                                    showDialog("Login Failed", "No connection to the database");
-                                    hideLoading();
-                                    System.out.println("error "+e.getMessage());
                                 }
                             });
 
@@ -408,6 +414,20 @@ public class Sign_in extends AppCompatActivity {
 
     private void stopActivity(){
         finish();
+    }
+
+    private void handleEditTextFocusChange(EditText editText, boolean hasFocus) {
+        if (hasFocus) {
+            switch (editText.getId()) {
+                case R.id.ETusername:
+                    usernameErrTV.setVisibility(View.GONE);
+                    break;
+                case R.id.ETpass:
+                    passErrTV.setVisibility(View.GONE);
+                    break;
+
+            }
+        }
     }
 
 

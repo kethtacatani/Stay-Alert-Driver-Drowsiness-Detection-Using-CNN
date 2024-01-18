@@ -14,6 +14,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.util.Patterns;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -194,8 +195,23 @@ public class Sign_up extends AppCompatActivity {
                         && !address.getText().toString().trim().isEmpty() && !age.getText().toString().trim().isEmpty()
                         && !email.getText().toString().trim().isEmpty()  && (!pass.getText().toString().trim().isEmpty() || passLayout.getVisibility()==View.GONE)
                         && (!conPass.getText().toString().trim().isEmpty() || conPassLayout.getVisibility()==View.GONE)){
-                    Toast.makeText(Sign_up.this, "Pass", Toast.LENGTH_SHORT).show();
-                    if(pass.getText().toString().trim().equals(conPass.getText().toString().trim())){
+                    if((pass.getText().toString().trim().length()<6 || conPass.getText().toString().trim().length()<6 ||
+                            !Patterns.EMAIL_ADDRESS.matcher(email.getText().toString()).matches()) && signUpMethod.equals("email")){
+                        if(!Patterns.EMAIL_ADDRESS.matcher(email.getText().toString()).matches()){
+                            emailErr.setText("Invalid email*");
+                            emailErr.setVisibility(View.VISIBLE);
+                        }
+                        if(pass.getText().toString().trim().length()<6 ){
+                            passErr.setText("Password must be atleast 6 characters long*");
+                            passErr.setVisibility(View.VISIBLE);
+                        }
+                        if(conPass.getText().toString().trim().length()<6 ){
+                            conPassErr.setText("Password must be atleast 6 characters long*");
+                            conPassErr.setVisibility(View.VISIBLE);
+                        }
+
+
+                    }else if(pass.getText().toString().trim().equals(conPass.getText().toString().trim())){
                         playLoadingAnim();
                         if(signInRetries<3){
                             switch (signUpMethod){
@@ -204,24 +220,35 @@ public class Sign_up extends AppCompatActivity {
                                         @Override
                                         public void onComplete(@NonNull Task<AuthResult> task) {
                                             if(task.isSuccessful()){
-                                                writeUserInfo(userData);
+                                                String result = firebaseDB.writeUserInfo(userData);
+                                                if(result!="success"){
+                                                    signInUser();
+                                                    userDataExist=true;
+                                                }else{
+                                                    showDialog("Sign up Failed",result);
+                                                    hideLoading();
+                                                }
                                             }
-                                            else if (!task.getException().getLocalizedMessage().contains("network error")){
+                                            else if (task.getException().getLocalizedMessage().contains("network error")){
                                                 // If sign in fails, handle different error scenarios
-                                                firebaseDB.failureDialog(task);
+                                                showDialog("Sign in Failed", "No connection to the database");
+                                                hideLoading();
+                                            }else{
+                                                showDialog("Sign in Failed", firebaseDB.failureDialog(task));
                                                 hideLoading();
                                             }
-                                        }
-                                    }).addOnFailureListener(new OnFailureListener() {
-                                        @Override
-                                        public void onFailure(@NonNull Exception e) {
-                                            firebaseDB.onFailureDialog(e);
-                                            hideLoading();
                                         }
                                     });
                                     break;
                                 case "google":
-                                    writeUserInfo(userData);
+                                    String result = firebaseDB.writeUserInfo(userData);
+                                    if(result=="success"){
+                                        signInUser();
+                                        userDataExist=true;
+                                    }else{
+                                        showDialog("Sign up Failed",result);
+                                        hideLoading();
+                                    }
                                     break;
                             }
 
@@ -245,6 +272,9 @@ public class Sign_up extends AppCompatActivity {
                     emailErr.setVisibility(email.getText().toString().trim().isEmpty()?View.VISIBLE:View.GONE);
                     passErr.setVisibility(pass.getText().toString().trim().isEmpty()?View.VISIBLE:View.GONE);
                     conPassErr.setVisibility(conPass.getText().toString().trim().isEmpty()?View.VISIBLE:View.GONE);
+                    passErr.setText("Requried*");
+                    conPassErr.setText("Requried*");
+                    emailErr.setText("Requried*");
 
                 }
 
@@ -384,24 +414,6 @@ public class Sign_up extends AppCompatActivity {
         this.email.setText("");
         emailLayout.setEnabled(true);
         signUpMethod="email";
-    }
-
-
-    public void writeUserInfo(Map userData){
-        userId= auth.getUid();
-        db.collection("users").document(userId).set(userData)
-                .addOnSuccessListener(aVoid -> {
-                    System.out.println("success");
-                    signInUser();
-                    userDataExist=true;
-                }).addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        hideLoading();
-                        showDialog("Sign up Failed",firebaseDB.onFailureDialog(e));
-                        System.out.println("error user "+ e);
-                    }
-                });
     }
 
 
