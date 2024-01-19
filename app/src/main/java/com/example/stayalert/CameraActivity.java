@@ -236,15 +236,6 @@ public abstract class CameraActivity extends AppCompatActivity
     };
     handler.post(runnableCode);
 
-    Handler delayedExecutionHandler = new Handler();
-    delayedExecutionHandler.postDelayed(new Runnable() {
-      @Override
-      public void run() {
-          minusImageView.performClick();
-          updateActiveModel();
-
-      }
-    }, 3000);
 
 
 
@@ -398,6 +389,15 @@ public abstract class CameraActivity extends AppCompatActivity
 
     plusImageView.setOnClickListener(this);
     minusImageView.setOnClickListener(this);
+
+    Handler delayedExecutionHandler = new Handler();
+    delayedExecutionHandler.postDelayed(new Runnable() {
+      @Override
+      public void run() {
+        minusImageView.performClick();
+        updateActiveModel();
+      }
+    }, 3000);
 
 
   }

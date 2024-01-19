@@ -203,7 +203,7 @@
 
                     <LinearLayout
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent"
+                        android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:orientation="vertical">
                         <TextView
@@ -222,6 +222,7 @@
                             android:id="@+id/PE_FNameLayout"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
+                            android:clickable="true"
                             android:layout_marginRight="12dp"
                             android:layout_weight="1"
                             app:hintEnabled="false"
@@ -252,7 +253,7 @@
 
                     <LinearLayout
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent"
+                        android:layout_height="wrap_content"
                         android:layout_weight="3"
                         android:orientation="vertical">
                         <TextView
@@ -266,16 +267,16 @@
                             android:textSize="14sp"
                             app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintTop_toTopOf="parent" />
+
                         <com.google.android.material.textfield.TextInputLayout
                             android:id="@+id/PE_MNameLayout"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginRight="12dp"
                             android:layout_weight="1"
-                            app:hintEnabled="false"
-                            app:endIconMode="clear_text"
                             app:boxStrokeWidth="0dp"
                             app:boxStrokeWidthFocused="0dp"
+                            app:endIconMode="clear_text"
+                            app:hintEnabled="false"
                             app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintTop_toTopOf="parent">
@@ -306,72 +307,65 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:orientation="vertical"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/linearLayout6">
-
-                    <TextView
-                        android:id="@+id/textView4s2"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginLeft="3dp"
-                        android:fontFamily="@font/poppins_medium"
-                        android:includeFontPadding="false"
-                        android:text="Last Name"
-                        android:textSize="14sp"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintTop_toTopOf="parent" />
-
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/PE_LNameLayout"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginRight="12dp"
-                        android:layout_weight="1"
-                        app:hintEnabled="false"
-                        app:endIconMode="clear_text"
-                        app:boxStrokeWidth="0dp"
-                        app:boxStrokeWidthFocused="0dp"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent">
-
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/PE_LName"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:background="@drawable/input_profile"
-                            android:fontFamily="@font/poppins_medium"
-                            android:inputType="textPersonName"
-                            android:paddingLeft="10dp"
-                            android:paddingTop="10dp"
-                            android:paddingBottom="7dp"
-                            android:text=""
-                            android:textSize="18sp"
-                            />
-                    </com.google.android.material.textfield.TextInputLayout>
-
-                </LinearLayout>
-
-                <LinearLayout
-                    android:id="@+id/linearLaysout6"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
                     android:orientation="horizontal"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/linearLayouts6">
-
-
+                    app:layout_constraintTop_toBottomOf="@+id/linearLayout6">
 
 
                     <LinearLayout
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent"
+                        android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:orientation="vertical">
                         <TextView
-                            android:id="@+id/textViesw4"
+                            android:id="@+id/textViessw4s2"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginLeft="3dp"
+                            android:fontFamily="@font/poppins_medium"
+                            android:includeFontPadding="false"
+                            android:text="Last Name"
+                            android:textSize="14sp"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/PE_LNameLayout"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginRight="12dp"
+                            android:layout_weight="1"
+                            app:hintEnabled="false"
+                            app:endIconMode="clear_text"
+                            app:boxStrokeWidth="0dp"
+                            app:boxStrokeWidthFocused="0dp"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/PE_LName"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:background="@drawable/input_profile"
+                                android:fontFamily="@font/poppins_medium"
+                                android:inputType="number"
+                                android:paddingLeft="10dp"
+                                android:paddingTop="10dp"
+                                android:paddingBottom="7dp"
+                                android:text=""
+                                android:textSize="18sp"
+                                />
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="2"
+                        android:orientation="vertical">
+                        <TextView
+                            android:id="@+id/textsViesw4"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginLeft="3dp"
@@ -386,7 +380,6 @@
                             android:id="@+id/PE_SuffixLayout"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginRight="12dp"
                             android:layout_weight="1"
                             app:hintEnabled="false"
                             app:endIconMode="clear_text"
@@ -403,6 +396,7 @@
                                 android:background="@drawable/input_profile"
                                 android:fontFamily="@font/poppins_regular"
                                 android:maxLength="3"
+                                android:hint="Jr/Sr/III"
                                 android:inputType="textCapWords"
                                 android:paddingLeft="10dp"
                                 android:paddingTop="10dp"
@@ -414,10 +408,24 @@
 
                     </LinearLayout>
 
+
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/linearLaysout6"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:orientation="horizontal"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/linearLayouts6">
+
+
                     <LinearLayout
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="2.5"
                         android:orientation="vertical">
                         <TextView
                             android:id="@+id/textViesw4s2"
@@ -461,6 +469,54 @@
 
                     </LinearLayout>
 
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+                        <TextView
+                            android:id="@+id/textViesw4"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginLeft="3dp"
+                            android:includeFontPadding="false"
+                            android:fontFamily="@font/poppins_medium"
+                            android:text="Contact"
+                            android:textSize="14sp"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/PE_ContactLayout"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            app:hintEnabled="false"
+                            app:endIconMode="clear_text"
+                            app:boxStrokeWidth="0dp"
+                            app:boxStrokeWidthFocused="0dp"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/PE_Contact"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:background="@drawable/input_profile"
+                                android:fontFamily="@font/poppins_medium"
+                                android:maxLength="13"
+                                android:inputType="phone"
+                                android:paddingLeft="10dp"
+                                android:paddingTop="10dp"
+                                android:paddingBottom="7dp"
+                                android:text=""
+                                android:textSize="18sp"
+                                />
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                    </LinearLayout>
+
 
 
                 </LinearLayout>
@@ -490,7 +546,6 @@
                         android:id="@+id/PE_AddressLayout"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginRight="12dp"
                         android:layout_weight="1"
                         app:hintEnabled="false"
                         app:endIconMode="clear_text"
@@ -592,12 +647,11 @@
                         android:id="@+id/PE_OldPassLayout"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginRight="12dp"
                         android:layout_weight="1"
                         app:boxStrokeWidth="0dp"
                         app:boxStrokeWidthFocused="0dp"
                         app:hintEnabled="false"
-                        app:passwordToggleEnabled="true"
+                        app:endIconMode="password_toggle"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent">
@@ -643,12 +697,11 @@
                         android:id="@+id/PE_PassLayout"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginRight="12dp"
                         android:layout_weight="1"
                         app:boxStrokeWidth="0dp"
                         app:boxStrokeWidthFocused="0dp"
-                        app:passwordToggleEnabled="true"
                         app:hintEnabled="false"
+                        app:endIconMode="password_toggle"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent">
@@ -694,12 +747,11 @@
                         android:id="@+id/PE_ConPassLayout"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginRight="12dp"
                         android:layout_weight="1"
                         app:hintEnabled="false"
                         app:boxStrokeWidth="0dp"
                         app:boxStrokeWidthFocused="0dp"
-                        app:passwordToggleEnabled="true"
+                        app:endIconMode="password_toggle"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent">
@@ -708,8 +760,8 @@
                             android:id="@+id/PE_ConPass"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:background="@drawable/input_profile"
                             android:fontFamily="@font/poppins_medium"
+                            android:background="@drawable/input_profile"
                             android:inputType="textPassword"
                             android:paddingLeft="10dp"
                             android:paddingTop="10dp"
@@ -869,20 +921,22 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="15dp"
                 android:layout_marginBottom="15dp"
-                android:visibility="gone">
+                android:visibility="visible">
 
-                <TextView
+                <Button
                     android:id="@+id/ProfileSave"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginRight="17dp"
-                    android:background="@drawable/save_profile"
                     android:fontFamily="@font/poppins_semibold"
                     android:includeFontPadding="false"
-                    android:clickable="true"
-                    android:paddingHorizontal="22dp"
-                    android:paddingTop="1dp"
-                    android:paddingBottom="1dp"
+                    android:minHeight="0dp"
+                    android:minWidth="0dp"
+                    android:paddingTop="2dp"
+                    android:paddingBottom="2dp"
+                    android:paddingLeft="20dp"
+                    android:paddingRight="20dp"
+                    app:cornerRadius="10dp"
                     android:text="Save"
                     android:textAllCaps="false"
                     android:textColor="@color/white"
@@ -906,6 +960,7 @@
                     android:textAllCaps="false"
                     android:textColor="@color/white"
                     android:textSize="16sp"
+                    app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
 

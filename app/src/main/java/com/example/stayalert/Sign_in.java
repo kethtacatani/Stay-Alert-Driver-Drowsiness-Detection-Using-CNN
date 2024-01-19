@@ -192,13 +192,17 @@ public class Sign_in extends AppCompatActivity {
                 String email = username.getText().toString().trim();
                 String pass = password.getText().toString().trim();
 
-                if(pass.length()<6){
+
+                if(username.getText().toString().trim().isEmpty() || password.getText().toString().trim().isEmpty()){
+                    usernameErrTV.setVisibility(username.getText().toString().trim().isEmpty()?View.VISIBLE:View.GONE);
+                    passErrTV.setVisibility(password.getText().toString().trim().isEmpty()?View.VISIBLE:View.GONE);
+                }
+                else if(pass.length()<6){
                     if(pass.length()<6){
                         passErrTV.setText("Password must be atleast 6 characters long*");
                         passErrTV.setVisibility(View.VISIBLE);
                     }
                 }else if(!username.getText().toString().trim().isEmpty() && !password.getText().toString().trim().isEmpty()){
-//                            PutData putData = new PutData("http://192.168.0.106/StayAlert/login.php", "POST", field, data);
                     playLoadingAnim();
                     mAuth.signInWithEmailAndPassword(email, pass)
                             .addOnCompleteListener(Sign_in.this, new OnCompleteListener<AuthResult>() {
@@ -219,11 +223,7 @@ public class Sign_in extends AppCompatActivity {
                             });
 
                 }
-                else{
 
-                    usernameErrTV.setVisibility(username.getText().toString().trim().isEmpty()?View.VISIBLE:View.GONE);
-                    passErrTV.setVisibility(password.getText().toString().trim().isEmpty()?View.VISIBLE:View.GONE);
-                }
 
 
 

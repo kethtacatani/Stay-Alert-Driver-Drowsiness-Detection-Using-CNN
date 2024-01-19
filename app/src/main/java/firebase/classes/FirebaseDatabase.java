@@ -137,7 +137,7 @@ public class FirebaseDatabase {
                     @Override
                     public void onFailure(@NonNull Exception e) {
                         exception = e;
-                        System.out.println("error user "+ e);
+                        Log.e("WriteUserInfo","Err "+e);
                     }
                 });
         return onFailureDialog(exception);
@@ -156,7 +156,7 @@ public class FirebaseDatabase {
                     @Override
                     public void onFailure(@NonNull Exception e) {
                         exception = e;
-                        System.out.println("error user "+ e);
+                        Log.e("UpdateUserInfo","Error "+e);
                     }
                 });
         return  onFailureDialog(exception);

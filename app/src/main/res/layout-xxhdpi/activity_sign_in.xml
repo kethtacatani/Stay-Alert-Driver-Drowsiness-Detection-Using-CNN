@@ -113,7 +113,7 @@
                 android:layout_height="wrap_content"
                 android:background="@drawable/input"
                 android:fontFamily="@font/poppins_medium"
-                android:hint="Username"
+                android:hint="Email"
                 android:inputType="textPersonName"
                 android:paddingLeft="15dp"
                 android:textSize="16sp"
