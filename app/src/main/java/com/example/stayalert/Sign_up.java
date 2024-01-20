@@ -48,6 +48,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import firebase.classes.FirebaseDatabase;
+import helper.classes.DialogHelper;
 
 public class Sign_up extends AppCompatActivity {
 
@@ -75,6 +76,7 @@ public class Sign_up extends AppCompatActivity {
     String userEmail="";
     FirebaseDatabase firebaseDB;
     boolean cameraPermissionDialog=false, userDataExist=false;
+    private DialogHelper dialogHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -95,26 +97,14 @@ public class Sign_up extends AppCompatActivity {
                 .build();
         googleSignInClient = GoogleSignIn.getClient(this,options);
 
-
-
+        dialogHelper=new DialogHelper(Sign_up.this);
         TextView loginAccTV;
-
-        dialog = new Dialog(Sign_up.this);
-        dialog.setContentView(R.layout.pop_up_dialog);
-        dialogOkay = dialog.findViewById(R.id.TVCancel);
-        dialogTitle = dialog.findViewById(R.id.TVTitle);
-        dialogInfo = dialog.findViewById(R.id.TVInfo);
-        buttonAnimation=findViewById(R.id.BTNSign_upLoading);
-        dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT);
-        dialog.getWindow().setBackgroundDrawable(getDrawable(R.drawable.dialog_bg));
-
-
-
 
         loginAccTV = (TextView)findViewById(R.id.TVloginAcc);
         signUpBtn =  findViewById(R.id.BTNsignup);
         googleSignUp= findViewById(R.id.BTNgoogleSignup);
 
+        buttonAnimation=findViewById(R.id.BTNSign_upLoading);
         fName = findViewById(R.id.ETfNameSignup);
         mName= findViewById(R.id.ETmInitialSignup);
         lName= findViewById(R.id.ETlNameSignup);
@@ -148,17 +138,22 @@ public class Sign_up extends AppCompatActivity {
         pass.setOnFocusChangeListener((v, hasFocus) -> handleEditTextFocusChange(pass, hasFocus));
         conPass.setOnFocusChangeListener((v, hasFocus) -> handleEditTextFocusChange(conPass, hasFocus));
 
-        dialogOkay.setOnClickListener(new View.OnClickListener() {
+        dialogHelper = new DialogHelper(this, new DialogHelper.DialogClickListener() {
             @Override
-            public void onClick(View v) {
+            public void onOkayClicked() {
                 if(cameraPermissionDialog){
                     viewCameraPermission();
                     cameraPermissionDialog=false;
                 }
-                dialog.dismiss();
+            }
+
+            @Override
+            public void onActionClicked() {
 
             }
+
         });
+
 
         googleSignUp.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -225,16 +220,16 @@ public class Sign_up extends AppCompatActivity {
                                                     signInUser();
                                                     userDataExist=true;
                                                 }else{
-                                                    showDialog("Sign up Failed",result);
+                                                    dialogHelper.showDialog("Sign up Failed",result);
                                                     hideLoading();
                                                 }
                                             }
                                             else if (task.getException().getLocalizedMessage().contains("network error")){
                                                 // If sign in fails, handle different error scenarios
-                                                showDialog("Sign in Failed", "No connection to the database");
+                                                dialogHelper.showDialog("Sign in Failed", "No connection to the database");
                                                 hideLoading();
                                             }else{
-                                                showDialog("Sign in Failed", firebaseDB.failureDialog(task));
+                                                dialogHelper.showDialog("Sign in Failed", firebaseDB.failureDialog(task));
                                                 hideLoading();
                                             }
                                         }
@@ -246,7 +241,7 @@ public class Sign_up extends AppCompatActivity {
                                         signInUser();
                                         userDataExist=true;
                                     }else{
-                                        showDialog("Sign up Failed",result);
+                                        dialogHelper.showDialog("Sign up Failed",result);
                                         hideLoading();
                                     }
                                     break;
@@ -254,7 +249,7 @@ public class Sign_up extends AppCompatActivity {
 
                         }
                         else{
-                            showDialog("Sign up Failed","Too much requests, please try again later");
+                            dialogHelper.showDialog("Sign up Failed","Too much requests, please try again later");
                         }
                     }
                     else{
@@ -289,6 +284,7 @@ public class Sign_up extends AppCompatActivity {
         loginAccTV.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
                 Intent intent = new Intent(getApplicationContext(), Sign_in.class);
                 startActivity(intent);
                 auth.signOut();
@@ -301,7 +297,6 @@ public class Sign_up extends AppCompatActivity {
         if (!email.equals("")){
             createAccountWithGoogle(email);
         }
-
 
 
     }
@@ -326,14 +321,14 @@ public class Sign_up extends AppCompatActivity {
                                     isUserHasInfo();
                                 }else if (!task.getException().getLocalizedMessage().contains("network error")){
                                     // If sign in fails, handle different error scenarios
-                                    showDialog("Sign up Failed",firebaseDB.failureDialog(task));
+                                    dialogHelper.showDialog("Sign up Failed",firebaseDB.failureDialog(task));
                                 }
 
                             }
                         }).addOnFailureListener(new OnFailureListener() {
                             @Override
                             public void onFailure(@NonNull Exception e) {
-                                showDialog("Sign up Failed",firebaseDB.onFailureDialog(e));
+                                dialogHelper.showDialog("Sign up Failed",firebaseDB.onFailureDialog(e));
                             }
                         });
 
@@ -341,11 +336,11 @@ public class Sign_up extends AppCompatActivity {
                 e.printStackTrace();
                 Log.e("Sign up",e.getMessage());
                 if(e.getStatusCode()==12500){
-                    showDialog("Sign in Failed", "No google play services installed");
+                    dialogHelper.showDialog("Sign in Failed", "No google play services installed");
                     hideLoading();
                 }
                 else if(e.getStatusCode()!=12501){
-                    showDialog("Sign in Failed", firebaseDB.onFailureDialog(e));
+                    dialogHelper.showDialog("Sign in Failed", firebaseDB.onFailureDialog(e));
                     hideLoading();
                 }
 
@@ -404,7 +399,7 @@ public class Sign_up extends AppCompatActivity {
         this.email.setText(email);
         emailLayout.setEnabled(false);
         signUpMethod="google";
-        showDialog("Register Account","Set up your account information");
+        dialogHelper.showDialog("Register Account","Set up your account information");
 
     }
 
@@ -424,7 +419,7 @@ public class Sign_up extends AppCompatActivity {
             startActivity(intent);
             stopActivity();
         }else{
-            showDialog("Sign up Failed", "You need to allow permission for camera usage as it is required for detection");
+            dialogHelper.showDialog("Sign up Failed", "You need to allow permission for camera usage as it is required for detection");
             hideLoading();
             cameraPermissionDialog=true;
         }
@@ -512,7 +507,7 @@ public class Sign_up extends AppCompatActivity {
                     signInUser();
                 }
             } else {
-                showDialog("Sign up Failed", "You need to allow permission for camera usage as it is required for detection");
+                dialogHelper.showDialog("Sign up Failed", "You need to allow permission for camera usage as it is required for detection");
                 hideLoading();
             }
         }

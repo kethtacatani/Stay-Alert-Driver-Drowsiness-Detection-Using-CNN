@@ -405,7 +405,7 @@ public abstract class CameraActivity extends AppCompatActivity
   ////////////////////////////////////////////
 
   public void getUserInfo(){
-    firebaseDB.readData("users", user.getUid(),"cache", new FirebaseDatabase.OnGetDataListener() {
+    firebaseDB.readData("users", user.getUid(),"default", new FirebaseDatabase.OnGetDataListener() {
       @Override
       public void onSuccess(DocumentSnapshot documentSnapshot) {
         Log.d(TAG, "DocumentSnapshot datas: " + documentSnapshot.getData());

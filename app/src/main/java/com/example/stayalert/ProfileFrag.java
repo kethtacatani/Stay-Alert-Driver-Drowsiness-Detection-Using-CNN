@@ -9,6 +9,7 @@ import androidx.fragment.app.Fragment;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -31,9 +32,10 @@ import java.util.Map;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 import firebase.classes.FirebaseDatabase;
+import helper.classes.DialogHelper;
 
 
-public class ProfileFrag extends Fragment implements View.OnKeyListener{
+public class ProfileFrag extends Fragment implements View.OnTouchListener{
     private static final String TAG = "ProfileFrag";
     ConstraintLayout profileLogout,edit, changePass,cancelSave,showInfoLayout, changPassLayout;
     LinearLayout toBeGone;
@@ -47,6 +49,8 @@ public class ProfileFrag extends Fragment implements View.OnKeyListener{
     FirebaseDatabase firebaseDB;
     Map<String, Object> userData = new HashMap<>();
     CameraActivity cameraActivity;
+    private DialogHelper dialogHelper;
+    String dialogAction="";
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -89,16 +93,16 @@ public class ProfileFrag extends Fragment implements View.OnKeyListener{
         changPassLayout=view.findViewById(R.id.ChangePassLayout);
         contact=view.findViewById(R.id.PE_Contact);
 
-        fName.setOnKeyListener(this);
-        mName.setOnKeyListener(this);
-        lName.setOnKeyListener(this);
-        suffix.setOnKeyListener(this);
-        age.setOnKeyListener(this);
-        contact.setOnKeyListener(this);
-        address.setOnKeyListener(this);
-        oldPassword.setOnKeyListener(this);
-        newPassword.setOnKeyListener(this);
-        conPassword.setOnKeyListener(this);
+        fName.setOnTouchListener(this);
+        mName.setOnTouchListener(this);
+        lName.setOnTouchListener(this);
+        suffix.setOnTouchListener(this);
+        age.setOnTouchListener(this);
+        contact.setOnTouchListener(this);
+        address.setOnTouchListener(this);
+        oldPassword.setOnTouchListener(this);
+        newPassword.setOnTouchListener(this);
+        conPassword.setOnTouchListener(this);
         
 
 
@@ -108,8 +112,41 @@ public class ProfileFrag extends Fragment implements View.OnKeyListener{
 
         cameraActivity = (CameraActivity) getActivity();
         GoogleSignInClient googleSignInClient = GoogleSignIn.getClient(cameraActivity, GoogleSignInOptions.DEFAULT_SIGN_IN);
+        dialogHelper = new DialogHelper(cameraActivity);
+
 
         displayUserInfo();
+
+        dialogHelper = new DialogHelper(cameraActivity, new DialogHelper.DialogClickListener() {
+            @Override
+            public void onOkayClicked() {
+
+            }
+
+            @Override
+            public void onActionClicked() {
+                if(dialogAction.equals("logout")){
+                    Intent intent = new Intent(getActivity(), Sign_in.class);
+                    cameraActivity.stopActivity();
+                    cameraActivity.ringtone.stop();
+                    startActivity(intent);
+                    FirebaseAuth.getInstance().signOut();
+                    googleSignInClient.signOut();
+
+                }else if (dialogAction.equals("signup")){
+                    Intent intent = new Intent(getActivity(), Sign_up.class);
+                    cameraActivity.stopActivity();
+                    cameraActivity.ringtone.stop();
+                    startActivity(intent);
+                    FirebaseAuth.getInstance().signOut();
+                    googleSignInClient.signOut();
+                }else if(dialogAction.equals("discard")){
+                    displayTBG();
+                }
+
+                dialogAction="";
+            }
+        });
 
         edit.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -118,7 +155,9 @@ public class ProfileFrag extends Fragment implements View.OnKeyListener{
                     if(!userData.isEmpty()){
                         showInfo();
                     }else{
-                        Toast.makeText(cameraActivity, "You are not signed in", Toast.LENGTH_SHORT).show();
+                        dialogHelper.signUpDialog();
+                        dialogAction="signup";
+                        dialogHelper.showDialog("Change Password","You need to sing up first");
                     }
                 }else{
                     displayTBG();
@@ -141,10 +180,12 @@ public class ProfileFrag extends Fragment implements View.OnKeyListener{
                         if (!userData.get("sign_in_method").toString().equals("google")) {
                             showChangePass();
                         } else {
-                            Toast.makeText(cameraActivity, "You are signed in using a Google", Toast.LENGTH_SHORT).show();
+                            dialogHelper.showDialog("Change Password","You are signed in using a Google");
                         }
                     } else {
-                        Toast.makeText(cameraActivity, "You are not signed in", Toast.LENGTH_SHORT).show();
+                        dialogHelper.signUpDialog();
+                        dialogAction="signup";
+                        dialogHelper.showDialog("Change Password","You need to sing up first");
                     }
                 }else{
                     displayTBG();
@@ -174,7 +215,7 @@ public class ProfileFrag extends Fragment implements View.OnKeyListener{
                                 displayTBG();
                                 getUserInfo();
                             }else{
-                                Toast.makeText(cameraActivity, "Error "+result, Toast.LENGTH_SHORT).show();
+                                dialogHelper.showDialog("Edit Profile",result);
                             }
                         }else{
                             fNameIL.setError((fName.getText().toString().trim().isEmpty())?"Required*":null);
@@ -183,7 +224,7 @@ public class ProfileFrag extends Fragment implements View.OnKeyListener{
                             ageIL.setError((age.getText().toString().trim().isEmpty())?"Required*":null);
                         }
                     }else{
-                        Toast.makeText(cameraActivity, "No changes have been made", Toast.LENGTH_SHORT).show();
+                        dialogHelper.showDialog("Edit Profile","No changes have been made");
                     }
 
                 }else if(changPassLayout.getVisibility()==View.VISIBLE){
@@ -198,7 +239,7 @@ public class ProfileFrag extends Fragment implements View.OnKeyListener{
                                     if(userData.get("password").equals(newPassword.getText().toString())){
                                         String result =firebaseDB.upddateUserInfo(userNewPass);
                                         if(result.equals("success")){
-                                            Toast.makeText(cameraActivity, "Password successfully changed", Toast.LENGTH_SHORT).show();
+                                            dialogHelper.showDialog("Edit Profile","Password successfully changed");
                                             displayTBG();
                                         }
                                     }
@@ -240,20 +281,31 @@ public class ProfileFrag extends Fragment implements View.OnKeyListener{
         cancel.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                displayTBG();
+                dialogHelper.discardDialog();
+                dialogAction="discard";
+                if(showInfoLayout.getVisibility()==View.VISIBLE){
+                    if(!isNoChanges()){
+                        dialogHelper.showDialog("Edit Profile","Discard changes?");
+                    }else{
+                        displayTBG();
+                    }
+                }else if (changPassLayout.getVisibility()==View.VISIBLE){
+                    if(!isNoPassChanges()){
+                        dialogHelper.showDialog("Change Password","Discard changes?");
+                    }else{
+                        displayTBG();
+                    }
+                }
+
             }
         });
 
         profileLogout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(getActivity(), Sign_in.class);
-
-                cameraActivity.stopActivity();
-                cameraActivity.ringtone.stop();
-                startActivity(intent);
-                FirebaseAuth.getInstance().signOut();
-                googleSignInClient.signOut();
+                dialogHelper.logoutDialog();
+                dialogHelper.showDialog("Logout","Confirm logout?");
+                dialogAction="logout";
             }
         });
 
@@ -336,6 +388,13 @@ public class ProfileFrag extends Fragment implements View.OnKeyListener{
         return false;
     }
 
+    public boolean isNoPassChanges(){
+        if(oldPassword.getText().toString().trim().isEmpty() && newPassword.getText().toString().trim().isEmpty() && conPassword.getText().toString().trim().isEmpty()){
+            return true;
+        }
+        return false;
+    }
+
     public void displayTBG(){
         edit.setVisibility(View.VISIBLE);
         changePass.setVisibility(View.VISIBLE);
@@ -355,34 +414,32 @@ public class ProfileFrag extends Fragment implements View.OnKeyListener{
         return false;
     }
 
-    @Override
-    public boolean onKey(View v, int keyCode, KeyEvent event) {
-        if (event.getAction() == KeyEvent.ACTION_DOWN) {
-            switch (v.getId()) {
-                case R.id.PE_FName:
-                    fNameIL.setErrorEnabled(false);
-                    break;
-                case R.id.PE_LName:
-                    lNameIL.setErrorEnabled(false);
-                    break;
-                case R.id.PE_Age:
-                    ageIL.setErrorEnabled(false);
-                    break;
-                case R.id.PE_Address:
-                    addressIL.setErrorEnabled(false);
-                    break;
-                case R.id.PE_OldPass:
-                    oldPasswordIL.setErrorEnabled(false);
-                    break;
-                case R.id.PE_Pass:
-                    newPasswordIL.setErrorEnabled(false);
-                    break;
-                case R.id.PE_ConPass:
-                    conPasswordIL.setErrorEnabled(false);
-                    break;
-            }
-        }
 
+    @Override
+    public boolean onTouch(View v, MotionEvent event) {
+        switch (v.getId()) {
+            case R.id.PE_FName:
+                fNameIL.setErrorEnabled(false);
+                break;
+            case R.id.PE_LName:
+                lNameIL.setErrorEnabled(false);
+                break;
+            case R.id.PE_Age:
+                ageIL.setErrorEnabled(false);
+                break;
+            case R.id.PE_Address:
+                addressIL.setErrorEnabled(false);
+                break;
+            case R.id.PE_OldPass:
+                oldPasswordIL.setErrorEnabled(false);
+                break;
+            case R.id.PE_Pass:
+                newPasswordIL.setErrorEnabled(false);
+                break;
+            case R.id.PE_ConPass:
+                conPasswordIL.setErrorEnabled(false);
+                break;
+        }
         return false;
     }
 }

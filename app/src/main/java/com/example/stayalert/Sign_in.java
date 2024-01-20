@@ -44,6 +44,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import java.util.Map;
 
 import firebase.classes.FirebaseDatabase;
+import helper.classes.DialogHelper;
 
 public class Sign_in extends AppCompatActivity {
     private static final String TAG = "Sign_up";
@@ -66,6 +67,7 @@ public class Sign_in extends AppCompatActivity {
     Map<String, Object> userData;
     boolean cameraPermissionDialog=false;
     boolean userDataExist=false;
+    private DialogHelper dialogHelper;
 
     @Override
     public void onStart() {
@@ -107,7 +109,7 @@ public class Sign_in extends AppCompatActivity {
         googleSignInClient = GoogleSignIn.getClient(this,options);
         googleBtn= findViewById(R.id.BTNgoogle);
 
-
+        dialogHelper=new DialogHelper(Sign_in.this);
 
         creatAccTV = (TextView)findViewById(R.id.TVcreateAcc);
         signInBtn = ( Button)findViewById(R.id.BTNsignin);
@@ -117,26 +119,22 @@ public class Sign_in extends AppCompatActivity {
         usernameErrTV = findViewById(R.id.TVusernameErr);
         passErrTV=findViewById(R.id.TVpassErr);
 
-        dialog = new Dialog(Sign_in.this);
-        dialog.setContentView(R.layout.pop_up_dialog);
-        dialogOkay = dialog.findViewById(R.id.TVCancel);
-        dialogTitle = dialog.findViewById(R.id.TVTitle);
-        dialogInfo = dialog.findViewById(R.id.TVInfo);
-
-        dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT);
-        dialog.getWindow().setBackgroundDrawable(getDrawable(R.drawable.dialog_bg));
-
-        dialogOkay.setOnClickListener(new View.OnClickListener() {
+        dialogHelper = new DialogHelper(this, new DialogHelper.DialogClickListener() {
             @Override
-            public void onClick(View v) {
+            public void onOkayClicked() {
                 if(cameraPermissionDialog){
                     viewCameraPermission();
                     cameraPermissionDialog=false;
                 }
-                dialog.dismiss();
+            }
+
+            @Override
+            public void onActionClicked() {
 
             }
+
         });
+
 
         googleBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -213,10 +211,10 @@ public class Sign_in extends AppCompatActivity {
                                         signInUser();
                                     } else if (task.getException().getLocalizedMessage().contains("network error")){
                                         // If sign in fails, handle different error scenarios
-                                        showDialog("Sign in Failed", "No connection to the database");
+                                        dialogHelper.showDialog("Sign in Failed", "No connection to the database");
                                         hideLoading();
                                     }else{
-                                        showDialog("Sign in Failed", firebaseDB.failureDialog(task));
+                                        dialogHelper.showDialog("Sign in Failed", firebaseDB.failureDialog(task));
                                         hideLoading();
                                     }
                                 }
@@ -300,7 +298,7 @@ public class Sign_in extends AppCompatActivity {
                                     playLoadingAnim();
                                 }else if (!task.getException().getLocalizedMessage().contains("network error")){
                                     // If sign in fails, handle different error scenarios
-                                    showDialog("Sign in Failed", firebaseDB.failureDialog(task));
+                                    dialogHelper.showDialog("Sign in Failed", firebaseDB.failureDialog(task));
                                     hideLoading();
 
                                 }
@@ -309,7 +307,7 @@ public class Sign_in extends AppCompatActivity {
                         }).addOnFailureListener(new OnFailureListener() {
                             @Override
                             public void onFailure(@NonNull Exception e) {
-                                showDialog("Sign in Failed", firebaseDB.onFailureDialog(e));
+                                dialogHelper.showDialog("Sign in Failed", firebaseDB.onFailureDialog(e));
                                 hideLoading();
                             }
                         });
@@ -317,11 +315,11 @@ public class Sign_in extends AppCompatActivity {
             } catch (ApiException e) {
                 e.printStackTrace();
                 if(e.getStatusCode()==12500){
-                    showDialog("Sign in Failed", "No google play services installed");
+                    dialogHelper.showDialog("Sign in Failed", "No google play services installed");
                     hideLoading();
                 }
                 else if(e.getStatusCode()!=12501){
-                    showDialog("Sign in Failed", firebaseDB.onFailureDialog(e));
+                    dialogHelper.showDialog("Sign in Failed", firebaseDB.onFailureDialog(e));
                     hideLoading();
                 }
 
@@ -362,7 +360,7 @@ public class Sign_in extends AppCompatActivity {
 
         }
         else{
-            showDialog("Login Failed", "You need to allow permission for camera usage as it is required for detection");
+            dialogHelper.showDialog("Login Failed", "You need to allow permission for camera usage as it is required for detection");
             hideLoading();
             cameraPermissionDialog=true;
         }
@@ -406,7 +404,7 @@ public class Sign_in extends AppCompatActivity {
                     signInUser();
                 }
             } else {
-                showDialog("Login Failed", "You need to allow permission for camera usage as it is required for detection");
+                dialogHelper.showDialog("Login Failed", "You need to allow permission for camera usage as it is required for detection");
                 hideLoading();
             }
         }

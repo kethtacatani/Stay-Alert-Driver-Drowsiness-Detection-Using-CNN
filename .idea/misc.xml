@@ -20,11 +20,14 @@
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/drawable-v24/background_frame.xml" value="0.2555" />
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/drawable-v24/background_oval_frame.xml" value="0.2555" />
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/drawable-v24/dialog_bg.xml" value="0.235" />
+        <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/drawable/bg_line_below.xml" value="0.1785" />
+        <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/drawable/bg_line_left.xml" value="0.1785" />
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/drawable/buttonsign_inup.xml" value="0.2555" />
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/drawable/create_login_text_button.xml" value="0.2555" />
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/drawable/dialog_btn.xml" value="0.123" />
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/drawable/forgot_pass_button.xml" value="0.2555" />
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/drawable/google_icon.xml" value="0.2145" />
+        <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/drawable/grey_btn_ripple.xml" value="0.1785" />
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/drawable/ic_google.xml" value="0.2555" />
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/drawable/ic_google_icon_logo_svgrepo_com.xml" value="0.2145" />
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/drawable/ic_home.xml" value="0.2145" />
@@ -40,8 +43,8 @@
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/layout/activity_home.xml" value="0.190625" />
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/layout/activity_sign_in.xml" value="0.536" />
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/layout/activity_sign_up.xml" value="0.4541015625" />
-        <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/layout/fragment_profile.xml" value="0.486697965571205" />
-        <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/layout/pop_up_dialog.xml" value="0.25416666666666665" />
+        <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/layout/fragment_profile.xml" value="0.44365192582025675" />
+        <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/layout/pop_up_dialog.xml" value="0.296195652173913" />
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/layout/tfe_od_activity_camera.xml" value="0.1" />
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/layout/tfe_od_camera_connection_fragment_tracking.xml" value="0.2" />
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/layout/tfe_od_layout_bottom_sheet.xml" value="0.2" />
