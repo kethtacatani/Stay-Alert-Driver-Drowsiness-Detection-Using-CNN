@@ -10,6 +10,7 @@ import android.Manifest;
 import android.app.Dialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -41,6 +42,7 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.rilixtech.widget.countrycodepicker.CountryCodePicker;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -77,6 +79,8 @@ public class Sign_up extends AppCompatActivity {
     FirebaseDatabase firebaseDB;
     boolean cameraPermissionDialog=false, userDataExist=false;
     private DialogHelper dialogHelper;
+    CountryCodePicker ccp;
+    String dialogAction="";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -122,9 +126,9 @@ public class Sign_up extends AppCompatActivity {
         fNameErr=findViewById(R.id.TVFNameErr);
         mNameErr=findViewById(R.id.TVMNameErr);
         lNameErr=findViewById(R.id.TVLNameErr);
-        suffixErr=findViewById(R.id.TVSuffixErr);
         ageErr=findViewById(R.id.TVAgeErr);
         addressErr=findViewById(R.id.TVAddressErr);
+        contactErr=findViewById(R.id.TVContactErr);
         emailErr=findViewById(R.id.TVEmailErr);
         passErr=findViewById(R.id.TVPassErrSignUp);
         conPassErr=findViewById(R.id.TVConPassErr);
@@ -138,6 +142,9 @@ public class Sign_up extends AppCompatActivity {
         pass.setOnFocusChangeListener((v, hasFocus) -> handleEditTextFocusChange(pass, hasFocus));
         conPass.setOnFocusChangeListener((v, hasFocus) -> handleEditTextFocusChange(conPass, hasFocus));
 
+        ccp = findViewById(R.id.ccp);
+        ccp.hideNameCode(true);
+
         dialogHelper = new DialogHelper(this, new DialogHelper.DialogClickListener() {
             @Override
             public void onOkayClicked() {
@@ -149,7 +156,18 @@ public class Sign_up extends AppCompatActivity {
 
             @Override
             public void onActionClicked() {
+                if(dialogAction.equals("signin")){
+                    signInUser();
+                }else if (dialogAction.equals("signInEmail")){
+                    Intent intent = new Intent(getApplicationContext(), Sign_in.class);
+                    intent.putExtra("email",email.getText().toString().trim());
+                    startActivity(intent);
+                    auth.signOut();
+                    googleSignInClient.signOut();
+                    stopActivity();
+                }
 
+                dialogAction="";
             }
 
         });
@@ -164,6 +182,7 @@ public class Sign_up extends AppCompatActivity {
                 Intent intent = googleSignInClient.getSignInIntent();
                 startActivityForResult(intent,1234);
             }
+
         });
 
 
@@ -172,25 +191,30 @@ public class Sign_up extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
+
                 Map<String, Object> userData = new HashMap<>();
 
-                userData.put("first_name", fName.getText().toString());
+                userData.put("first_name", fName.getText().toString().trim());
                 userData.put("middle_name", mName.getText().toString().trim().isEmpty() ? "" : mName.getText().toString());
-                userData.put("last_name", lName.getText().toString());
+                userData.put("last_name", lName.getText().toString().trim());
                 userData.put("suffix", suffix.getText().toString().trim().isEmpty() ? "" : suffix.getText().toString());
-                userData.put("contact", "");
-                userData.put("address", address.getText().toString());
-                userData.put("age", age.getText().toString());
-                userData.put("email", email.getText().toString());
+                userData.put("contact", contact.getText().toString().replace(" ", ""));
+                userData.put("address", address.getText().toString().trim());
+                userData.put("age", age.getText().toString().trim());
+                userData.put("email", email.getText().toString().trim());
                 userData.put("password", pass.getText().toString());
                 userData.put("sign_in_method", signUpMethod);
 
 
                 if(!fName.getText().toString().trim().isEmpty()  && !lName.getText().toString().trim().isEmpty()
-                        && !address.getText().toString().trim().isEmpty() && !age.getText().toString().trim().isEmpty()
+                        && !address.getText().toString().trim().isEmpty() && !age.getText().toString().trim().isEmpty() && !contact.getText().toString().trim().isEmpty()
                         && !email.getText().toString().trim().isEmpty()  && (!pass.getText().toString().trim().isEmpty() || passLayout.getVisibility()==View.GONE)
                         && (!conPass.getText().toString().trim().isEmpty() || conPassLayout.getVisibility()==View.GONE)){
-                    if((pass.getText().toString().trim().length()<6 || conPass.getText().toString().trim().length()<6 ||
+                    if(!ccp.isValid()){
+                        contactErr.setText("Invalid contact number");
+                        contactErr.setVisibility(View.VISIBLE);
+                    }
+                    else if((pass.getText().toString().trim().length()<6 || conPass.getText().toString().trim().length()<6 ||
                             !Patterns.EMAIL_ADDRESS.matcher(email.getText().toString()).matches()) && signUpMethod.equals("email")){
                         if(!Patterns.EMAIL_ADDRESS.matcher(email.getText().toString()).matches()){
                             emailErr.setText("Invalid email*");
@@ -215,20 +239,21 @@ public class Sign_up extends AppCompatActivity {
                                         @Override
                                         public void onComplete(@NonNull Task<AuthResult> task) {
                                             if(task.isSuccessful()){
-                                                String result = firebaseDB.writeUserInfo(userData);
-                                                if(result!="success"){
-                                                    signInUser();
-                                                    userDataExist=true;
-                                                }else{
-                                                    dialogHelper.showDialog("Sign up Failed",result);
-                                                    hideLoading();
-                                                }
+                                                creatUserInfo(userData);
+                                            }
+                                            else if (task.getException().getLocalizedMessage().contains("email address is already in use")){
+                                                // If sign in fails, handle different error scenarios
+                                                dialogAction="signInEmail";
+                                                dialogHelper.signInDialog();
+                                                dialogHelper.showDialog("Sign in Failed","Account already exist");
+                                                hideLoading();
                                             }
                                             else if (task.getException().getLocalizedMessage().contains("network error")){
                                                 // If sign in fails, handle different error scenarios
                                                 dialogHelper.showDialog("Sign in Failed", "No connection to the database");
                                                 hideLoading();
                                             }else{
+                                                System.out.println("task "+task.getException().getLocalizedMessage());
                                                 dialogHelper.showDialog("Sign in Failed", firebaseDB.failureDialog(task));
                                                 hideLoading();
                                             }
@@ -236,14 +261,7 @@ public class Sign_up extends AppCompatActivity {
                                     });
                                     break;
                                 case "google":
-                                    String result = firebaseDB.writeUserInfo(userData);
-                                    if(result=="success"){
-                                        signInUser();
-                                        userDataExist=true;
-                                    }else{
-                                        dialogHelper.showDialog("Sign up Failed",result);
-                                        hideLoading();
-                                    }
+                                    creatUserInfo(userData);
                                     break;
                             }
 
@@ -263,6 +281,8 @@ public class Sign_up extends AppCompatActivity {
                     fNameErr.setVisibility(fName.getText().toString().trim().isEmpty()?View.VISIBLE:View.GONE);
                     lNameErr.setVisibility(lName.getText().toString().trim().isEmpty()?View.VISIBLE:View.GONE);
                     ageErr.setVisibility(age.getText().toString().trim().isEmpty()?View.VISIBLE:View.GONE);
+                    contactErr.setText("Required");
+                    contactErr.setVisibility(contact.getText().toString().trim().isEmpty()?View.VISIBLE:View.GONE);
                     addressErr.setVisibility(address.getText().toString().trim().isEmpty()?View.VISIBLE:View.GONE);
                     emailErr.setVisibility(email.getText().toString().trim().isEmpty()?View.VISIBLE:View.GONE);
                     passErr.setVisibility(pass.getText().toString().trim().isEmpty()?View.VISIBLE:View.GONE);
@@ -318,7 +338,7 @@ public class Sign_up extends AppCompatActivity {
                             public void onComplete(@NonNull Task<AuthResult> task) {
                                 if(task.isSuccessful()){
                                     playLoadingAnim();
-                                    isUserHasInfo();
+                                    isUserHasInfo(null);
                                 }else if (!task.getException().getLocalizedMessage().contains("network error")){
                                     // If sign in fails, handle different error scenarios
                                     dialogHelper.showDialog("Sign up Failed",firebaseDB.failureDialog(task));
@@ -350,16 +370,21 @@ public class Sign_up extends AppCompatActivity {
 
     }
 
-    private void isUserHasInfo(){
+    private void isUserHasInfo(Map userData){
         firebaseDB.readData("users", auth.getUid(),"default", new FirebaseDatabase.OnGetDataListener() {
             @Override
             public void onSuccess(DocumentSnapshot documentSnapshot) {
                 Log.d(TAG, "DocumentSnapshot datas: " + documentSnapshot.getData());
                 if(documentSnapshot.getData().isEmpty()){
-                    createAccountWithGoogle(userEmail);
+                    if(signUpMethod.equals("google")){
+                        createAccountWithGoogle(userEmail);
+                    }
                     hideLoading();
                 }else{
-                    signInUser();
+                    dialogAction="signin";
+                    dialogHelper.signInDialog();
+                    dialogHelper.showDialog("Sign up","Account already exists");
+                    hideLoading();
                 }
             }
 
@@ -390,6 +415,16 @@ public class Sign_up extends AppCompatActivity {
         });
 
 
+    }
+    public void creatUserInfo(Map userData){
+        String result = firebaseDB.writeUserInfo(userData);
+        if(result=="success"){
+            signInUser();
+            userDataExist=true;
+        }else{
+            dialogHelper.showDialog("Sign up Failed",result);
+            hideLoading();
+        }
     }
 
 
@@ -463,6 +498,8 @@ public class Sign_up extends AppCompatActivity {
                     ageErr.setVisibility(View.GONE);
                     break;
                 case R.id.ETContactSignup:
+                    contact.setHintTextColor(ContextCompat.getColor(this,R.color.selection_highlight));
+                    ccp.registerPhoneNumberTextView(contact);
                     contactErr.setVisibility(View.GONE);
                     break;
                 case R.id.ETAddressSignup:
@@ -480,6 +517,10 @@ public class Sign_up extends AppCompatActivity {
                     conPassErr.setText("Required*");
                     break;
 
+            }
+        }else{
+            if(editText.getId()==R.id.ETContactSignup){
+                contact.setHintTextColor(Color.parseColor("#F1F4FF"));
             }
         }
     }

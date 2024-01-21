@@ -38,6 +38,7 @@ public class DialogHelper {
                     dialogClickListener.onOkayClicked();
                 }
                 dialog.dismiss();
+                normalDialog();
             }
         });
 
@@ -98,6 +99,12 @@ public class DialogHelper {
         dialogAction.setVisibility(View.VISIBLE);
         dialogOkay.setText("Cancel");
         dialogAction.setText("Sign up");
+    }
+
+    public void signInDialog(){
+        dialogAction.setVisibility(View.VISIBLE);
+        dialogOkay.setText("Cancel");
+        dialogAction.setText("Sign in");
     }
 
     public void discardDialog(){

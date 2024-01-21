@@ -130,6 +130,7 @@ public class FirebaseDatabase {
     }
 
     public String writeUserInfo(Map userData){
+        userID=mAuth.getUid();
         db.collection("users").document(userID).set(userData)
                 .addOnSuccessListener(aVoid -> {
                     return;

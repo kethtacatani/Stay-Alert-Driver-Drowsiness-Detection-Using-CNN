@@ -215,6 +215,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         app:endIconMode="clear_text"
+                        android:layout_marginRight="20dp"
+                        android:layout_weight="1"
                         android:textColorHint="@color/selection_highlight"
                         app:boxStrokeWidth="0dp"
                         app:boxStrokeWidthFocused="0dp"
@@ -229,7 +231,34 @@
                             android:background="@drawable/input"
                             android:fontFamily="@font/poppins_medium"
                             android:hint="Last Name"
-                            android:inputType="textPersonName"
+                            android:inputType="textCapWords"
+                            android:textSize="16sp"
+                            />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/ETSuffixSignupLayout"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        app:endIconMode="clear_text"
+                        android:layout_weight="2"
+                        app:boxStrokeWidth="0dp"
+                        app:boxStrokeWidthFocused="0dp"
+                        android:textColorHint="@color/selection_highlight"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/ETSuffixSignup"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/input"
+                            android:fontFamily="@font/poppins_medium"
+                            android:hint="Suffix"
+                            android:maxLength="3"
+                            android:inputType="textCapWords"
+                            android:paddingLeft="15dp"
                             android:textSize="16sp"
                             />
                     </com.google.android.material.textfield.TextInputLayout>
@@ -259,44 +288,15 @@
                     app:layout_constraintTop_toBottomOf="@+id/LL2">
 
                     <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/ETSuffixSignupLayout"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        app:endIconMode="clear_text"
-                        android:layout_weight="1"
-                        android:textColorHint="@color/selection_highlight"
-                        app:boxStrokeWidth="0dp"
-                        app:boxStrokeWidthFocused="0dp"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent">
-
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/ETSuffixSignup"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginRight="20dp"
-                            android:background="@drawable/input"
-                            android:fontFamily="@font/poppins_medium"
-                            android:hint="Suffix"
-                            android:maxLength="5"
-                            android:inputType="text"
-                            android:paddingLeft="15dp"
-                            android:textSize="16sp"
-                            />
-                    </com.google.android.material.textfield.TextInputLayout>
-
-
-
-                    <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/ETAgeSignupLayout"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginRight="20dp"
                         app:endIconMode="clear_text"
-                        android:layout_weight="1"
+                        android:layout_weight="1.5"
+                        android:textColorHint="@color/selection_highlight"
                         app:boxStrokeWidth="0dp"
                         app:boxStrokeWidthFocused="0dp"
-                        android:textColorHint="@color/selection_highlight"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent">
@@ -315,8 +315,48 @@
                     </com.google.android.material.textfield.TextInputLayout>
 
 
+                    <com.rilixtech.widget.countrycodepicker.CountryCodePicker
+                        android:id="@+id/ccp"
+                        android:layout_width="wrap_content"
+
+                        android:layout_gravity="center"
+                        android:layout_height="wrap_content"
+                        app:ccp_defaultNameCode="PH"
+                        app:ccp_textFont="@font/poppins_medium"
+                        />
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/ETContactSignupLayout"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        app:endIconMode="clear_text"
+                        android:layout_weight="1"
+                        app:boxStrokeWidth="0dp"
+                        app:boxStrokeWidthFocused="0dp"
+                        android:textColorHint="@color/selection_highlight"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent">
+
+
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/ETContactSignup"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/input"
+                            android:fontFamily="@font/poppins_medium"
+                            android:maxLength="13"
+                            android:inputType="phone"
+                            android:hint="Contact"
+                            android:paddingLeft="15dp"
+                            android:textSize="16sp"
+                            />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+
                     <EditText
-                        android:id="@+id/ETContactSignup"
+                        android:id="@+id/ETContactSignups"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_weight="2"
@@ -336,7 +376,7 @@
                 </LinearLayout>
 
                 <TextView
-                    android:id="@+id/TVSuffixErr"
+                    android:id="@+id/TVAgeErr"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="10dp"
@@ -348,7 +388,7 @@
                     app:layout_constraintTop_toBottomOf="@+id/LL3" />
 
                 <TextView
-                    android:id="@+id/TVAgeErr"
+                    android:id="@+id/TVContactErr"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginRight="10dp"

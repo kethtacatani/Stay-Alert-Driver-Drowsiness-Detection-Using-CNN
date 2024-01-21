@@ -3,9 +3,11 @@ package com.example.stayalert;
 import android.content.Intent;
 import android.os.Bundle;
 
+import androidx.appcompat.widget.AppCompatEditText;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 
+import android.telephony.PhoneNumberUtils;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -26,6 +28,7 @@ import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.rilixtech.widget.countrycodepicker.CountryCodePicker;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -51,6 +54,7 @@ public class ProfileFrag extends Fragment implements View.OnTouchListener{
     CameraActivity cameraActivity;
     private DialogHelper dialogHelper;
     String dialogAction="";
+    CountryCodePicker ccp;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -116,6 +120,13 @@ public class ProfileFrag extends Fragment implements View.OnTouchListener{
 
 
         displayUserInfo();
+
+
+
+        ccp = view.findViewById(R.id.ccp);
+        ccp.hideNameCode(true);
+        ccp.registerPhoneNumberTextView(contact);
+
 
         dialogHelper = new DialogHelper(cameraActivity, new DialogHelper.DialogClickListener() {
             @Override
@@ -203,25 +214,30 @@ public class ProfileFrag extends Fragment implements View.OnTouchListener{
                     userData.put("middle_name", mName.getText().toString().trim().isEmpty() ? "" : mName.getText().toString());
                     userData.put("last_name", lName.getText().toString());
                     userData.put("suffix", suffix.getText().toString().trim().isEmpty() ? "" : suffix.getText().toString());
-                    userData.put("contact", contact.getText().toString());
+                    userData.put("contact", contact.getText().toString().replace(" ", ""));
                     userData.put("address", address.getText().toString());
                     userData.put("age", age.getText().toString());
 
                     if(!isNoChanges()){
-                        if(!fName.getText().toString().trim().isEmpty()  && !lName.getText().toString().trim().isEmpty()
+                        if(!fName.getText().toString().trim().isEmpty()  && !lName.getText().toString().trim().isEmpty() && !contact.getText().toString().trim().isEmpty()
                                 && !address.getText().toString().trim().isEmpty() && !age.getText().toString().trim().isEmpty()){
-                            String result=firebaseDB.upddateUserInfo(userData);
-                            if(result=="success"){
-                                displayTBG();
-                                getUserInfo();
+                            if(ccp.isValid()){
+                                String result=firebaseDB.upddateUserInfo(userData);
+                                if(result=="success"){
+                                    displayTBG();
+                                    getUserInfo();
+                                }else{
+                                    dialogHelper.showDialog("Edit Profile",result);
+                                }
                             }else{
-                                dialogHelper.showDialog("Edit Profile",result);
+                                contactIL.setError("Invalid phone number*");
                             }
                         }else{
                             fNameIL.setError((fName.getText().toString().trim().isEmpty())?"Required*":null);
                             lNameIL.setError((lName.getText().toString().trim().isEmpty())?"Required*":null);
                             addressIL.setError((address.getText().toString().trim().isEmpty())?"Required*":null);
                             ageIL.setError((age.getText().toString().trim().isEmpty())?"Required*":null);
+                            contactIL.setError((contact.getText().toString().trim().isEmpty())?"Required*":null);
                         }
                     }else{
                         dialogHelper.showDialog("Edit Profile","No changes have been made");
@@ -281,16 +297,18 @@ public class ProfileFrag extends Fragment implements View.OnTouchListener{
         cancel.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                dialogHelper.discardDialog();
-                dialogAction="discard";
                 if(showInfoLayout.getVisibility()==View.VISIBLE){
                     if(!isNoChanges()){
+                        dialogHelper.discardDialog();
+                        dialogAction="discard";
                         dialogHelper.showDialog("Edit Profile","Discard changes?");
                     }else{
                         displayTBG();
                     }
                 }else if (changPassLayout.getVisibility()==View.VISIBLE){
                     if(!isNoPassChanges()){
+                        dialogHelper.discardDialog();
+                        dialogAction="discard";
                         dialogHelper.showDialog("Change Password","Discard changes?");
                     }else{
                         displayTBG();
@@ -381,7 +399,7 @@ public class ProfileFrag extends Fragment implements View.OnTouchListener{
     public boolean isNoChanges(){
         if(fName.getText().toString().trim().equals(userData.get("first_name").toString())  && mName.getText().toString().trim().equals(userData.get("middle_name").toString())
                 && lName.getText().toString().trim().equals(userData.get("last_name").toString()) && suffix.getText().toString().trim().equals(userData.get("suffix").toString())
-                && contact.getText().toString().trim().equals(userData.get("contact").toString())  && address.getText().toString().trim().equals(userData.get("address").toString())
+                && contact.getText().toString().replace(" ", "").equals(userData.get("contact").toString())  && address.getText().toString().trim().equals(userData.get("address").toString())
                 && age.getText().toString().trim().equals(userData.get("age").toString())){
             return true;
         }
@@ -426,6 +444,9 @@ public class ProfileFrag extends Fragment implements View.OnTouchListener{
                 break;
             case R.id.PE_Age:
                 ageIL.setErrorEnabled(false);
+                break;
+            case R.id.PE_Contact:
+                contactIL.setErrorEnabled(false);
                 break;
             case R.id.PE_Address:
                 addressIL.setErrorEnabled(false);

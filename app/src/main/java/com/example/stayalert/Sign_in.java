@@ -119,6 +119,11 @@ public class Sign_in extends AppCompatActivity {
         usernameErrTV = findViewById(R.id.TVusernameErr);
         passErrTV=findViewById(R.id.TVpassErr);
 
+        String email=getIntent().getStringExtra("email");
+        if(email!=null){
+            username.setText(email);
+        }
+
         dialogHelper = new DialogHelper(this, new DialogHelper.DialogClickListener() {
             @Override
             public void onOkayClicked() {
@@ -143,8 +148,6 @@ public class Sign_in extends AppCompatActivity {
                 startActivityForResult(intent,1234);
             }
         });
-
-
 
 
         creatAccTV.setOnClickListener(new View.OnClickListener() {
