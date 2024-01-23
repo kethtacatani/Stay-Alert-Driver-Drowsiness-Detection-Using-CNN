@@ -26,8 +26,9 @@
                 android:id="@+id/profileCam"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:src="@drawable/ic_cam_edit"
                 android:elevation="10dp"
+                android:src="@drawable/ic_cam_edit"
+                android:visibility="gone"
                 app:layout_constraintBottom_toBottomOf="@+id/profilePicIV"
                 app:layout_constraintEnd_toEndOf="@+id/profilePicIV" />
 

@@ -3,18 +3,15 @@ package com.example.stayalert;
 import android.content.Intent;
 import android.os.Bundle;
 
-import androidx.appcompat.widget.AppCompatEditText;
+import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 
-import android.telephony.PhoneNumberUtils;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -23,9 +20,14 @@ import android.widget.Toast;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
+import com.google.firebase.auth.AuthCredential;
+import com.google.firebase.auth.EmailAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.rilixtech.widget.countrycodepicker.CountryCodePicker;
@@ -49,6 +51,7 @@ public class ProfileFrag extends Fragment implements View.OnTouchListener{
     ImageView editArrow, profileCam, changePassArrow;
     FirebaseFirestore db;
     FirebaseAuth auth;
+    FirebaseUser user;
     FirebaseDatabase firebaseDB;
     Map<String, Object> userData = new HashMap<>();
     CameraActivity cameraActivity;
@@ -113,6 +116,7 @@ public class ProfileFrag extends Fragment implements View.OnTouchListener{
         firebaseDB = new FirebaseDatabase();
         db = FirebaseFirestore.getInstance();
         auth = FirebaseAuth.getInstance();
+        user = FirebaseAuth.getInstance().getCurrentUser();
 
         cameraActivity = (CameraActivity) getActivity();
         GoogleSignInClient googleSignInClient = GoogleSignIn.getClient(cameraActivity, GoogleSignInOptions.DEFAULT_SIGN_IN);
@@ -204,6 +208,7 @@ public class ProfileFrag extends Fragment implements View.OnTouchListener{
             }
         });
 
+
         save.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -222,12 +227,17 @@ public class ProfileFrag extends Fragment implements View.OnTouchListener{
                         if(!fName.getText().toString().trim().isEmpty()  && !lName.getText().toString().trim().isEmpty() && !contact.getText().toString().trim().isEmpty()
                                 && !address.getText().toString().trim().isEmpty() && !age.getText().toString().trim().isEmpty()){
                             if(ccp.isValid()){
-                                String result=firebaseDB.upddateUserInfo(userData);
-                                if(result=="success"){
-                                    displayTBG();
-                                    getUserInfo();
+                                if(!contact.getText().toString().replace(" ", "").equals(ProfileFrag.this.userData.get("contact"))){
+                                    firebaseDB.isContactUnique(contact.getText().toString().replace(" ", ""), isUnique -> {
+                                        if(isUnique){
+                                            updateUserInfo(userData, ProfileFrag.this.userData.get("contact").toString());
+                                        }else{
+                                            dialogHelper.showDialog("Edit Profile","Contact number was already taken");
+
+                                        }
+                                    });
                                 }else{
-                                    dialogHelper.showDialog("Edit Profile",result);
+                                    updateUserInfo(userData,null);
                                 }
                             }else{
                                 contactIL.setError("Invalid phone number*");
@@ -250,26 +260,57 @@ public class ProfileFrag extends Fragment implements View.OnTouchListener{
 
                     if(!passIsEmpty()){
                         if(oldPassword.getText().toString().equals(userData.get("password"))){
-                            if(!oldPassword.getText().toString().equals(newPassword.getText().toString())){
-                                if(newPassword.getText().toString().equals(conPassword.getText().toString())){
-                                    if(userData.get("password").equals(newPassword.getText().toString())){
-                                        String result =firebaseDB.upddateUserInfo(userNewPass);
-                                        if(result.equals("success")){
-                                            dialogHelper.showDialog("Edit Profile","Password successfully changed");
-                                            displayTBG();
-                                        }
+                            if(newPassword.getText().toString().equals(conPassword.getText().toString())){
+                                if(newPassword.getText().toString().length()>5){
+                                    if(newPassword.getText().toString().equals(userData.get("password"))){
+                                        AuthCredential credential = EmailAuthProvider
+                                                .getCredential(user.getEmail(), userData.get("password").toString());
+                                        user.reauthenticate(credential).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                            @Override
+                                            public void onComplete(@NonNull Task<Void> task) {
+                                                if (task.isSuccessful()) {
+                                                    user.updatePassword(newPassword.getText().toString()).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                                        @Override
+                                                        public void onComplete(@NonNull Task<Void> task) {
+                                                            if (task.isSuccessful()) {
+                                                                firebaseDB.updateUserInfo(userNewPass, new FirebaseDatabase.TaskCallback<Void>() {
+                                                                    @Override
+                                                                    public void onSuccess(Void result) {
+                                                                        dialogHelper.showDialog("Edit Profile","Password successfully changed");
+                                                                        displayTBG();
+                                                                        getUserInfo();
+                                                                    }
+                                                                    @Override
+                                                                    public void onFailure(String errorMessage) {
+                                                                        dialogHelper.showDialog("Change Password",errorMessage);
+                                                                    }
+                                                                });
+
+                                                            } else {
+                                                                Log.d(TAG, "Error password not updated "+task.getException().getLocalizedMessage());
+                                                            }
+                                                        }
+                                                    });
+                                                } else {
+                                                    dialogHelper.showDialog("Change Password",firebaseDB.failureDialog(task));
+                                                    Log.d(TAG, "Error auth failed "+task.getException().getLocalizedMessage());
+                                                }
+                                            }
+                                        });
+                                    }else{
+                                        newPasswordIL.setError("New password is the same with the current one*");
+                                        conPasswordIL.setError("New password is the same with the current one*");
+                                        newPasswordIL.setErrorIconDrawable(null);
+                                        conPasswordIL.setErrorIconDrawable(null);
+                                        newPasswordIL.setEndIconMode(TextInputLayout.END_ICON_PASSWORD_TOGGLE);
+                                        conPasswordIL.setEndIconMode(TextInputLayout.END_ICON_PASSWORD_TOGGLE);
                                     }
                                 }else{
-                                    newPasswordIL.setError("Password do not match*");
-                                    conPasswordIL.setError("Password do not match*");
-                                    newPasswordIL.setErrorIconDrawable(null);
-                                    conPasswordIL.setErrorIconDrawable(null);
-                                    newPasswordIL.setEndIconMode(TextInputLayout.END_ICON_PASSWORD_TOGGLE);
-                                    conPasswordIL.setEndIconMode(TextInputLayout.END_ICON_PASSWORD_TOGGLE);
+
                                 }
                             }else{
-                                newPasswordIL.setError("New password matched the old one*");
-                                conPasswordIL.setError("New password matched the old one*");
+                                newPasswordIL.setError("Password do not match*");
+                                conPasswordIL.setError("Password do not match*");
                                 newPasswordIL.setErrorIconDrawable(null);
                                 conPasswordIL.setErrorIconDrawable(null);
                                 newPasswordIL.setEndIconMode(TextInputLayout.END_ICON_PASSWORD_TOGGLE);
@@ -331,6 +372,57 @@ public class ProfileFrag extends Fragment implements View.OnTouchListener{
 
 
     }
+
+    public void updateUserInfo(Map userData, String oldContact){
+        //update user information
+        firebaseDB.updateUserInfo(userData, new FirebaseDatabase.TaskCallback<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                if(oldContact!=null){
+                    //write contact
+                    Map<String, Object> userContact = new HashMap<>();
+                    userContact.put("userID", auth.getUid());
+                    firebaseDB.writeUserInfo(userContact,"contact_numbers", userData.get("contact").toString(), new FirebaseDatabase.TaskCallback<Void>() {
+                        //delete the old contact
+                        @Override
+                        public void onSuccess(Void result) {
+                            firebaseDB.deleteDocument("contact_numbers", oldContact, new FirebaseDatabase.TaskCallback<Void>() {
+                                @Override
+                                public void onSuccess(Void result) {
+                                    dialogHelper.showDialog("Edit Profile","Profile information successfully updated");
+                                    displayTBG();
+                                    getUserInfo();
+                                }
+
+                                @Override
+                                public void onFailure(String errorMessage) {
+                                    Log.w(TAG+" Delete Document ",errorMessage);
+                                    dialogHelper.showDialog("Edit Profile", errorMessage);
+                                }
+                            });
+                        }
+                        @Override
+                        public void onFailure(String errorMessage) {
+                            Log.w(TAG+" Delete Document ",errorMessage);
+                            dialogHelper.showDialog("Edit Profile", errorMessage);
+                        }
+                    });
+                }else{
+                    dialogHelper.showDialog("Edit Profile","Profile information successfully updated");
+                    displayTBG();
+                    getUserInfo();
+                }
+
+            }
+
+            @Override
+            public void onFailure(String errorMessage) {
+                dialogHelper.showDialog("Edit Profile",errorMessage);
+
+            }
+        });
+    }
+
 
     public void getUserInfo(){
         firebaseDB.readData("users", auth.getUid(),"cache", new FirebaseDatabase.OnGetDataListener() {

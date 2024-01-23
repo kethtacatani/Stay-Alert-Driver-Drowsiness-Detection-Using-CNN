@@ -17,11 +17,9 @@ import android.os.Handler;
 import android.util.Log;
 import android.util.Patterns;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 
 
 import com.airbnb.lottie.LottieAnimationView;
@@ -37,8 +35,6 @@ import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseAuthException;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -233,38 +229,48 @@ public class Sign_up extends AppCompatActivity {
                     }else if(pass.getText().toString().trim().equals(conPass.getText().toString().trim())){
                         playLoadingAnim();
                         if(signInRetries<3){
-                            switch (signUpMethod){
-                                case "email":
-                                    auth.createUserWithEmailAndPassword(email.getText().toString().trim(),pass.getText().toString().trim()).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
-                                        @Override
-                                        public void onComplete(@NonNull Task<AuthResult> task) {
-                                            if(task.isSuccessful()){
-                                                creatUserInfo(userData);
-                                            }
-                                            else if (task.getException().getLocalizedMessage().contains("email address is already in use")){
-                                                // If sign in fails, handle different error scenarios
-                                                dialogAction="signInEmail";
-                                                dialogHelper.signInDialog();
-                                                dialogHelper.showDialog("Sign in Failed","Account already exist");
-                                                hideLoading();
-                                            }
-                                            else if (task.getException().getLocalizedMessage().contains("network error")){
-                                                // If sign in fails, handle different error scenarios
-                                                dialogHelper.showDialog("Sign in Failed", "No connection to the database");
-                                                hideLoading();
-                                            }else{
-                                                System.out.println("task "+task.getException().getLocalizedMessage());
-                                                dialogHelper.showDialog("Sign in Failed", firebaseDB.failureDialog(task));
-                                                hideLoading();
-                                            }
+                            firebaseDB.isContactUnique(contact.getText().toString().replace(" ", ""), new FirebaseDatabase.OnContactCheckListener() {
+                                @Override
+                                public void onContactCheckResult(boolean isUnique) {
+                                    if(isUnique){
+                                        switch (signUpMethod){
+                                            case "email":
+                                                auth.createUserWithEmailAndPassword(email.getText().toString().trim(),pass.getText().toString().trim()).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+                                                    @Override
+                                                    public void onComplete(@NonNull Task<AuthResult> task) {
+                                                        if(task.isSuccessful()){
+                                                            createUserInfo(userData);
+                                                        }
+                                                        else if (task.getException().getLocalizedMessage().contains("email address is already in use")){
+                                                            // If sign in fails, handle different error scenarios
+                                                            dialogAction="signInEmail";
+                                                            dialogHelper.signInDialog();
+                                                            dialogHelper.showDialog("Sign in Failed","Account already exist");
+                                                            hideLoading();
+                                                        }
+                                                        else if (task.getException().getLocalizedMessage().contains("network error")){
+                                                            // If sign in fails, handle different error scenarios
+                                                            dialogHelper.showDialog("Sign in Failed", "No connection to the database");
+                                                            hideLoading();
+                                                        }else{
+                                                            System.out.println("task "+task.getException().getLocalizedMessage());
+                                                            dialogHelper.showDialog("Sign in Failed", firebaseDB.failureDialog(task));
+                                                            hideLoading();
+                                                        }
+                                                    }
+                                                });
+                                                break;
+                                            case "google":
+                                                createUserInfo(userData);
+                                                break;
                                         }
-                                    });
-                                    break;
-                                case "google":
-                                    creatUserInfo(userData);
-                                    break;
-                            }
 
+                                    }else{
+                                        dialogHelper.showDialog("Sign in Failed","Contact number already taken");
+                                        hideLoading();
+                                    }
+                                }
+                            });
                         }
                         else{
                             dialogHelper.showDialog("Sign up Failed","Too much requests, please try again later");
@@ -370,6 +376,7 @@ public class Sign_up extends AppCompatActivity {
 
     }
 
+
     private void isUserHasInfo(Map userData){
         firebaseDB.readData("users", auth.getUid(),"default", new FirebaseDatabase.OnGetDataListener() {
             @Override
@@ -416,17 +423,35 @@ public class Sign_up extends AppCompatActivity {
 
 
     }
-    public void creatUserInfo(Map userData){
-        String result = firebaseDB.writeUserInfo(userData);
-        if(result=="success"){
-            signInUser();
-            userDataExist=true;
-        }else{
-            dialogHelper.showDialog("Sign up Failed",result);
-            hideLoading();
-        }
-    }
+    public void createUserInfo(Map userData){
+        firebaseDB.writeUserInfo(userData,"users",auth.getUid(), new FirebaseDatabase.TaskCallback<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                //write users contact number
+                Map<String, Object> userContact = new HashMap<>();
+                userContact.put("userID", auth.getUid());
+                firebaseDB.writeUserInfo(userContact,"contact_numbers",userData.get("contact").toString(), new FirebaseDatabase.TaskCallback<Void>() {
+                    @Override
+                    public void onSuccess(Void result) {
+                        signInUser();
+                        userDataExist=true;
+                    }
 
+                    @Override
+                    public void onFailure(String errorMessage) {
+                        dialogHelper.showDialog("Sign up Failed", errorMessage);
+                        hideLoading();
+                    }
+                });
+            }
+
+            @Override
+            public void onFailure(String errorMessage) {
+                dialogHelper.showDialog("Sign up Failed", errorMessage);
+                hideLoading();
+            }
+        });
+    }
 
     public void createAccountWithGoogle(String email){
         passLayout.setVisibility(View.GONE);

@@ -29,7 +29,6 @@ public class DialogHelper {
 
     public DialogHelper(Context context, DialogClickListener listener) {
         instantiate(context);
-
         // Set the listener for the cancel button
         dialogOkay.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -115,6 +114,7 @@ public class DialogHelper {
 
 
     public void normalDialog(){
+
         dialogAction.setVisibility(View.GONE);
         dialogOkay.setText("Okay");
     }

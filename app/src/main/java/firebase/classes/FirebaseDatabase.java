@@ -129,38 +129,72 @@ public class FirebaseDatabase {
         return userData;
     }
 
-    public String writeUserInfo(Map userData){
-        userID=mAuth.getUid();
-        db.collection("users").document(userID).set(userData)
-                .addOnSuccessListener(aVoid -> {
-                    return;
-                }).addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        exception = e;
-                        Log.e("WriteUserInfo","Err "+e);
-                    }
-                });
-        return onFailureDialog(exception);
+    public interface TaskCallback<T> {
+        void onSuccess(T result);
+        void onFailure(String errorMessage);
     }
 
-    public  String upddateUserInfo(Map userData){
-        db.collection("users").document(userID).update(userData)
-                .addOnCompleteListener(new OnCompleteListener<Void>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Void> task) {
-                        if (task.isSuccessful()) {
-                            return;
-                        }
-                    }
-                }).addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        exception = e;
-                        Log.e("UpdateUserInfo","Error "+e);
-                    }
+    public void writeUserInfo(Map userData, String collection,String document, TaskCallback<Void> callback) {
+
+        db.collection(collection).document(document).set(userData)
+                .addOnSuccessListener(aVoid -> {
+                    callback.onSuccess(null); // Passing null as there is no specific result for success
+                }).addOnFailureListener(e -> {
+                    Log.e("WriteUserInfo", "Err " + e);
+                    callback.onFailure(e.getMessage());
                 });
-        return  onFailureDialog(exception);
+    }
+
+    public void deleteDocument(String collection,String document, TaskCallback<Void> callback) {
+        db.collection(collection).document(document).delete().addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(Task<Void> task) {
+                if (task.isSuccessful()) {
+                    callback.onSuccess(null); // Passing null as there is no specific result for success
+                } else {
+                    // Handle errors here
+                    Exception e = task.getException();
+                    if (e != null) {
+                        callback.onFailure(e.getMessage());
+                    }
+                }
+            }
+        });
+    }
+    public void updateUserInfo(Map userData, TaskCallback<Void> callback) {
+        db.collection("users").document(userID).update(userData)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        callback.onSuccess(null); // Passing null as there is no specific result for success
+                    }
+                }).addOnFailureListener(e -> {
+                    Log.e("UpdateUserInfo", "Error " + e);
+                    callback.onFailure(e.getMessage());
+                });
+    }
+
+    public interface OnContactCheckListener {
+        void onContactCheckResult(boolean isUnique);
+    }
+
+    public boolean isContactUnique(String contactNumber,OnContactCheckListener listener){
+        DocumentReference docRef = db.collection("contact_numbers").document(contactNumber);
+        docRef.get(Source.SERVER).addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                if (task.isSuccessful()) {
+                    DocumentSnapshot document = task.getResult();
+                    if (!document.exists()) {
+                        listener.onContactCheckResult(true);
+                    } else {
+                        listener.onContactCheckResult(false);
+                    }
+                } else {
+                    Log.d(TAG, "get failed with ", task.getException());
+                }
+            }
+        });
+        return false;
     }
 
     public boolean insertDB(String collection){
