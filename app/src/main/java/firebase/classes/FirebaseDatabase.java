@@ -1,11 +1,16 @@
 package firebase.classes;
 
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.os.Environment;
 import android.util.Log;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
+import com.example.stayalert.CameraActivity;
 import com.example.stayalert.env.Logger;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -20,7 +25,18 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Source;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
@@ -36,11 +52,13 @@ public class FirebaseDatabase {
     String userID;
     Map<String, Object> userData=new HashMap<>();
     Exception exception =null;
+    FirebaseStorage storage;
 
     public FirebaseDatabase(){
         db = FirebaseFirestore.getInstance();
         mAuth = FirebaseAuth.getInstance();
         userID = mAuth.getUid();
+        storage= FirebaseStorage.getInstance();
     }
 
 
@@ -173,11 +191,15 @@ public class FirebaseDatabase {
                 });
     }
 
-    public interface OnContactCheckListener {
-        void onContactCheckResult(boolean isUnique);
+
+
+
+
+    public interface OnInterfaceListener {
+        void onInterfaceCheckResult(boolean isTrue,String message);
     }
 
-    public boolean isContactUnique(String contactNumber,OnContactCheckListener listener){
+    public boolean isContactUnique(String contactNumber,OnInterfaceListener listener){
         DocumentReference docRef = db.collection("contact_numbers").document(contactNumber);
         docRef.get(Source.SERVER).addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
             @Override
@@ -185,22 +207,123 @@ public class FirebaseDatabase {
                 if (task.isSuccessful()) {
                     DocumentSnapshot document = task.getResult();
                     if (!document.exists()) {
-                        listener.onContactCheckResult(true);
+                        listener.onInterfaceCheckResult(true,null);
                     } else {
-                        listener.onContactCheckResult(false);
+                        listener.onInterfaceCheckResult(false,null);
                     }
                 } else {
-                    Log.d(TAG, "get failed with ", task.getException());
+                    Log.d(TAG, "get failed with "+ task.getException().getLocalizedMessage());
+                    listener.onInterfaceCheckResult(false,task.getException().getLocalizedMessage());
                 }
             }
         });
         return false;
     }
 
-    public boolean insertDB(String collection){
-        return false;
+    public String[] saveImageToLocal(Context mcoContext, String nameExtension, Bitmap bitmap, String folder){
+        String time = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
+        String path=mAuth.getUid()+"/"+folder+"/"+time.substring(0, Math.min(time.length(), 8));
+        File dir = new File(mcoContext.getFilesDir(), path);
+        if(!dir.exists()){
+            dir.mkdirs();
+        }
+
+        try {
+            String fileName=(nameExtension.contains("local_"))?nameExtension:"local_"+time +"_"+nameExtension+".jpg";
+            File imageFile = new File(dir, fileName);
+            FileOutputStream fos = new FileOutputStream(imageFile);
+            compressImage(bitmap).compress(Bitmap.CompressFormat.JPEG, 100, fos);
+
+            // Close the FileOutputStream
+            fos.flush();
+            fos.close();
+
+            return new String[]{path,fileName};
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+        return null;
     }
 
+
+    public void saveFileInfoToFirestore(Map fileInfo, String folder) {
+        db.collection("users/"+mAuth.getUid()+"/"+folder).document(userData.get("file_name").toString()).set(userData)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        //display the image in ui
+                        //save the image in storage calling syncFunction
+                    }
+                }).addOnFailureListener(e -> {
+                    Log.e("UpdateUserInfo", "Error " + e);
+                });
+    }
+
+    public void uploadFileToStorage(Map fileinfo, TaskCallback<Void> callback) {
+
+    }
+
+    public String isImageUploaded(Bitmap bitmap, String timestamp,OnInterfaceListener listener){
+
+        StorageReference storageRef = storage.getReference();
+
+// Create a reference to "mountains.jpg"
+        StorageReference mountainsRef = storageRef.child(timestamp+ ".jpg");
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        compressImage(bitmap).compress(Bitmap.CompressFormat.JPEG, 100, baos);
+        byte[] data = baos.toByteArray();
+
+        UploadTask uploadTask = mountainsRef.putBytes(data);
+        uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                // taskSnapshot.getMetadata() contains file metadata such as size, content-type, etc.
+                listener.onInterfaceCheckResult(true,null);
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception exception) {
+                System.out.println("Excep "+exception.getLocalizedMessage());
+                listener.onInterfaceCheckResult(false,exception.getLocalizedMessage());
+            }
+        });
+        return null;
+    }
+    private String uploadFile(String storagePath, String localPath) {
+        // Implement file upload logic using Java libraries or Android SDK
+        // Make sure to return an UploadTask instance
+        return null;
+    }
+
+    public Bitmap compressImage(Bitmap imageBitmap){
+        Bitmap bitmap = imageBitmap;
+        int maxSizeInBytes = 100 * 1024; // 100 KB
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        int quality = 100; // initial quality
+
+        do {
+            // Compress the Bitmap with the current quality
+            bitmap.compress(Bitmap.CompressFormat.JPEG, quality, baos);
+
+            // Check the size of the compressed image
+            int compressedSize = baos.toByteArray().length;
+
+            // If the compressed size is greater than the maximum size, reduce the quality
+            if (compressedSize > maxSizeInBytes) {
+                baos.reset(); // Reset the ByteArrayOutputStream
+
+                // Reduce the quality by a certain factor (e.g., 10% reduction)
+                quality -= 10;
+
+                // Ensure the quality doesn't go below 0
+                if (quality < 0) {
+                    quality = 0;
+                }
+            }
+        } while (baos.toByteArray().length > maxSizeInBytes);
+        return bitmap;
+    }
 
     public String getAuthMessage(String errorCode){
         String errorMessage="";

@@ -229,10 +229,10 @@ public class Sign_up extends AppCompatActivity {
                     }else if(pass.getText().toString().trim().equals(conPass.getText().toString().trim())){
                         playLoadingAnim();
                         if(signInRetries<3){
-                            firebaseDB.isContactUnique(contact.getText().toString().replace(" ", ""), new FirebaseDatabase.OnContactCheckListener() {
+                            firebaseDB.isContactUnique(contact.getText().toString().replace(" ", ""), new FirebaseDatabase.OnInterfaceListener() {
                                 @Override
-                                public void onContactCheckResult(boolean isUnique) {
-                                    if(isUnique){
+                                public void onInterfaceCheckResult(boolean isTrue,String errorMessage){
+                                    if(isTrue){
                                         switch (signUpMethod){
                                             case "email":
                                                 auth.createUserWithEmailAndPassword(email.getText().toString().trim(),pass.getText().toString().trim()).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
@@ -557,6 +557,7 @@ public class Sign_up extends AppCompatActivity {
         }
         return true;
     }
+
 
     public void viewCameraPermission(){
         ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.CAMERA},100);

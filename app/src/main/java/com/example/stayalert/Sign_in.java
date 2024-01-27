@@ -76,6 +76,8 @@ public class Sign_in extends AppCompatActivity {
         if(!ifHasCameraPermission()){
             viewCameraPermission();
         }
+
+        isStoragePermissionGranted();
         // Check if user is signed in (non-null) and update UI accordingly.
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
@@ -245,7 +247,7 @@ public class Sign_in extends AppCompatActivity {
                     Log.w(TAG,"No data exist");
                     signUpUser(user.getEmail());
                 }else{
-                    if(ifHasCameraPermission()){ signInUser();}
+                    if(ifHasCameraPermission() && ifHasStoragePermission()){ signInUser();}
                 }
             }
 
@@ -385,6 +387,20 @@ public class Sign_in extends AppCompatActivity {
         buttonAnimation.pauseAnimation();
         signInBtn.setText("Sign in");
     }
+    public boolean ifHasStoragePermission(){
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                == PackageManager.PERMISSION_DENIED) {
+            return false;
+        }
+        return  true;
+    }
+
+    public void viewStoragePermission(){
+        ActivityCompat.requestPermissions(this,
+                new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                110);
+    }
+
     public boolean ifHasCameraPermission(){
         if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.CAMERA)
                 == PackageManager.PERMISSION_DENIED){
@@ -396,11 +412,29 @@ public class Sign_in extends AppCompatActivity {
         ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.CAMERA},100);
     }
 
+    public  boolean isStoragePermissionGranted() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    == PackageManager.PERMISSION_GRANTED) {
+                Log.v(TAG,"Permission is granted");
+                return true;
+            } else {
+
+                Log.v(TAG,"Permission is revoked");
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 110);
+                return false;
+            }
+        }
+        else { //permission is automatically granted on sdk<23 upon installation
+            Log.v(TAG,"Permission is granted");
+            return true;
+        }
+    }
+
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == 100) {
-            System.out.println("ok cam");
             // Check if the CAMERA permission is granted after the user responds to the permission request
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 if(userDataExist){
@@ -408,6 +442,18 @@ public class Sign_in extends AppCompatActivity {
                 }
             } else {
                 dialogHelper.showDialog("Login Failed", "You need to allow permission for camera usage as it is required for detection");
+                hideLoading();
+            }
+        }
+
+        else if (requestCode == 110) {
+            // Check if the CAMERA permission is granted after the user responds to the permission request
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                if(userDataExist){
+                    signInUser();
+                }
+            } else {
+                dialogHelper.showDialog("Login Failed", "You need to allow permission for storage usage as it is required for detection");
                 hideLoading();
             }
         }

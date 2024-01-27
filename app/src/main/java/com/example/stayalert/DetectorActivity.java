@@ -67,14 +67,12 @@ public class DetectorActivity extends com.example.stayalert.CameraActivity imple
 
     private YoloV5Classifier detector;
 
-    private long lastProcessingTimeMs;
     private Bitmap rgbFrameBitmap = null;
     private Bitmap croppedBitmap = null;
-    private Bitmap cropCopyBitmap = null;
+
 
     private boolean computingDetection = false;
 
-    private long timestamp = 0;
 
     private Matrix frameToCropTransform;
     private Matrix cropToFrameTransform;

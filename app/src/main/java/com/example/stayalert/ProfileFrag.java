@@ -228,12 +228,17 @@ public class ProfileFrag extends Fragment implements View.OnTouchListener{
                                 && !address.getText().toString().trim().isEmpty() && !age.getText().toString().trim().isEmpty()){
                             if(ccp.isValid()){
                                 if(!contact.getText().toString().replace(" ", "").equals(ProfileFrag.this.userData.get("contact"))){
-                                    firebaseDB.isContactUnique(contact.getText().toString().replace(" ", ""), isUnique -> {
-                                        if(isUnique){
+                                    firebaseDB.isContactUnique(contact.getText().toString().replace(" ", ""), (isUnique, errorMessage) -> {
+                                        if(isUnique && errorMessage==null){
                                             updateUserInfo(userData, ProfileFrag.this.userData.get("contact").toString());
-                                        }else{
+                                        }else if(!isUnique && errorMessage==null){
                                             dialogHelper.showDialog("Edit Profile","Contact number was already taken");
 
+                                        }else if (errorMessage.contains("offline")){
+                                            dialogHelper.showDialog("Edit Profile","Cannot change contact number when offline");
+                                        }else{
+                                            dialogHelper.showDialog("Edit Profile","There is an error with the database");
+                                            Log.e(TAG,errorMessage);
                                         }
                                     });
                                 }else{
@@ -262,7 +267,7 @@ public class ProfileFrag extends Fragment implements View.OnTouchListener{
                         if(oldPassword.getText().toString().equals(userData.get("password"))){
                             if(newPassword.getText().toString().equals(conPassword.getText().toString())){
                                 if(newPassword.getText().toString().length()>5){
-                                    if(newPassword.getText().toString().equals(userData.get("password"))){
+                                    if(!newPassword.getText().toString().equals(userData.get("password"))){
                                         AuthCredential credential = EmailAuthProvider
                                                 .getCredential(user.getEmail(), userData.get("password").toString());
                                         user.reauthenticate(credential).addOnCompleteListener(new OnCompleteListener<Void>() {
@@ -291,6 +296,9 @@ public class ProfileFrag extends Fragment implements View.OnTouchListener{
                                                             }
                                                         }
                                                     });
+                                                }else if (task.getException().getLocalizedMessage().contains("network error")){
+                                                    // If sign in fails, handle different error scenarios
+                                                    dialogHelper.showDialog("Sign in Failed", "No connection to the database");
                                                 } else {
                                                     dialogHelper.showDialog("Change Password",firebaseDB.failureDialog(task));
                                                     Log.d(TAG, "Error auth failed "+task.getException().getLocalizedMessage());
@@ -375,7 +383,9 @@ public class ProfileFrag extends Fragment implements View.OnTouchListener{
 
     public void updateUserInfo(Map userData, String oldContact){
         //update user information
+
         firebaseDB.updateUserInfo(userData, new FirebaseDatabase.TaskCallback<Void>() {
+
             @Override
             public void onSuccess(Void result) {
                 if(oldContact!=null){
@@ -389,9 +399,7 @@ public class ProfileFrag extends Fragment implements View.OnTouchListener{
                             firebaseDB.deleteDocument("contact_numbers", oldContact, new FirebaseDatabase.TaskCallback<Void>() {
                                 @Override
                                 public void onSuccess(Void result) {
-                                    dialogHelper.showDialog("Edit Profile","Profile information successfully updated");
-                                    displayTBG();
-                                    getUserInfo();
+                                    updateSuccessDialog();
                                 }
 
                                 @Override
@@ -407,20 +415,23 @@ public class ProfileFrag extends Fragment implements View.OnTouchListener{
                             dialogHelper.showDialog("Edit Profile", errorMessage);
                         }
                     });
-                }else{
-                    dialogHelper.showDialog("Edit Profile","Profile information successfully updated");
-                    displayTBG();
-                    getUserInfo();
                 }
-
             }
 
             @Override
             public void onFailure(String errorMessage) {
                 dialogHelper.showDialog("Edit Profile",errorMessage);
-
             }
         });
+        if(oldContact==null){
+            updateSuccessDialog();
+        }
+    }
+
+    public void updateSuccessDialog(){
+            dialogHelper.showDialog("Edit Profile","Profile information successfully updated");
+            displayTBG();
+            getUserInfo();
     }
 
 

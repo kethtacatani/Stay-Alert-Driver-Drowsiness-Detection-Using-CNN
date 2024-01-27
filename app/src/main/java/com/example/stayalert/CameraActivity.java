@@ -22,6 +22,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
+import android.graphics.Bitmap;
 import android.hardware.Camera;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
@@ -66,13 +67,18 @@ import com.etebarian.meowbottomnavigation.MeowBottomNavigation;
 import com.example.stayalert.databinding.ActivityHomeBinding;
 import com.example.stayalert.env.ImageUtils;
 import com.example.stayalert.env.Logger;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -97,6 +103,7 @@ public abstract class CameraActivity extends AppCompatActivity
   private static final Logger LOGGER = new Logger();
   private static final String TAG = "CameraActivity";
   private static final int PERMISSIONS_REQUEST = 1;
+  public static String PACKAGE_NAME;
 
   private static final String PERMISSION_CAMERA = Manifest.permission.CAMERA;
   private static final String ASSET_PATH = "";
@@ -137,10 +144,15 @@ public abstract class CameraActivity extends AppCompatActivity
   public static int elevation=0;
   public static String eyeStatus="";
   public static String mouthStatus="";
+  public Bitmap cropCopyBitmap = null;
+  public long timestamp = 0;
+  public long lastProcessingTimeMs;
 
   private String[] values = new String[30];
   private int currentIndex = 0;
+  private int currentIndexYawn  = 0;
   private int closeCount = 0;
+  private int yawnCount = 0;
   private Runnable runnableCode;
   boolean ring=false;
   Ringtone ringtone;
@@ -148,6 +160,7 @@ public abstract class CameraActivity extends AppCompatActivity
   Handler schedHandler;
   Runnable connectivityCheckRunnable;
   String statusDriver=" ACTIVE ";
+  String statusDriverMouth=" ACTIVE ";
   FirebaseUser user;
   FirebaseFirestore db;
   FirebaseDatabase firebaseDB;
@@ -160,6 +173,7 @@ public abstract class CameraActivity extends AppCompatActivity
   @Override
   protected void onCreate(final Bundle savedInstanceState) {
 
+    PACKAGE_NAME = getApplicationContext().getPackageName();
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
       View decorView = getWindow().getDecorView();
       decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
@@ -216,25 +230,71 @@ public abstract class CameraActivity extends AppCompatActivity
           Toast.makeText(CameraActivity.this, "Please WAKE UP!!!!", Toast.LENGTH_SHORT).show();
 
           // Play the default ringtone
-          statusDriver=" SLEEPY ";
+
           ringtone.play();
-          HomeFrag.statusDriverTV.setText(statusDriver);
-          System.out.println("playinh ring");
+          if(statusDriver.contains("ACTIVE")){
+            saveDetectedImage(cropCopyBitmap,"closed_eyes", lastProcessingTimeMs+"");
+          }
+          statusDriver=" DROWSY ";
+
+
         }
-        else if(closePercentage<90 && HomeFrag.statusDriverTV!=null){
+        else if(closePercentage<90){
           statusDriver=" ACTIVE ";
-          HomeFrag.statusDriverTV.setText(statusDriver);
           ringtone.stop();
 
         }
-
-        // Schedule the next update
-//        System.out.println("looping "+ closePercentage+"\n"+ Arrays.toString(values)+"\n closeCount: "+closeCount);
 
         handler.postDelayed(this, 100); // Schedule the task to run again after 100 milliseconds
       }
     };
     handler.post(runnableCode);
+
+    //FOR MOUTH
+
+    String[] valuesYawn = new String[30];
+
+    Runnable mouthRunnable;
+    mouthRunnable = new Runnable() {
+      @Override
+      public void run() {
+        String newValue = mouthStatus;
+        if ("yawn".equals(newValue) && yawnCount<30) {
+          yawnCount++;
+        }else if (yawnCount>0){
+          yawnCount--;
+        }
+        valuesYawn[currentIndexYawn] = newValue;
+        currentIndexYawn = (currentIndexYawn + 1) % 30; // Wrap around to the beginning of the array
+        double yawnPercentage = (yawnCount / 30.0) * 100.0;
+
+
+        if(yawnPercentage>90 && !ringtone.isPlaying() && !appStopped){
+          Toast.makeText(CameraActivity.this, "YAWNING", Toast.LENGTH_SHORT).show();
+
+
+//          if(statusDriverMouth.contains("ACTIVE")){
+//            firebaseDB.saveImageToLocal(getApplicationContext(),""+timestamp,cropCopyBitmap,"detections");
+//          }
+          if(statusDriverMouth.contains("ACTIVE")){
+            saveDetectedImage(cropCopyBitmap,"yawn",lastProcessingTimeMs+"");
+          }
+          statusDriverMouth=" YAWNING ";
+
+        }
+        else if(yawnPercentage<90){
+          statusDriverMouth=" ACTIVE ";
+
+        }
+        if(HomeFrag.statusDriverTV!=null){
+          HomeFrag.statusDriverTV.setText((statusDriver.contains("ACTIVE"))?statusDriverMouth:statusDriver);
+        }
+        handler.postDelayed(this, 100); // Schedule the task to run again after 100 milliseconds
+      }
+    };
+    handler.post(mouthRunnable);
+
+
 
 
 
@@ -404,6 +464,8 @@ public abstract class CameraActivity extends AppCompatActivity
 
   ////////////////////////////////////////////
 
+
+
   public void getUserInfo(){
     firebaseDB.readData("users", user.getUid(),"default", new FirebaseDatabase.OnGetDataListener() {
       @Override
@@ -430,6 +492,21 @@ public abstract class CameraActivity extends AppCompatActivity
       }
     });
 
+  }
+
+  public void saveDetectedImage(Bitmap bitmap,String detectionType, String ms){
+    String result[] =firebaseDB.saveImageToLocal(getApplicationContext(),""+timestamp,bitmap,"detections");
+    if(result!=null){
+      Map<String, Object> imageInfo = new HashMap<>();
+      imageInfo.put("detection_name", "closed_eyes");
+      imageInfo.put("file_name",result[1]);
+      imageInfo.put("local_path",result[0]);
+      imageInfo.put("inference",ms);
+
+      firebaseDB.saveFileInfoToFirestore(imageInfo,"image_detection");
+
+      //can be possible to start display of image
+    }
   }
 
 
