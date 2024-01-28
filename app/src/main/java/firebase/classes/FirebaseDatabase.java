@@ -2,6 +2,8 @@ package firebase.classes;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Environment;
 import android.util.Log;
 import android.widget.EditText;
@@ -13,6 +15,7 @@ import androidx.annotation.NonNull;
 import com.example.stayalert.CameraActivity;
 import com.example.stayalert.env.Logger;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -23,7 +26,10 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.Source;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
@@ -53,6 +59,7 @@ public class FirebaseDatabase {
     Map<String, Object> userData=new HashMap<>();
     Exception exception =null;
     FirebaseStorage storage;
+    private boolean isSyncing = false;
 
     public FirebaseDatabase(){
         db = FirebaseFirestore.getInstance();
@@ -220,6 +227,21 @@ public class FirebaseDatabase {
         return false;
     }
 
+    public Bitmap getImageToLocal(String local_path, String fileName) {
+        try {
+            File imageFile = new File(CameraActivity.context.getFilesDir(), local_path + "/" + fileName);
+            if (imageFile.exists()) {
+                System.out.println("get image at "+imageFile.getName());
+                return BitmapFactory.decodeFile(imageFile.getAbsolutePath());
+            } else {
+                Log.e("getImageFromLocal", "File does not exist: " + imageFile.getAbsolutePath());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     public String[] saveImageToLocal(Context mcoContext, String nameExtension, Bitmap bitmap, String folder){
         String time = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
         String path=mAuth.getUid()+"/"+folder+"/"+time.substring(0, Math.min(time.length(), 8));
@@ -247,53 +269,129 @@ public class FirebaseDatabase {
 
 
     public void saveFileInfoToFirestore(Map fileInfo, String folder) {
-        db.collection("users/"+mAuth.getUid()+"/"+folder).document(userData.get("file_name").toString()).set(userData)
+        db.collection("users/"+mAuth.getUid()+"/"+folder).document(fileInfo.get("file_name").toString()).set(fileInfo)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        //display the image in ui
-                        //save the image in storage calling syncFunction
+                        // trigger Syncing
+                        if(folder.equals("image_detection")){
+                            syncToServer();
+                        }
                     }
                 }).addOnFailureListener(e -> {
                     Log.e("UpdateUserInfo", "Error " + e);
                 });
-    }
-
-    public void uploadFileToStorage(Map fileinfo, TaskCallback<Void> callback) {
 
     }
 
-    public String isImageUploaded(Bitmap bitmap, String timestamp,OnInterfaceListener listener){
 
-        StorageReference storageRef = storage.getReference();
+    public UploadTask isImageUploaded(String storagePath,String localPath, String fileName, OnInterfaceListener listener){
 
-// Create a reference to "mountains.jpg"
-        StorageReference mountainsRef = storageRef.child(timestamp+ ".jpg");
-
+        Bitmap bitmap= getImageToLocal(localPath,fileName);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        compressImage(bitmap).compress(Bitmap.CompressFormat.JPEG, 100, baos);
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
         byte[] data = baos.toByteArray();
 
-        UploadTask uploadTask = mountainsRef.putBytes(data);
+        StorageReference storageRef = storage.getReference(storagePath);
+        StorageReference imageRef = storageRef.child(fileName);
+
+        UploadTask uploadTask = imageRef.putBytes(data);
         uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
             @Override
             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                // taskSnapshot.getMetadata() contains file metadata such as size, content-type, etc.
-                listener.onInterfaceCheckResult(true,null);
+                System.out.println("uploaded");
+                Task<Uri> urlTask = uploadTask.continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
+                    @Override
+                    public Task<Uri> then(@NonNull Task<UploadTask.TaskSnapshot> task) throws Exception {
+                        if (!task.isSuccessful()) {
+                            throw task.getException();
+                        }
+                        listener.onInterfaceCheckResult(true,imageRef.getDownloadUrl().toString());
+                        return imageRef.getDownloadUrl();
+                    }
+                }).addOnCompleteListener(new OnCompleteListener<Uri>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Uri> task) {
+                        if (task.isSuccessful()) {
+                            Uri downloadUri = task.getResult();
+                        } else {
+                            listener.onInterfaceCheckResult(false,task.getException().getLocalizedMessage());
+                        }
+                    }
+                });
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception exception) {
                 System.out.println("Excep "+exception.getLocalizedMessage());
-                listener.onInterfaceCheckResult(false,exception.getLocalizedMessage());
             }
         });
         return null;
     }
-    private String uploadFile(String storagePath, String localPath) {
-        // Implement file upload logic using Java libraries or Android SDK
-        // Make sure to return an UploadTask instance
-        return null;
+
+    public void syncToServer(){
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+
+        if (currentUser == null || isSyncing) {
+            return;
+        }
+
+        isSyncing = true;
+        System.out.println("sync in");
+        try {
+            String syncPath = "users/" + currentUser.getUid() + "/upload_queue";
+            db.collection(syncPath).get().addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    QuerySnapshot querySnapshot = task.getResult();
+                    if (querySnapshot != null) {
+                        for (DocumentSnapshot syncFile : querySnapshot.getDocuments()) {
+                            String fileName = getValue(syncFile.getData(), "file_name", "");
+                            String localPath = getValue(syncFile.getData(), "local_path", "");
+                            String storagePath = getValue(syncFile.getData(), "storage_path", "");
+                            String firestorePath = getValue(syncFile.getData(), "firestore_path", "");
+
+                            if (!localPath.isEmpty()) {
+                                isImageUploaded(storagePath, localPath, fileName, new OnInterfaceListener() {
+                                    @Override
+                                    public void onInterfaceCheckResult(boolean isTrue, String message) {
+                                        if (isTrue) {
+                                            String downloadURL = message;
+                                            if (downloadURL != null) {
+                                                db.document(firestorePath).update(new HashMap<String, Object>() {{
+                                                    put("downloadURL", downloadURL);
+                                                    put("storageURL", storagePath);
+                                                }});
+
+                                                db.document(syncPath + "/" + fileName).delete();
+                                            }
+                                        } else {
+                                            Log.w(TAG, message);
+                                        }
+                                    }
+                                });
+
+
+                            }
+                        }
+                    }
+                } else {
+                    // Handle failures
+                    Exception exception = task.getException();
+                    System.out.println("Error getting documents: " + exception.getLocalizedMessage());
+                }
+            });
+        } catch (Exception e) {
+            System.out.println("Error syncing files: " + e.getMessage());
+        }
+        isSyncing = false;
     }
+
+
+    private String getValue(Map<String, Object> data, String key, String defaultValue) {
+        return data.containsKey(key) ? data.get(key).toString() : defaultValue;
+    }
+
+
+
 
     public Bitmap compressImage(Bitmap imageBitmap){
         Bitmap bitmap = imageBitmap;
@@ -323,6 +421,25 @@ public class FirebaseDatabase {
             }
         } while (baos.toByteArray().length > maxSizeInBytes);
         return bitmap;
+    }
+
+    public void checkSync(){
+        DocumentReference docRef = db.collection("users").document(mAuth.getUid());
+
+        docRef.get(Source.SERVER).addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                DocumentSnapshot document = task.getResult();
+                if (document.exists()) {
+                    syncToServer();
+                } else {
+                    Log.d(TAG,"No connection to database");
+                }
+            } else {
+                // Handle failures
+                Exception exception = task.getException();
+                Log.w(TAG, "Error getting document", exception);
+            }
+        });
     }
 
     public String getAuthMessage(String errorCode){

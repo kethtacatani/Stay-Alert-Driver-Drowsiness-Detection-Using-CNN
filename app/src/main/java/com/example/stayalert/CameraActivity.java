@@ -73,6 +73,7 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
@@ -84,6 +85,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -104,6 +106,7 @@ public abstract class CameraActivity extends AppCompatActivity
   private static final String TAG = "CameraActivity";
   private static final int PERMISSIONS_REQUEST = 1;
   public static String PACKAGE_NAME;
+  public static Context context;
 
   private static final String PERMISSION_CAMERA = Manifest.permission.CAMERA;
   private static final String ASSET_PATH = "";
@@ -174,6 +177,7 @@ public abstract class CameraActivity extends AppCompatActivity
   protected void onCreate(final Bundle savedInstanceState) {
 
     PACKAGE_NAME = getApplicationContext().getPackageName();
+    context=getApplicationContext();
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
       View decorView = getWindow().getDecorView();
       decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
@@ -456,8 +460,11 @@ public abstract class CameraActivity extends AppCompatActivity
       public void run() {
         minusImageView.performClick();
         updateActiveModel();
+        firebaseDB.checkSync();
       }
     }, 3000);
+
+
 
 
   }
@@ -495,17 +502,24 @@ public abstract class CameraActivity extends AppCompatActivity
   }
 
   public void saveDetectedImage(Bitmap bitmap,String detectionType, String ms){
+
     String result[] =firebaseDB.saveImageToLocal(getApplicationContext(),""+timestamp,bitmap,"detections");
     if(result!=null){
       Map<String, Object> imageInfo = new HashMap<>();
-      imageInfo.put("detection_name", "closed_eyes");
+      imageInfo.put("detection_name", detectionType);
+      imageInfo.put("timestamp", new Date());
       imageInfo.put("file_name",result[1]);
       imageInfo.put("local_path",result[0]);
+      imageInfo.put("firestore_path","users/"+user.getUid()+"/image_detection/"+result[1]);
+      imageInfo.put("storage_path","users/"+user.getUid()+"/detection_images");
       imageInfo.put("inference",ms);
 
+      firebaseDB.saveFileInfoToFirestore(imageInfo,"upload_queue");
       firebaseDB.saveFileInfoToFirestore(imageInfo,"image_detection");
 
-      //can be possible to start display of image
+
+      //can be possible to start display of image even if saved to cache
+      //if save to server trigger syncing
     }
   }
 
