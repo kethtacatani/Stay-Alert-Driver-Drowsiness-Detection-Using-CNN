@@ -64,7 +64,6 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.etebarian.meowbottomnavigation.MeowBottomNavigation;
-import com.example.stayalert.databinding.ActivityHomeBinding;
 import com.example.stayalert.env.ImageUtils;
 import com.example.stayalert.env.Logger;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -467,7 +466,6 @@ public abstract class CameraActivity extends AppCompatActivity
 
 
 
-
   }
 
   ////////////////////////////////////////////
@@ -504,10 +502,10 @@ public abstract class CameraActivity extends AppCompatActivity
 
   public void saveDetectedImage(Bitmap bitmap,String detectionType, String ms){
 
-    String result[] =firebaseDB.saveImageToLocal(getApplicationContext(),""+timestamp,bitmap,"detections");
+    String result[] =firebaseDB.saveImageToLocal(""+timestamp,bitmap,"detections");
     if(result!=null){
       Map<String, Object> imageInfo = new HashMap<>();
-      imageInfo.put("detection_name", detectionType);
+      imageInfo.put("detection_name", (detectionType.equals("yawn")?"Yawn":"Drowsy"));
       imageInfo.put("timestamp", new Date());
       imageInfo.put("file_name",result[1]);
       imageInfo.put("local_path",result[0]);

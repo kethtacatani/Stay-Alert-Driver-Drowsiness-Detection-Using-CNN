@@ -23,7 +23,7 @@
         android:fontFamily="@font/nunito_sans"
         android:text="11/21/23 7:20 AM "
         android:textColor="@color/black"
-        android:textSize="16sp"
+        android:textSize="14sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toEndOf="@+id/viewDetectedImageBtn"
         app:layout_constraintTop_toTopOf="parent" />
@@ -32,13 +32,12 @@
         android:id="@+id/detectionType"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="-60dp"
         android:fontFamily="@font/nunito_sans"
         android:text="Sleep"
         android:textColor="@color/black"
-        android:textSize="16sp"
+        android:textSize="14sp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toEndOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
 

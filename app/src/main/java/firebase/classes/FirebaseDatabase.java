@@ -3,48 +3,44 @@ package firebase.classes;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Camera;
 import android.net.Uri;
-import android.os.Environment;
 import android.util.Log;
-import android.widget.EditText;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
 import com.example.stayalert.CameraActivity;
-import com.example.stayalert.env.Logger;
+import com.example.stayalert.DetectionLogsInfo;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.Source;
+import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.IdentityHashMap;
+import java.util.Locale;
 import java.util.Map;
 
 public class FirebaseDatabase {
@@ -227,11 +223,43 @@ public class FirebaseDatabase {
         return false;
     }
 
-    public Bitmap getImageToLocal(String local_path, String fileName) {
+    public interface BitmapTaskCallback<T> {
+        void onSuccess(Bitmap bitmap);
+        void onFailure(String errorMessage);
+    }
+
+    public Bitmap getImageFromServer(String fileName, BitmapTaskCallback callback) {
         try {
-            File imageFile = new File(CameraActivity.context.getFilesDir(), local_path + "/" + fileName);
+            StorageReference storageRef = storage.getReference().child("users/"+mAuth.getUid()+"/detection_images/"+fileName);
+            final long ONE_MEGABYTE = 1024 * 1024;
+            storageRef.getBytes(ONE_MEGABYTE).addOnSuccessListener(new OnSuccessListener<byte[]>() {
+                @Override
+                public void onSuccess(byte[] bytes) {
+                    System.out.println("success byte");
+                    Bitmap bitmap=BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                    if(bitmap!=null){
+                        saveImageToLocal(fileName,bitmap,"detections");
+                        callback.onSuccess(bitmap);
+                    }
+                }
+            }).addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception exception) {
+                    callback.onFailure(exception.getLocalizedMessage());
+
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public Bitmap getImageFromLocal(Context context,String local_path, String fileName) {
+        try {
+            File imageFile = new File(context.getFilesDir(), local_path + "/" + fileName);
             if (imageFile.exists()) {
-                System.out.println("get image at "+imageFile.getName());
+//                System.out.println("get image at "+imageFile.getName());
                 return BitmapFactory.decodeFile(imageFile.getAbsolutePath());
             } else {
                 Log.e("getImageFromLocal", "File does not exist: " + imageFile.getAbsolutePath());
@@ -242,10 +270,10 @@ public class FirebaseDatabase {
         return null;
     }
 
-    public String[] saveImageToLocal(Context mcoContext, String nameExtension, Bitmap bitmap, String folder){
+    public String[] saveImageToLocal(String nameExtension, Bitmap bitmap, String folder){
         String time = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
-        String path=mAuth.getUid()+"/"+folder+"/"+time.substring(0, Math.min(time.length(), 8));
-        File dir = new File(mcoContext.getFilesDir(), path);
+        String path=mAuth.getUid()+"/"+folder;
+        File dir = new File(CameraActivity.context.getFilesDir(), path);
         if(!dir.exists()){
             dir.mkdirs();
         }
@@ -286,7 +314,7 @@ public class FirebaseDatabase {
 
     public UploadTask isImageUploaded(String storagePath,String localPath, String fileName, OnInterfaceListener listener){
 
-        Bitmap bitmap= getImageToLocal(localPath,fileName);
+        Bitmap bitmap= getImageFromLocal(CameraActivity.context, localPath,fileName);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
         byte[] data = baos.toByteArray();
@@ -441,6 +469,53 @@ public class FirebaseDatabase {
             }
         });
     }
+
+    public interface ArrayListTaskCallback<T> {
+        void onSuccess(ArrayList<DetectionLogsInfo> arrayList);
+        void onFailure(String errorMessage);
+    }
+
+    public ArrayList<DetectionLogsInfo> getDetectionLogsInfo(Query query,ArrayListTaskCallback<Void> callback) {
+        ArrayList<DetectionLogsInfo> info = new ArrayList<>();
+
+        query.get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                QuerySnapshot querySnapshot = task.getResult();
+                if (querySnapshot != null) {
+                    for (DocumentSnapshot documentFields : querySnapshot.getDocuments()) {
+                        String fileName = getValue(documentFields.getData(), "file_name", "");
+                        String type = getValue(documentFields.getData(), "detection_name", "");
+                        String timestamp = dateFormat(documentFields.getTimestamp("timestamp"));
+                        String location = getValue(documentFields.getData(), "location", "to be added");
+                        String accuracy = getValue(documentFields.getData(), "accuracy", "");
+                        String inference = getValue(documentFields.getData(), "inference", "");
+                        String localPath = getValue(documentFields.getData(), "local_path", "");
+                        String downloadURL = getValue(documentFields.getData(), "downloadURL", "");
+
+                        info.add( new DetectionLogsInfo(type,timestamp,location,accuracy,inference,fileName, localPath, downloadURL));
+                    }
+                    callback.onSuccess(info);
+                }
+
+            } else {
+                // Handle failures
+                Exception exception = task.getException();
+                Log.d(TAG+ "getDetectionLogsIndo","Error getting documents: " + exception.getLocalizedMessage());
+                callback.onFailure(exception.getLocalizedMessage());
+            }
+        });
+        return null;
+    }
+
+    private String dateFormat(Timestamp timestamp) {
+        String timestampString = null;
+        Date date = timestamp.toDate();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("MMM d, yyyy 'at' h:mm a", Locale.getDefault());
+        timestampString = dateFormat.format(date);
+        return timestampString;
+
+    }
+
 
     public String getAuthMessage(String errorCode){
         String errorMessage="";

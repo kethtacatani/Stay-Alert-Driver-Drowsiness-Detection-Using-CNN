@@ -39,7 +39,7 @@
                 android:textColor="@color/black"
                 android:textStyle="bold"
                 android:textSize="14sp"
-                app:layout_constraintBottom_toTopOf="@+id/imageView9"
+                app:layout_constraintBottom_toTopOf="@+id/detectionLogsImage"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
@@ -53,11 +53,11 @@
                 android:layout_marginBottom="2dp"
                 android:background="@color/transparent"
                 android:src="@drawable/ic_close_round"
-                app:layout_constraintEnd_toEndOf="@+id/imageView9"
+                app:layout_constraintEnd_toEndOf="@+id/detectionLogsImage"
                 app:layout_constraintTop_toTopOf="parent" />
 
             <ImageView
-                android:id="@+id/imageView9"
+                android:id="@+id/detectionLogsImage"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_marginTop="5dp"
@@ -65,7 +65,7 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/detectionViewCloseBtn"
-                android:src="@drawable/drpwsy_face" />
+                android:src="@drawable/blank_detection" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -73,7 +73,7 @@
                 android:layout_marginTop="15dp"
                 android:orientation="vertical"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/imageView9">
+                app:layout_constraintTop_toBottomOf="@+id/detectionLogsImage">
 
                 <LinearLayout
                     android:layout_width="match_parent"
