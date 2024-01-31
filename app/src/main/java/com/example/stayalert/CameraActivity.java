@@ -149,7 +149,7 @@ public abstract class CameraActivity extends AppCompatActivity
   public Bitmap cropCopyBitmap = null;
   public long timestamp = 0;
   public long lastProcessingTimeMs;
-  public float confidenceLevel;
+  public float confidenceLevel=0;
 
   private String[] values = new String[30];
   private int currentIndex = 0;
@@ -512,7 +512,7 @@ public abstract class CameraActivity extends AppCompatActivity
       imageInfo.put("firestore_path","users/"+user.getUid()+"/image_detection/"+result[1]);
       imageInfo.put("storage_path","users/"+user.getUid()+"/detection_images");
       imageInfo.put("inference",ms);
-      imageInfo.put("accuracy",confidenceLevel);
+      imageInfo.put("accuracy",(int) ((Math.round(confidenceLevel * 100.0f) / 100.0f)*100));
 
       firebaseDB.saveFileInfoToFirestore(imageInfo,"upload_queue");
       firebaseDB.saveFileInfoToFirestore(imageInfo,"image_detection");

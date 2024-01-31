@@ -323,6 +323,7 @@ public class DetectorActivity extends com.example.stayalert.CameraActivity imple
 
                                 result.setLocation(location);
                                 result.getConfidence();
+                                mappedRecognitions.add(result);
                                 confidenceLevel= result.getConfidence();
 
                             }

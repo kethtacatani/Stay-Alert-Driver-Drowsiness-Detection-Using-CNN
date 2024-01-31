@@ -83,7 +83,7 @@ public class ViewDetectedImageHelper {
         type.setText(info.getDetectionType());
         timestamp.setText(info.getTimestamp());
         location.setText(info.getLocation());
-        accuracy.setText(info.getAccuracy());
+        accuracy.setText(info.getAccuracy()+"%");
         inference.setText(info.getInference());
         title.setText(info.getTitle());
         detectionImage.setImageResource(R.drawable.blank_detection);
