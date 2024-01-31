@@ -101,6 +101,7 @@ public class ViewDetectedImageHelper {
                 @Override
                 public void onFailure(String errorMessage) {
                     Log.w("ViewDetectionHelper", errorMessage);
+
                 }
             });
         }

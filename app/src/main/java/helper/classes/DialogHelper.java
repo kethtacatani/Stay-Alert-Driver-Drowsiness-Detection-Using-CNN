@@ -3,8 +3,10 @@ package helper.classes;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.graphics.Bitmap;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -79,6 +81,12 @@ public class DialogHelper {
     public void showDialog(String title, String info) {
         dialogTitle.setText(title);
         dialogInfo.setText(info);
+        dialog.show();
+    }
+
+    public void showTestImage(Bitmap bitmap){
+        ImageView imageView= dialog.findViewById(R.id.testImage);
+        imageView.setImageBitmap(bitmap);
         dialog.show();
     }
 

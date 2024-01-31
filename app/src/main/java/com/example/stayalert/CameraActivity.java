@@ -92,6 +92,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import firebase.classes.FirebaseDatabase;
+import helper.classes.DialogHelper;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
 
@@ -106,6 +107,7 @@ public abstract class CameraActivity extends AppCompatActivity
   private static final int PERMISSIONS_REQUEST = 1;
   public static String PACKAGE_NAME;
   public static Context context;
+  public Date date;
 
   private static final String PERMISSION_CAMERA = Manifest.permission.CAMERA;
   private static final String ASSET_PATH = "";
@@ -147,6 +149,7 @@ public abstract class CameraActivity extends AppCompatActivity
   public static String eyeStatus="";
   public static String mouthStatus="";
   public Bitmap cropCopyBitmap = null;
+  public Bitmap copyBitmap = null;
   public long timestamp = 0;
   public long lastProcessingTimeMs;
   public float confidenceLevel=0;
@@ -169,6 +172,7 @@ public abstract class CameraActivity extends AppCompatActivity
   FirebaseDatabase firebaseDB;
   FirebaseStorage storage = FirebaseStorage.getInstance();
   public Map<String, Object> userInfo = new HashMap<>();
+  DialogHelper dialogHelper;
 
   ArrayList<String> deviceStrings = new ArrayList<String>();
 
@@ -194,6 +198,7 @@ public abstract class CameraActivity extends AppCompatActivity
     super.onCreate(null);
     getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
+    dialogHelper= new DialogHelper(this);
     setContentView(R.layout.tfe_od_activity_camera);
     frameLayout = findViewById(R.id.container);
     Handler handler = new Handler();
@@ -237,7 +242,7 @@ public abstract class CameraActivity extends AppCompatActivity
 
           ringtone.play();
           if(statusDriver.contains("ACTIVE")){
-            saveDetectedImage(cropCopyBitmap,"closed_eyes", lastProcessingTimeMs+"");
+            saveDetectedImage(copyBitmap,eyeStatus, lastProcessingTimeMs+"");
           }
           statusDriver=" DROWSY ";
 
@@ -281,7 +286,7 @@ public abstract class CameraActivity extends AppCompatActivity
 //            firebaseDB.saveImageToLocal(getApplicationContext(),""+timestamp,cropCopyBitmap,"detections");
 //          }
           if(statusDriverMouth.contains("ACTIVE")){
-            saveDetectedImage(cropCopyBitmap,"yawn",lastProcessingTimeMs+"");
+            saveDetectedImage(copyBitmap,mouthStatus,lastProcessingTimeMs+"");
           }
           statusDriverMouth=" YAWNING ";
 
@@ -501,12 +506,15 @@ public abstract class CameraActivity extends AppCompatActivity
   }
 
   public void saveDetectedImage(Bitmap bitmap,String detectionType, String ms){
+    if(detectionType.equals("open")||detectionType.equals("no_yawn")){
+      return;
+    }
 
     String result[] =firebaseDB.saveImageToLocal(""+timestamp,bitmap,"detections");
     if(result!=null){
       Map<String, Object> imageInfo = new HashMap<>();
       imageInfo.put("detection_name", (detectionType.equals("yawn")?"Yawn":"Drowsy"));
-      imageInfo.put("timestamp", new Date());
+      imageInfo.put("timestamp", date);
       imageInfo.put("file_name",result[1]);
       imageInfo.put("local_path",result[0]);
       imageInfo.put("firestore_path","users/"+user.getUid()+"/image_detection/"+result[1]);

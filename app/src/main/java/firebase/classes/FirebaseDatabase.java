@@ -238,7 +238,7 @@ public class FirebaseDatabase {
                     System.out.println("success byte");
                     Bitmap bitmap=BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
                     if(bitmap!=null){
-                        saveImageToLocal(fileName,bitmap,"detections");
+                        saveImageToLocal(fileName,bitmap,(fileName.contains("local")?"detections":"user_images"));
                         callback.onSuccess(bitmap);
                     }
                 }
@@ -421,34 +421,38 @@ public class FirebaseDatabase {
 
 
 
-    public Bitmap compressImage(Bitmap imageBitmap){
-        Bitmap bitmap = imageBitmap;
-        int maxSizeInBytes = 100 * 1024; // 100 KB
+    public Bitmap compressImage(Bitmap bm){
+        int width = bm.getWidth();
+        int height = bm.getHeight();
 
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        int quality = 100; // initial quality
 
-        do {
-            // Compress the Bitmap with the current quality
-            bitmap.compress(Bitmap.CompressFormat.JPEG, quality, baos);
 
-            // Check the size of the compressed image
-            int compressedSize = baos.toByteArray().length;
 
-            // If the compressed size is greater than the maximum size, reduce the quality
-            if (compressedSize > maxSizeInBytes) {
-                baos.reset(); // Reset the ByteArrayOutputStream
+        int maxWidth=480;
+        int maxHeight=480;
 
-                // Reduce the quality by a certain factor (e.g., 10% reduction)
-                quality -= 10;
+        if(bm.getHeight()<maxHeight|| bm.getWidth()<maxWidth){
+            return bm;
+        }
+        if (width > height) {
+            // landscape
+            float ratio = (float) width / maxWidth;
+            width = maxWidth;
+            height = (int)(height / ratio);
+        } else if (height > width) {
+            // portrait
+            float ratio = (float) height / maxHeight;
+            height = maxHeight;
+            width = (int)(width / ratio);
+        } else {
+            // square
+            height = maxHeight;
+            width = maxWidth;
+        }
 
-                // Ensure the quality doesn't go below 0
-                if (quality < 0) {
-                    quality = 0;
-                }
-            }
-        } while (baos.toByteArray().length > maxSizeInBytes);
-        return bitmap;
+
+        bm = Bitmap.createScaledBitmap(bm, width, height, true);
+        return bm;
     }
 
     public void checkSync(){
@@ -507,7 +511,7 @@ public class FirebaseDatabase {
         return null;
     }
 
-    private String dateFormat(Timestamp timestamp) {
+    public String dateFormat(Timestamp timestamp) {
         String timestampString = null;
         Date date = timestamp.toDate();
         SimpleDateFormat dateFormat = new SimpleDateFormat("MMM d, yyyy 'at' h:mm a", Locale.getDefault());
