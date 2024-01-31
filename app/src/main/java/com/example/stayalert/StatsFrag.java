@@ -3,62 +3,70 @@ package com.example.stayalert;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link StatsFrag#newInstance} factory method to
- * create an instance of this fragment.
- */
+import com.google.firebase.Firebase;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
+
+import java.util.ArrayList;
+
+import firebase.classes.FirebaseDatabase;
+
 public class StatsFrag extends Fragment {
-
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
-
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
-
-    public StatsFrag() {
-        // Required empty public constructor
-    }
-
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment StatsFrag.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static StatsFrag newInstance(String param1, String param2) {
-        StatsFrag fragment = new StatsFrag();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
-    }
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
-    }
+    RecyclerView detectionLogsRV;
+    LinearLayoutManager linearLayoutManager;
+    ArrayList<DetectionLogsInfo> info = new ArrayList<>();
+    DetectionLogsRecycleViewAdapter adapter;
+    FirebaseDatabase firebaseDB;
+    FirebaseUser user;
+    FirebaseFirestore db;
+    Query query;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_stats, container, false);
+        View view= inflater.inflate(R.layout.fragment_stats, container, false);
+        firebaseDB=new FirebaseDatabase();
+        db = FirebaseFirestore.getInstance();
+        user = FirebaseAuth.getInstance().getCurrentUser();
+
+        detectionLogsRV=view.findViewById(R.id.detectionLogsRV);
+        detectionLogsRV.setHasFixedSize(false);
+
+        query= db.collection("users/"+user.getUid()+"/image_detection")
+                // Order documents by the "timestamp" field in descending order
+                .orderBy("timestamp", Query.Direction.DESCENDING)
+                // Limit the result set to 15 documents
+                .limit(15);
+
+        info = firebaseDB.getDetectionLogsInfo(query, new FirebaseDatabase.ArrayListTaskCallback<Void>() {
+
+            @Override
+            public void onSuccess(ArrayList<DetectionLogsInfo> arrayList) {
+                info =arrayList;
+                linearLayoutManager = new LinearLayoutManager((CameraActivity)getActivity());
+                detectionLogsRV.setLayoutManager(linearLayoutManager);
+                adapter= new DetectionLogsRecycleViewAdapter(info, (CameraActivity)getActivity());
+                detectionLogsRV.setAdapter(adapter);
+            }
+
+            @Override
+            public void onFailure(String errorMessage) {
+
+            }
+        });
+
+
+        return view;
     }
 }

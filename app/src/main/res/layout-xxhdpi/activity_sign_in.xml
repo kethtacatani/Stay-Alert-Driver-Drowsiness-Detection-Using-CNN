@@ -93,23 +93,32 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/textView" />
 
-        <EditText
-            android:id="@+id/ETusername"
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/ETusernameLayout"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="50dp"
-            android:background="@drawable/input"
-            android:ems="14"
-            android:fontFamily="@font/poppins_medium"
-            android:hint="Username"
-            android:inputType="textPersonName"
-            android:paddingLeft="15dp"
-            android:textSize="16sp"
+            app:endIconMode="clear_text"
+            android:textColorHint="@color/selection_highlight"
+            app:boxStrokeWidth="0dp"
+            app:boxStrokeWidthFocused="0dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textView2" />
+            app:layout_constraintTop_toBottomOf="@+id/textView2" >
 
-        />
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/ETusername"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/input"
+                android:fontFamily="@font/poppins_medium"
+                android:hint="Email"
+                android:inputType="textPersonName"
+                android:paddingLeft="15dp"
+                android:textSize="16sp"
+                />
+        </com.google.android.material.textfield.TextInputLayout>
 
         <TextView
             android:id="@+id/TVusernameErr"
@@ -119,24 +128,32 @@
             android:text="Required*"
             android:textColor="@color/red"
             android:visibility="invisible"
-            app:layout_constraintEnd_toEndOf="@+id/ETusername"
-            app:layout_constraintTop_toBottomOf="@+id/ETusername" />
+            app:layout_constraintEnd_toEndOf="@+id/ETusernameLayout"
+            app:layout_constraintTop_toBottomOf="@+id/ETusernameLayout" />
 
-        <EditText
-            android:id="@+id/ETpass"
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/ETpassLayout"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@drawable/input"
-            android:ems="14"
+            app:boxStrokeWidth="0dp"
+            app:boxStrokeWidthFocused="0dp"
             android:layout_marginTop="25dp"
-            android:hint="Passowrd"
-            android:paddingLeft="15dp"
-            android:inputType="textPassword"
-            android:textSize="16sp"
-            android:fontFamily="@font/poppins_medium"
+            app:passwordToggleEnabled="true"
             app:layout_constraintEnd_toEndOf="parent"
+            android:textColorHint="@color/selection_highlight"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/ETusername" />
+            app:layout_constraintTop_toBottomOf="@+id/ETusernameLayout">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/ETpass"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/input"
+                android:fontFamily="@font/poppins_medium"
+                android:hint="Password"
+                android:inputType="textPassword" />
+        </com.google.android.material.textfield.TextInputLayout>
+
 
         <TextView
             android:id="@+id/TVpassErr"
@@ -146,8 +163,8 @@
             android:text="Required*"
             android:textColor="@color/red"
             android:visibility="invisible"
-            app:layout_constraintEnd_toEndOf="@+id/ETpass"
-            app:layout_constraintTop_toBottomOf="@+id/ETpass" />
+            app:layout_constraintEnd_toEndOf="@+id/ETpassLayout"
+            app:layout_constraintTop_toBottomOf="@+id/ETpassLayout" />
 
         />
 
@@ -162,8 +179,8 @@
             android:text="Forgot password?"
             android:textColor="@drawable/forgot_pass_button"
             android:textSize="14sp"
-            app:layout_constraintEnd_toEndOf="@+id/BTNsignin"
-            app:layout_constraintTop_toBottomOf="@+id/ETpass" />
+            app:layout_constraintEnd_toEndOf="@+id/ETpassLayout"
+            app:layout_constraintTop_toBottomOf="@+id/ETpassLayout" />
 
         <Button
             android:id="@+id/BTNsignin"
@@ -172,7 +189,7 @@
             android:layout_marginTop="20dp"
             android:background="@drawable/buttonsign_inup"
             android:elevation="20dp"
-            android:ems="11"
+            android:ems="8"
             android:fontFamily="@font/poppins_semibold"
             android:padding="10dp"
             android:textSize="20sp"
@@ -240,37 +257,20 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
 
+
             <Button
                 android:id="@+id/BTNgoogle"
-                android:layout_width="60dp"
+                android:layout_width="wrap_content"
                 android:layout_height="44dp"
-                android:background="@drawable/ic_google"
-                app:backgroundTint="@null"
+                android:drawableLeft="@drawable/ic_google_icon_logo_svgrepo_com"
+                android:gravity="left|center_vertical"
+                android:text="Sign up with Google"
+                android:textColor="@color/black"
+                app:backgroundTint="@color/white"
+                android:textAllCaps="false"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/TVtext3"
                 tools:ignore="SpeakableTextPresentCheck,TouchTargetSizeCheck,TouchTargetSizeCheck" />
-
-            <Button
-                android:id="@+id/BTNapple"
-                android:layout_width="60dp"
-                android:layout_height="44dp"
-                android:layout_marginStart="10dp"
-                android:background="@drawable/ic_facebook"
-                app:backgroundTint="@null"
-                app:layout_constraintStart_toEndOf="@+id/BTNgoogle"
-                app:layout_constraintTop_toBottomOf="@+id/TVtext3"
-                tools:ignore="SpeakableTextPresentCheck,TouchTargetSizeCheck" />
-
-            <Button
-                android:id="@+id/BTNfb"
-                android:layout_width="60dp"
-                android:layout_height="44dp"
-                android:layout_marginStart="10dp"
-                app:backgroundTint="@null"
-                android:background="@drawable/ic_apple"
-                app:layout_constraintStart_toEndOf="@+id/BTNapple"
-                app:layout_constraintTop_toBottomOf="@+id/TVtext3"
-                tools:ignore="SpeakableTextPresentCheck,TouchTargetSizeCheck" />
         </LinearLayout>
 
 

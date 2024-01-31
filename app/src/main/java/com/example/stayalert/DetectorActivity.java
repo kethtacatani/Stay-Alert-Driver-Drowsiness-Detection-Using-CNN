@@ -32,7 +32,10 @@ import android.util.Log;
 import android.util.Size;
 import android.util.TypedValue;
 import android.widget.FrameLayout;
+import android.widget.Switch;
 import android.widget.Toast;
+
+import androidx.core.content.res.ResourcesCompat;
 
 import com.example.stayalert.customview.OverlayView;
 import com.example.stayalert.customview.OverlayView.DrawCallback;
@@ -43,9 +46,12 @@ import com.example.stayalert.tflite.Classifier;
 import com.example.stayalert.tflite.DetectorFactory;
 import com.example.stayalert.tflite.YoloV5Classifier;
 import com.example.stayalert.tracking.MultiBoxTracker;
+import com.google.firebase.Timestamp;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -67,14 +73,14 @@ public class DetectorActivity extends com.example.stayalert.CameraActivity imple
 
     private YoloV5Classifier detector;
 
-    private long lastProcessingTimeMs;
     private Bitmap rgbFrameBitmap = null;
     private Bitmap croppedBitmap = null;
-    private Bitmap cropCopyBitmap = null;
+
+
+
 
     private boolean computingDetection = false;
 
-    private long timestamp = 0;
 
     private Matrix frameToCropTransform;
     private Matrix cropToFrameTransform;
@@ -123,6 +129,10 @@ public class DetectorActivity extends com.example.stayalert.CameraActivity imple
         LOGGER.i("Initializing at size %dx%d", previewWidth, previewHeight);
         rgbFrameBitmap = Bitmap.createBitmap(previewWidth, previewHeight, Config.ARGB_8888);
         croppedBitmap = Bitmap.createBitmap(cropSize, cropSize, Config.ARGB_8888);
+
+
+
+
 
         frameToCropTransform =
                 ImageUtils.getTransformationMatrix(
@@ -296,12 +306,10 @@ public class DetectorActivity extends com.example.stayalert.CameraActivity imple
 
                         Log.e("CHECK", "run: " + results.size());
 
+
                         cropCopyBitmap = Bitmap.createBitmap(croppedBitmap);
-                        final Canvas canvas = new Canvas(cropCopyBitmap);
-                        final Paint paint = new Paint();
-                        paint.setColor(Color.RED);
-                        paint.setStyle(Style.STROKE);
-                        paint.setStrokeWidth(2.0f);
+                        copyBitmap = cropToSquare(rgbFrameBitmap);
+                        final Canvas canvas = new Canvas(copyBitmap);
 
                         float minimumConfidence = MINIMUM_CONFIDENCE_TF_OD_API;
                         switch (MODE) {
@@ -318,13 +326,16 @@ public class DetectorActivity extends com.example.stayalert.CameraActivity imple
                         for (final Classifier.Recognition result : results) {
                             final RectF location = result.getLocation();
                             if (location != null && result.getConfidence() >= minimumConfidence) {
-                                canvas.drawRect(location, paint);
+
+                                setCanvas(canvas,result.getTitle(),location);
 
                                 cropToFrameTransform.mapRect(location);
                                 resultTitles.add(result.getTitle());
-
                                 result.setLocation(location);
+                                result.getConfidence();
                                 mappedRecognitions.add(result);
+                                confidenceLevel= result.getConfidence();
+
                             }
                         }
 
@@ -348,6 +359,77 @@ public class DetectorActivity extends com.example.stayalert.CameraActivity imple
                                 });
                     }
                 });
+    }
+
+    public void setCanvas(Canvas canvas, String label, RectF location){
+        int color=1;
+        switch (label){
+            case "open":
+                color=Color.GREEN;
+                break;
+            case "closed":
+                color=Color.BLUE;
+                break;
+            case "yawn":
+                color=Color.YELLOW;
+                break;
+            case "no_yawn":
+                color=Color.RED;
+                break;
+            default:
+                color=Color.MAGENTA;
+                break;
+        }
+
+        Paint paint = new Paint();
+        paint.setColor(color);
+        paint.setStyle(Style.STROKE);
+        paint.setTextSize(55.0f);
+        paint.setStrokeWidth(4.0f);
+
+        paint.setTypeface(ResourcesCompat.getFont(context,R.font.nunito_regular));
+
+
+        int scale=1080/160;
+
+        canvas.drawText(label, location.left*(scale), (label.equals("yawn")||label.equals("no_yawn"))?location.bottom*(scale)+100:location.top*(scale)+50,paint);
+        canvas.drawRect(location.left*(scale)+70,location.top*(scale)+70,location.right*(scale)+70,location.bottom*(scale)+70,paint);
+
+        date=new Date();
+        String time = firebaseDB.dateFormat(Timestamp.now());
+        Paint timePaint = new Paint();
+        timePaint.setTextSize(60.0f);
+        timePaint.setColor(Color.CYAN);
+        canvas.drawText(time,50,80,timePaint);
+
+    }
+
+    public Bitmap cropToSquare(Bitmap srcBmp){
+        Bitmap dstBmp;
+        Matrix matrix = new Matrix();
+        matrix.postRotate(270);
+        matrix.preScale(1 ,-1);
+        if (srcBmp.getWidth() >= srcBmp.getHeight()){
+
+            dstBmp = Bitmap.createBitmap(
+                    srcBmp,
+                    srcBmp.getWidth()/2 - srcBmp.getHeight()/2,
+                    0,
+                    srcBmp.getHeight(),
+                    srcBmp.getHeight(),matrix,true
+            );
+
+        }else{
+
+            dstBmp = Bitmap.createBitmap(
+                    srcBmp,
+                    0,
+                    srcBmp.getHeight()/2 - srcBmp.getWidth()/2,
+                    srcBmp.getWidth(),
+                    srcBmp.getWidth(),matrix,true
+            );
+        }
+        return dstBmp;
     }
 
     @Override

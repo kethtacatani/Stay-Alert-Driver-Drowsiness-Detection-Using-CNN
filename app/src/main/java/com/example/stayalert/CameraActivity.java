@@ -22,6 +22,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
+import android.graphics.Bitmap;
 import android.hardware.Camera;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
@@ -39,6 +40,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Trace;
+import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
 import android.view.View;
@@ -57,23 +59,40 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.etebarian.meowbottomnavigation.MeowBottomNavigation;
-import com.example.stayalert.databinding.ActivityHomeBinding;
 import com.example.stayalert.env.ImageUtils;
 import com.example.stayalert.env.Logger;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import firebase.classes.FirebaseDatabase;
+import helper.classes.DialogHelper;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
 
@@ -84,8 +103,11 @@ public abstract class CameraActivity extends AppCompatActivity
         View.OnClickListener {
   MeowBottomNavigation bottomNavigation;
   private static final Logger LOGGER = new Logger();
-
+  private static final String TAG = "CameraActivity";
   private static final int PERMISSIONS_REQUEST = 1;
+  public static String PACKAGE_NAME;
+  public static Context context;
+  public Date date;
 
   private static final String PERMISSION_CAMERA = Manifest.permission.CAMERA;
   private static final String ASSET_PATH = "";
@@ -100,7 +122,7 @@ public abstract class CameraActivity extends AppCompatActivity
   private int[] rgbBytes = null;
   private int yRowStride;
   protected int defaultModelIndex = 0;
-  protected int defaultDeviceIndex = 1;
+  protected int defaultDeviceIndex = 0;
   private Runnable postInferenceCallback;
   private Runnable imageConverter;
   protected ArrayList<String> modelStrings = new ArrayList<String>();
@@ -126,29 +148,49 @@ public abstract class CameraActivity extends AppCompatActivity
   public static int elevation=0;
   public static String eyeStatus="";
   public static String mouthStatus="";
+  public Bitmap cropCopyBitmap = null;
+  public Bitmap copyBitmap = null;
+  public long timestamp = 0;
+  public long lastProcessingTimeMs;
+  public float confidenceLevel=0;
 
   private String[] values = new String[30];
   private int currentIndex = 0;
+  private int currentIndexYawn  = 0;
   private int closeCount = 0;
+  private int yawnCount = 0;
   private Runnable runnableCode;
   boolean ring=false;
   Ringtone ringtone;
   boolean offlineMode=false, appStopped=false;
   Handler schedHandler;
   Runnable connectivityCheckRunnable;
-  Database db;
   String statusDriver=" ACTIVE ";
+  String statusDriverMouth=" ACTIVE ";
+  FirebaseUser user;
+  FirebaseFirestore db;
+  FirebaseDatabase firebaseDB;
+  FirebaseStorage storage = FirebaseStorage.getInstance();
+  public Map<String, Object> userInfo = new HashMap<>();
+  DialogHelper dialogHelper;
 
   ArrayList<String> deviceStrings = new ArrayList<String>();
+
 
   @Override
   protected void onCreate(final Bundle savedInstanceState) {
 
+    PACKAGE_NAME = getApplicationContext().getPackageName();
+    context=getApplicationContext();
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
       View decorView = getWindow().getDecorView();
       decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
 
     }
+    firebaseDB= new FirebaseDatabase();
+    db = FirebaseFirestore.getInstance();
+    user = FirebaseAuth.getInstance().getCurrentUser();
+    getUserInfo();
 
     CameraManager cameraManager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
 
@@ -156,6 +198,7 @@ public abstract class CameraActivity extends AppCompatActivity
     super.onCreate(null);
     getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
+    dialogHelper= new DialogHelper(this);
     setContentView(R.layout.tfe_od_activity_camera);
     frameLayout = findViewById(R.id.container);
     Handler handler = new Handler();
@@ -163,9 +206,6 @@ public abstract class CameraActivity extends AppCompatActivity
     // Create a Ringtone object from the URI
     ringtone = RingtoneManager.getRingtone(CameraActivity.this, defaultRingtoneUri);
 
-
-    db = new Database();
-    db.isConnected();
 
     bottomNavigation= findViewById(R.id.bottomNavigation);
     backBtn= findViewById(R.id.backBtn);
@@ -178,46 +218,8 @@ public abstract class CameraActivity extends AppCompatActivity
     bottomNavigation.add(new MeowBottomNavigation.Model(5, R.drawable.ic_profile));
 
 
-    schedHandler = new Handler();
-
-    connectivityCheckRunnable = new Runnable() {
-      @Override
-      public void run() {
-        // Perform database connectivity check
-        boolean isConnected = db.isConnected;
-        db.isConnected();
-        System.out.println("main - checking");
 
 
-        // Handle the result as needed
-//        if (!isConnected) {
-//          offlineMode=true;
-//          if(!dialog.isShowing()){
-//            showDialog("Connection Failed","No database connection.\n Proceed to Offline mode?");
-//            System.out.println("showing");
-//          }
-//        } else {
-//          if(dialog.isShowing() && offlineMode){
-//            dialog.dismiss();
-//            offlineMode=false;
-//          }
-//        }
-
-        // Schedule the next check after 3 seconds
-        schedHandler.postDelayed(this, 3000); // 3000 milliseconds = 3 seconds
-      }
-    };
-    schedHandler.postDelayed(connectivityCheckRunnable, 2500);
-//
-//    ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-//    Runnable task = () -> {
-//      System.out.println("fuck");
-//      db.isConnected();
-//    };
-//    scheduler.scheduleAtFixedRate(task, 0, 6000, TimeUnit.MILLISECONDS);
-
-
-    
 
     runnableCode = new Runnable() {
       @Override
@@ -237,38 +239,75 @@ public abstract class CameraActivity extends AppCompatActivity
           Toast.makeText(CameraActivity.this, "Please WAKE UP!!!!", Toast.LENGTH_SHORT).show();
 
           // Play the default ringtone
-          statusDriver=" SLEEPY ";
+
           ringtone.play();
-          HomeFrag.statusDriverTV.setText(statusDriver);
-          System.out.println("playinh ring");
+          if(statusDriver.contains("ACTIVE")){
+            saveDetectedImage(copyBitmap,eyeStatus, lastProcessingTimeMs+"");
+          }
+          statusDriver=" DROWSY ";
+
+
         }
         else if(closePercentage<90){
           statusDriver=" ACTIVE ";
-          HomeFrag.statusDriverTV.setText(statusDriver);
           ringtone.stop();
 
         }
-
-        // Schedule the next update
-//        System.out.println("looping "+ closePercentage+"\n"+ Arrays.toString(values)+"\n closeCount: "+closeCount);
 
         handler.postDelayed(this, 100); // Schedule the task to run again after 100 milliseconds
       }
     };
     handler.post(runnableCode);
 
-    Handler delayedExecutionHandler = new Handler();
-    delayedExecutionHandler.postDelayed(new Runnable() {
+    //FOR MOUTH
+
+    String[] valuesYawn = new String[30];
+
+    Runnable mouthRunnable;
+    mouthRunnable = new Runnable() {
       @Override
       public void run() {
-        minusImageView.performClick();
-        updateActiveModel();
-      }
-    }, 3000);
+        String newValue = mouthStatus;
+        if ("yawn".equals(newValue) && yawnCount<30) {
+          yawnCount++;
+        }else if (yawnCount>0){
+          yawnCount--;
+        }
+        valuesYawn[currentIndexYawn] = newValue;
+        currentIndexYawn = (currentIndexYawn + 1) % 30; // Wrap around to the beginning of the array
+        double yawnPercentage = (yawnCount / 30.0) * 100.0;
 
-    bottomNavigation.show(3,true);
-    replaceFragment(new HomeFrag());
-    bottomNavigation.clearCount(1);
+
+        if(yawnPercentage>90 && !ringtone.isPlaying() && !appStopped){
+          Toast.makeText(CameraActivity.this, "YAWNING", Toast.LENGTH_SHORT).show();
+
+
+//          if(statusDriverMouth.contains("ACTIVE")){
+//            firebaseDB.saveImageToLocal(getApplicationContext(),""+timestamp,cropCopyBitmap,"detections");
+//          }
+          if(statusDriverMouth.contains("ACTIVE")){
+            saveDetectedImage(copyBitmap,mouthStatus,lastProcessingTimeMs+"");
+          }
+          statusDriverMouth=" YAWNING ";
+
+        }
+        else if(yawnPercentage<90){
+          statusDriverMouth=" ACTIVE ";
+
+        }
+        if(HomeFrag.statusDriverTV!=null){
+          HomeFrag.statusDriverTV.setText((statusDriver.contains("ACTIVE"))?statusDriverMouth:statusDriver);
+        }
+        handler.postDelayed(this, 100); // Schedule the task to run again after 100 milliseconds
+      }
+    };
+    handler.post(mouthRunnable);
+
+
+
+
+
+
 
 
 
@@ -420,17 +459,77 @@ public abstract class CameraActivity extends AppCompatActivity
     plusImageView.setOnClickListener(this);
     minusImageView.setOnClickListener(this);
 
-
-
-    handler.postDelayed(new Runnable() {
+    Handler delayedExecutionHandler = new Handler();
+    delayedExecutionHandler.postDelayed(new Runnable() {
       @Override
       public void run() {
         minusImageView.performClick();
+        updateActiveModel();
+        firebaseDB.checkSync();
       }
     }, 3000);
+
+
+
   }
 
   ////////////////////////////////////////////
+
+
+
+  public void getUserInfo(){
+    firebaseDB.readData("users", user.getUid(),"default", new FirebaseDatabase.OnGetDataListener() {
+      @Override
+      public void onSuccess(DocumentSnapshot documentSnapshot) {
+        Log.d(TAG, "DocumentSnapshot datas: " + documentSnapshot.getData());
+        userInfo = documentSnapshot.getData();
+        bottomNavigation.show(3,true);
+        replaceFragment(new HomeFrag());
+        bottomNavigation.clearCount(1);
+      }
+
+      @Override
+      public void onStart() {
+        Log.d(TAG, "Start getting user info");
+      }
+
+      @Override
+      public void onFailure(Exception e) {
+        Log.d(TAG,"Failed getting user info: "+e);
+        Toast.makeText(CameraActivity.this, "Unable to load user information", Toast.LENGTH_SHORT).show();
+        bottomNavigation.show(3,true);
+        replaceFragment(new HomeFrag());
+        bottomNavigation.clearCount(1);
+      }
+    });
+
+  }
+
+  public void saveDetectedImage(Bitmap bitmap,String detectionType, String ms){
+    if(detectionType.equals("open")||detectionType.equals("no_yawn")){
+      return;
+    }
+
+    String result[] =firebaseDB.saveImageToLocal(""+timestamp,bitmap,"detections");
+    if(result!=null){
+      Map<String, Object> imageInfo = new HashMap<>();
+      imageInfo.put("detection_name", (detectionType.equals("yawn")?"Yawn":"Drowsy"));
+      imageInfo.put("timestamp", date);
+      imageInfo.put("file_name",result[1]);
+      imageInfo.put("local_path",result[0]);
+      imageInfo.put("firestore_path","users/"+user.getUid()+"/image_detection/"+result[1]);
+      imageInfo.put("storage_path","users/"+user.getUid()+"/detection_images");
+      imageInfo.put("inference",ms);
+      imageInfo.put("accuracy",(int) ((Math.round(confidenceLevel * 100.0f) / 100.0f)*100));
+
+      firebaseDB.saveFileInfoToFirestore(imageInfo,"upload_queue");
+      firebaseDB.saveFileInfoToFirestore(imageInfo,"image_detection");
+
+
+      //can be possible to start display of image even if saved to cache
+      //if save to server trigger syncing
+    }
+  }
 
 
   @Override
@@ -449,7 +548,6 @@ public abstract class CameraActivity extends AppCompatActivity
     }
     ringtone.stop();
     appStopped=true;
-    schedHandler.removeCallbacks(connectivityCheckRunnable);
     handler.removeCallbacks(runnableCode);
     finish();
   }
@@ -707,7 +805,7 @@ public abstract class CameraActivity extends AppCompatActivity
       if (shouldShowRequestPermissionRationale(PERMISSION_CAMERA)) {
         Toast.makeText(
                 CameraActivity.this,
-                "Camera permission is required for this demo",
+                "Camera permission is required",
                 Toast.LENGTH_LONG)
             .show();
       }
