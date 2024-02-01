@@ -54,6 +54,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.TimeZone;
 
 /**
  * An activity that uses a TensorFlowMultiBoxDetector and ObjectTracker to detect and then track
@@ -75,6 +76,7 @@ public class DetectorActivity extends com.example.stayalert.CameraActivity imple
 
     private Bitmap rgbFrameBitmap = null;
     private Bitmap croppedBitmap = null;
+    Bitmap newBm;
 
 
 
@@ -273,6 +275,7 @@ public class DetectorActivity extends com.example.stayalert.CameraActivity imple
 
         croppedBitmap = Bitmap.createBitmap(croppedBitmap, 0, 0, croppedBitmap.getWidth(), croppedBitmap.getHeight(), matrix, false);
 
+
         runInBackground(
                 new Runnable() {
                     @Override
@@ -308,8 +311,8 @@ public class DetectorActivity extends com.example.stayalert.CameraActivity imple
 
 
                         cropCopyBitmap = Bitmap.createBitmap(croppedBitmap);
-                        copyBitmap = cropToSquare(rgbFrameBitmap);
-                        final Canvas canvas = new Canvas(copyBitmap);
+                        newBm = cropToSquare(rgbFrameBitmap);
+                        final Canvas canvas = new Canvas(newBm);
 
                         float minimumConfidence = MINIMUM_CONFIDENCE_TF_OD_API;
                         switch (MODE) {
@@ -326,8 +329,8 @@ public class DetectorActivity extends com.example.stayalert.CameraActivity imple
                         for (final Classifier.Recognition result : results) {
                             final RectF location = result.getLocation();
                             if (location != null && result.getConfidence() >= minimumConfidence) {
-
                                 setCanvas(canvas,result.getTitle(),location);
+                                copyBitmap=newBm;
 
                                 cropToFrameTransform.mapRect(location);
                                 resultTitles.add(result.getTitle());
@@ -338,6 +341,11 @@ public class DetectorActivity extends com.example.stayalert.CameraActivity imple
 
                             }
                         }
+
+
+//                        RectF myRectF = new RectF(80, 90, 80, 90);
+//                        setCanvas(canvas,"sdd",myRectF);
+//                        dialogHelper.showTestImage(copyBitmap);
 
                         eyeStatus=resultTitles.contains("open")||resultTitles.contains("closed")?resultTitles.contains("open") ? "open" : "closed":"";
                         mouthStatus=resultTitles.contains("yawn")||resultTitles.contains("no_yawn")?resultTitles.contains("yawn") ? "yawn" : "no_yawn":"";
@@ -357,8 +365,13 @@ public class DetectorActivity extends com.example.stayalert.CameraActivity imple
                                         showInference(lastProcessingTimeMs + "ms");
                                     }
                                 });
+
                     }
+
+
+
                 });
+
     }
 
     public void setCanvas(Canvas canvas, String label, RectF location){
@@ -393,13 +406,24 @@ public class DetectorActivity extends com.example.stayalert.CameraActivity imple
         int scale=1080/160;
 
         canvas.drawText(label, location.left*(scale), (label.equals("yawn")||label.equals("no_yawn"))?location.bottom*(scale)+100:location.top*(scale)+50,paint);
-        canvas.drawRect(location.left*(scale)+70,location.top*(scale)+70,location.right*(scale)+70,location.bottom*(scale)+70,paint);
+        canvas.drawRect(location.left*(scale)+70,location.top*(scale)+70,location.right*(scale)+70,location.bottom*(scale)+(label.equals("yawn")?80:70),paint);
 
         date=new Date();
-        String time = firebaseDB.dateFormat(Timestamp.now());
+        String time = firebaseDB.dateFormat(Timestamp.now())+" " +(TimeZone.getDefault().getID().equals("Asia/Manila")?"PHT":TimeZone.getDefault().getID());
         Paint timePaint = new Paint();
         timePaint.setTextSize(60.0f);
-        timePaint.setColor(Color.CYAN);
+        timePaint.setColor(Color.WHITE);
+
+
+        Paint outlinePaint = new Paint();
+
+        outlinePaint.setAntiAlias(true);
+        //  paint.setARGB(150, 0, 0, 0); // alpha, r, g, b (Black, semi see-through)
+        outlinePaint.setColor(Color.BLACK);
+        outlinePaint.setTextSize(60.0f);
+        // paint2.setColor(0x00000000);
+        outlinePaint.setStyle(Paint.Style.FILL);
+        canvas.drawText(time,53,83,outlinePaint);
         canvas.drawText(time,50,80,timePaint);
 
     }

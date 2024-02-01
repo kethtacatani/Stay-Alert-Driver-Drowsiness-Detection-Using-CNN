@@ -514,7 +514,7 @@ public class FirebaseDatabase {
     public String dateFormat(Timestamp timestamp) {
         String timestampString = null;
         Date date = timestamp.toDate();
-        SimpleDateFormat dateFormat = new SimpleDateFormat("MMM d, yyyy 'at' h:mm a", Locale.getDefault());
+        SimpleDateFormat dateFormat = new SimpleDateFormat("MMM d, yyyy 'at' h:mm a");
         timestampString = dateFormat.format(date);
         return timestampString;
 

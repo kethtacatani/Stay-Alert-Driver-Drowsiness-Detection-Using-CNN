@@ -235,7 +235,7 @@ public abstract class CameraActivity extends AppCompatActivity
         double closePercentage = (closeCount / 30.0) * 100.0;
 
 
-        if(closePercentage>90 && !ringtone.isPlaying() && !appStopped){
+        if(closePercentage>70 && !ringtone.isPlaying() && !appStopped){
           Toast.makeText(CameraActivity.this, "Please WAKE UP!!!!", Toast.LENGTH_SHORT).show();
 
           // Play the default ringtone
@@ -278,7 +278,7 @@ public abstract class CameraActivity extends AppCompatActivity
         double yawnPercentage = (yawnCount / 30.0) * 100.0;
 
 
-        if(yawnPercentage>90 && !ringtone.isPlaying() && !appStopped){
+        if(yawnPercentage>70 && !ringtone.isPlaying() && !appStopped){
           Toast.makeText(CameraActivity.this, "YAWNING", Toast.LENGTH_SHORT).show();
 
 
