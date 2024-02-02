@@ -74,6 +74,7 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
@@ -101,6 +102,8 @@ public abstract class CameraActivity extends AppCompatActivity
         Camera.PreviewCallback,
 //        CompoundButton.OnCheckedChangeListener,
         View.OnClickListener {
+
+
   MeowBottomNavigation bottomNavigation;
   private static final Logger LOGGER = new Logger();
   private static final String TAG = "CameraActivity";
@@ -154,7 +157,7 @@ public abstract class CameraActivity extends AppCompatActivity
   public long lastProcessingTimeMs;
   public float confidenceLevel=0;
 
-  private String[] values = new String[30];
+
   private int currentIndex = 0;
   private int currentIndexYawn  = 0;
   private int closeCount = 0;
@@ -175,6 +178,11 @@ public abstract class CameraActivity extends AppCompatActivity
   DialogHelper dialogHelper;
 
   ArrayList<String> deviceStrings = new ArrayList<String>();
+
+  public ArrayList<DetectionLogsInfo> detectionLogsInfo = new ArrayList<>();
+  public Query query;
+
+
 
 
   @Override
@@ -225,6 +233,7 @@ public abstract class CameraActivity extends AppCompatActivity
       @Override
       public void run() {
         String newValue = eyeStatus;
+        String[] values = new String[30];
         if ("closed".equals(newValue) && closeCount<30) {
           closeCount++;
         }else if (closeCount>0){
@@ -241,8 +250,9 @@ public abstract class CameraActivity extends AppCompatActivity
           // Play the default ringtone
 
           ringtone.play();
-          if(statusDriver.contains("ACTIVE")){
+          if(statusDriver.contains("ACTIVE") && values[values.length-1]!=null){
             saveDetectedImage(copyBitmap,eyeStatus, lastProcessingTimeMs+"");
+            updateDetectionLogs(query);
           }
           statusDriver=" DROWSY ";
 
@@ -278,15 +288,16 @@ public abstract class CameraActivity extends AppCompatActivity
         double yawnPercentage = (yawnCount / 30.0) * 100.0;
 
 
-        if(yawnPercentage>70 && !ringtone.isPlaying() && !appStopped){
+        if(yawnPercentage>70 && !ringtone.isPlaying() && !appStopped ){
           Toast.makeText(CameraActivity.this, "YAWNING", Toast.LENGTH_SHORT).show();
 
 
 //          if(statusDriverMouth.contains("ACTIVE")){
 //            firebaseDB.saveImageToLocal(getApplicationContext(),""+timestamp,cropCopyBitmap,"detections");
 //          }
-          if(statusDriverMouth.contains("ACTIVE")){
+          if(statusDriverMouth.contains("ACTIVE") && valuesYawn[valuesYawn.length-1]!=null){
             saveDetectedImage(copyBitmap,mouthStatus,lastProcessingTimeMs+"");
+            updateDetectionLogs(query);
           }
           statusDriverMouth=" YAWNING ";
 
@@ -466,10 +477,17 @@ public abstract class CameraActivity extends AppCompatActivity
         minusImageView.performClick();
         updateActiveModel();
         firebaseDB.checkSync();
+
+
       }
-    }, 3000);
+    }, 6000);
 
-
+    query= db.collection("users/"+user.getUid()+"/image_detection")
+            // Order documents by the "timestamp" field in descending order
+            .orderBy("timestamp", Query.Direction.DESCENDING)
+            // Limit the result set to 15 documents
+            .limit(15);
+    updateDetectionLogs(null);
 
   }
 
@@ -529,6 +547,23 @@ public abstract class CameraActivity extends AppCompatActivity
       //can be possible to start display of image even if saved to cache
       //if save to server trigger syncing
     }
+  }
+
+  public void updateDetectionLogs(Query query){
+    if(query!=null){
+      this.query=query;
+    }
+    detectionLogsInfo = firebaseDB.getDetectionLogsInfo(this.query, new FirebaseDatabase.ArrayListTaskCallback<Void>() {
+      @Override
+      public void onSuccess(ArrayList<DetectionLogsInfo> arrayList) {
+        detectionLogsInfo =arrayList;
+      }
+
+      @Override
+      public void onFailure(String errorMessage) {
+
+      }
+    });
   }
 
 

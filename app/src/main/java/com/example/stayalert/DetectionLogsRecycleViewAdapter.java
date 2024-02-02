@@ -25,7 +25,7 @@ public class DetectionLogsRecycleViewAdapter  extends  RecyclerView.Adapter<Dete
     public DetectionLogsRecycleViewAdapter(ArrayList<DetectionLogsInfo> data, Context context){
         this.detectionInfo=data;
         this.context=context;
-        helper= new ViewDetectedImageHelper(context);
+        helper= new ViewDetectedImageHelper(this.context);
     }
 
     @NonNull

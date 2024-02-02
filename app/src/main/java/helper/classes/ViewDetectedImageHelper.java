@@ -29,8 +29,8 @@ public class ViewDetectedImageHelper {
     Context context;
 
     public ViewDetectedImageHelper(Context context) {
-        instantiate(context);
         this.context=context;
+        instantiate(this.context);
     }
 
 
