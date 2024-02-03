@@ -296,17 +296,19 @@ public class FirebaseDatabase {
     }
 
 
-    public void saveFileInfoToFirestore(Map fileInfo, String folder) {
+    public void saveFileInfoToFirestore(Map fileInfo, String folder, TaskCallback callback) {
         db.collection("users/"+mAuth.getUid()+"/"+folder).document(fileInfo.get("file_name").toString()).set(fileInfo)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
                         // trigger Syncing
                         if(folder.equals("image_detection")){
                             syncToServer();
+                            callback.onSuccess(true);
                         }
                     }
                 }).addOnFailureListener(e -> {
                     Log.e("UpdateUserInfo", "Error " + e);
+                    callback.onFailure(e.getLocalizedMessage());
                 });
 
     }
@@ -315,6 +317,9 @@ public class FirebaseDatabase {
     public UploadTask isImageUploaded(String storagePath,String localPath, String fileName, OnInterfaceListener listener){
 
         Bitmap bitmap= getImageFromLocal(CameraActivity.context, localPath,fileName);
+        if(bitmap==null){
+            return null;
+        }
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
         byte[] data = baos.toByteArray();
