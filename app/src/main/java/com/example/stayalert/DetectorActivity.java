@@ -234,6 +234,8 @@ public class DetectorActivity extends com.example.stayalert.CameraActivity imple
 
     @Override
     protected void processImage() {
+
+
         FrameLayout frameLayout = findViewById(R.id.container);
         DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
         float dpHeight = displayMetrics.heightPixels / displayMetrics.density;

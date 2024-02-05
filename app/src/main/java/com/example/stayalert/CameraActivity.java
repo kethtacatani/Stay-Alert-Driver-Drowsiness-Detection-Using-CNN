@@ -587,7 +587,7 @@ public abstract class CameraActivity extends AppCompatActivity
       firebaseDB.saveFileInfoToFirestore(imageInfo, "image_detection", new FirebaseDatabase.TaskCallback() {
         @Override
         public void onSuccess(Object result) {
-          updateDetectionLogs(query, detectionType.equals("yawn")?"Yawn":"Drowsy");
+
         }
 
         @Override
@@ -595,6 +595,8 @@ public abstract class CameraActivity extends AppCompatActivity
           Log.e(TAG, errorMessage);
         }
       });
+
+      updateDetectionLogs(query, detectionType.equals("yawn")?"Yawn":"Drowsy");
 
 
 
@@ -651,8 +653,8 @@ public abstract class CameraActivity extends AppCompatActivity
 
     Date newStartDate = calendar.getTime();
 
-    Query yawnCountQuery = db.collection("users/"+user.getUid()+"/image_detection").whereEqualTo("detection_name", "Drowsy");
-    Query drowsyCountQuery = db.collection("users/"+user.getUid()+"/image_detection").whereEqualTo("detection_name", "Yawn");
+    Query yawnCountQuery = db.collection("users/"+user.getUid()+"/image_detection").whereEqualTo("detection_name", "Yawn");
+    Query drowsyCountQuery = db.collection("users/"+user.getUid()+"/image_detection").whereEqualTo("detection_name", "Drowsy");
     AggregateQuery countQueryYawn = yawnCountQuery
             .whereGreaterThanOrEqualTo("timestamp", (startDate!=null)?startDate:newStartDate)
             .whereLessThanOrEqualTo("timestamp", (endDate!=null)?endDate:new Date())
@@ -683,7 +685,6 @@ public abstract class CameraActivity extends AppCompatActivity
           // Count fetched successfully
           AggregateQuerySnapshot snapshot = task.getResult();
           drowsyCount=(int)snapshot.getCount();
-          System.out.println("cpunt "+snapshot.getCount());
           callback.onSuccess(true);
         } else {
           Log.d(TAG, "Count failed: ", task.getException());
