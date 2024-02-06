@@ -573,28 +573,8 @@ public abstract class CameraActivity extends AppCompatActivity
       imageInfo.put("inference",ms);
       imageInfo.put("accuracy",(int) ((Math.round(confidenceLevel * 100.0f) / 100.0f)*100));
 
-      firebaseDB.saveFileInfoToFirestore(imageInfo, "upload_queue", new FirebaseDatabase.TaskCallback() {
-        @Override
-        public void onSuccess(Object result) {
-          Log.e(TAG, "Success to upload");
-        }
-
-        @Override
-        public void onFailure(String errorMessage) {
-          Log.e(TAG, errorMessage);
-        }
-      });
-      firebaseDB.saveFileInfoToFirestore(imageInfo, "image_detection", new FirebaseDatabase.TaskCallback() {
-        @Override
-        public void onSuccess(Object result) {
-
-        }
-
-        @Override
-        public void onFailure(String errorMessage) {
-          Log.e(TAG, errorMessage);
-        }
-      });
+      firebaseDB.saveFileInfoToFirestore(imageInfo, "upload_queue");
+      firebaseDB.saveFileInfoToFirestore(imageInfo, "image_detection");
 
       updateDetectionLogs(query, detectionType.equals("yawn")?"Yawn":"Drowsy");
 

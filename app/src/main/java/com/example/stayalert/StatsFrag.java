@@ -70,10 +70,10 @@ public class StatsFrag extends Fragment implements AdapterView.OnItemSelectedLis
         instantiateAdapter(detectionChartSpinner);
         instantiateAdapter(detectionLogsSpinner);
 
-        ImageButton detectionResultsImageButton, detectionChartImageButton, detectionLogsImageButton;
-        detectionResultsImageButton = view.findViewById(R.id.detectionResultsButton);
-        detectionChartImageButton = view.findViewById(R.id.detectionChartButton);
-        detectionLogsImageButton= view.findViewById(R.id.detectionLogsButton);
+        ImageButton detectionResultsImageButtonDD, detectionChartImageButtonDD, detectionLogsImageButtonDD;
+        detectionResultsImageButtonDD = view.findViewById(R.id.detectionResultsButton);
+        detectionChartImageButtonDD = view.findViewById(R.id.detectionChartButton);
+        detectionLogsImageButtonDD= view.findViewById(R.id.detectionLogsButton);
 
 
         detectionResultsSpinner.setOnItemSelectedListener(this);
@@ -88,21 +88,21 @@ public class StatsFrag extends Fragment implements AdapterView.OnItemSelectedLis
             }
         });
 
-        detectionResultsImageButton.setOnClickListener(new View.OnClickListener() {
+        detectionResultsImageButtonDD.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 detectionResultsSpinner.performClick();
             }
         });
 
-        detectionChartImageButton.setOnClickListener(new View.OnClickListener() {
+        detectionChartImageButtonDD.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 detectionChartSpinner.performClick();
             }
         });
 
-        detectionLogsImageButton.setOnClickListener(new View.OnClickListener() {
+        detectionLogsImageButtonDD.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 detectionLogsSpinner.performClick();

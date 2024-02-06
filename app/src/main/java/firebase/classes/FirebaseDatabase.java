@@ -228,9 +228,9 @@ public class FirebaseDatabase {
         void onFailure(String errorMessage);
     }
 
-    public Bitmap getImageFromServer(String fileName, BitmapTaskCallback callback) {
+    public Bitmap getImageFromServer(String fileName,String folder, BitmapTaskCallback callback) {
         try {
-            StorageReference storageRef = storage.getReference().child("users/"+mAuth.getUid()+"/detection_images/"+fileName);
+            StorageReference storageRef = storage.getReference().child("users/"+mAuth.getUid()+"/"+folder+"/"+fileName);
             final long ONE_MEGABYTE = 1024 * 1024;
             storageRef.getBytes(ONE_MEGABYTE).addOnSuccessListener(new OnSuccessListener<byte[]>() {
                 @Override
@@ -238,7 +238,7 @@ public class FirebaseDatabase {
                     System.out.println("success byte");
                     Bitmap bitmap=BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
                     if(bitmap!=null){
-                        saveImageToLocal(fileName,bitmap,(fileName.contains("local")?"detections":"user_images"));
+                        saveImageToLocal(fileName,bitmap,(fileName.contains("local")?"detections":"userRes"));
                         callback.onSuccess(bitmap);
                     }
                 }
@@ -279,7 +279,13 @@ public class FirebaseDatabase {
         }
 
         try {
-            String fileName=(nameExtension.contains("local_"))?nameExtension:"local_"+time +"_"+nameExtension+".jpg";
+            String fileName="local_"+time +"_"+nameExtension+".jpg";
+            if(nameExtension.contains("local_")){
+                fileName =nameExtension;
+            }else if(nameExtension.contains("profile_pic")){
+                fileName="profile_pic.jpg";
+            }
+
             File imageFile = new File(dir, fileName);
             FileOutputStream fos = new FileOutputStream(imageFile);
             compressImage(bitmap).compress(Bitmap.CompressFormat.JPEG, 100, fos);
@@ -296,19 +302,17 @@ public class FirebaseDatabase {
     }
 
 
-    public void saveFileInfoToFirestore(Map fileInfo, String folder, TaskCallback callback) {
+    public void saveFileInfoToFirestore(Map fileInfo, String folder) {
         db.collection("users/"+mAuth.getUid()+"/"+folder).document(fileInfo.get("file_name").toString()).set(fileInfo)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
                         // trigger Syncing
                         if(folder.equals("image_detection")){
                             syncToServer();
-                            callback.onSuccess(true);
                         }
                     }
                 }).addOnFailureListener(e -> {
                     Log.e("UpdateUserInfo", "Error " + e);
-                    callback.onFailure(e.getLocalizedMessage());
                 });
 
     }
@@ -429,9 +433,6 @@ public class FirebaseDatabase {
     public Bitmap compressImage(Bitmap bm){
         int width = bm.getWidth();
         int height = bm.getHeight();
-
-
-
 
         int maxWidth=480;
         int maxHeight=480;

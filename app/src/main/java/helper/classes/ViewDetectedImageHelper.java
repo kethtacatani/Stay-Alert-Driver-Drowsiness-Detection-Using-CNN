@@ -92,7 +92,7 @@ public class ViewDetectedImageHelper {
         if(bitmap!=null){
             detectionImage.setImageBitmap(bitmap);
         }else{
-            firebaseDB.getImageFromServer(info.getTitle(), new FirebaseDatabase.BitmapTaskCallback() {
+            firebaseDB.getImageFromServer(info.getTitle(),"detection_images", new FirebaseDatabase.BitmapTaskCallback() {
                 @Override
                 public void onSuccess(Bitmap bitmap) {
                     detectionImage.setImageBitmap(bitmap);
