@@ -58,7 +58,7 @@ public class Sign_in extends AppCompatActivity {
     Runnable connectivityCheckRunnable;
     FirebaseAuth mAuth;
     FirebaseUser user;
-    TextView creatAccTV, usernameErrTV, passErrTV;
+    TextView creatAccTV, usernameErrTV, passErrTV, forgotPass;
     GoogleSignInClient googleSignInClient;
     CollectionReference collection;
     EditText username, password;
@@ -122,6 +122,7 @@ public class Sign_in extends AppCompatActivity {
         password = findViewById(R.id.ETpass);
         usernameErrTV = findViewById(R.id.TVusernameErr);
         passErrTV=findViewById(R.id.TVpassErr);
+        forgotPass= findViewById(R.id.TVforgot);
 
         String email=getIntent().getStringExtra("email");
         if(email!=null){
@@ -144,12 +145,23 @@ public class Sign_in extends AppCompatActivity {
 
         });
 
-
         googleBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = googleSignInClient.getSignInIntent();
                 startActivityForResult(intent,1234);
+            }
+        });
+
+        forgotPass.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(getApplicationContext(), ForgotPassActivity.class);
+                if(!username.getText().toString().trim().isEmpty()){
+                    intent.putExtra("email",username.getText().toString().trim());
+                }
+                startActivity(intent);
+                finish();
             }
         });
 

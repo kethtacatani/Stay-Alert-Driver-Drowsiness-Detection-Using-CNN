@@ -236,17 +236,18 @@ public abstract class CameraActivity extends AppCompatActivity
 
 
     String[] values = new String[30];
+
     runnableCode = new Runnable() {
       @Override
       public void run() {
-        String newValue = eyeStatus;
+        String eyeValue = eyeStatus;
 
-        if ("closed".equals(newValue) && closeCount<30) {
+        if ("closed".equals(eyeValue) && closeCount<30) {
           closeCount++;
         }else if (closeCount>0){
           closeCount--;
         }
-        values[currentIndex] = newValue;
+        values[currentIndex] = eyeValue;
         currentIndex = (currentIndex + 1) % 30; // Wrap around to the beginning of the array
         double closePercentage = (closeCount / 30.0) * 100.0;
 
@@ -283,13 +284,13 @@ public abstract class CameraActivity extends AppCompatActivity
     mouthRunnable = new Runnable() {
       @Override
       public void run() {
-        String newValue = mouthStatus;
-        if ("yawn".equals(newValue) && yawnCount<30) {
+        String mouthValue = mouthStatus;
+        if ("yawn".equals(mouthValue) && yawnCount<30) {
           yawnCount++;
         }else if (yawnCount>0){
           yawnCount--;
         }
-        valuesYawn[currentIndexYawn] = newValue;
+        valuesYawn[currentIndexYawn] = mouthValue;
         currentIndexYawn = (currentIndexYawn + 1) % 30; // Wrap around to the beginning of the array
         double yawnPercentage = (yawnCount / 30.0) * 100.0;
 
@@ -318,11 +319,6 @@ public abstract class CameraActivity extends AppCompatActivity
       }
     };
     handler.post(mouthRunnable);
-
-
-
-
-
 
 
 

@@ -132,7 +132,7 @@ public class StatsFrag extends Fragment implements AdapterView.OnItemSelectedLis
 
     public void displayDetectionLogs(){
         info= cameraActivity.detectionLogsInfo;
-        if(!info.isEmpty()){
+        if(info!=null || !info.isEmpty()){
             progressBar.setVisibility(View.GONE);
             recyleViewAdapter = new DetectionLogsRecycleViewAdapter(info, (CameraActivity)getActivity());
             detectionLogsRV.setAdapter(recyleViewAdapter);
