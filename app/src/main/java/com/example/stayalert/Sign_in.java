@@ -85,13 +85,17 @@ public class Sign_in extends AppCompatActivity {
         db = FirebaseFirestore.getInstance();
         firebaseDB = new FirebaseDatabase();
         user = FirebaseAuth.getInstance().getCurrentUser();
+        dialogHelper=new DialogHelper(Sign_in.this);
 
         if(user != null){
+
+            dialogHelper.showLoadingDialog("Logging In","Please wait...");
             getUserInfo();
+
+        }
+        else{
         }
     }
-
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -103,9 +107,6 @@ public class Sign_in extends AppCompatActivity {
             decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
         }
 
-
-
-
         GoogleSignInOptions options = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.default_web_client_id))
                 .requestEmail()
@@ -113,7 +114,7 @@ public class Sign_in extends AppCompatActivity {
         googleSignInClient = GoogleSignIn.getClient(this,options);
         googleBtn= findViewById(R.id.BTNgoogle);
 
-        dialogHelper=new DialogHelper(Sign_in.this);
+
 
         creatAccTV = (TextView)findViewById(R.id.TVcreateAcc);
         signInBtn = ( Button)findViewById(R.id.BTNsignin);
@@ -261,7 +262,9 @@ public class Sign_in extends AppCompatActivity {
                     Log.w(TAG,"No data exist");
                     signUpUser(user.getEmail());
                 }else{
-                    if(ifHasCameraPermission() && ifHasStoragePermission()){ signInUser();}
+                    if(ifHasCameraPermission() && ifHasStoragePermission()){
+                        signInUser();
+                    }
                 }
             }
 
