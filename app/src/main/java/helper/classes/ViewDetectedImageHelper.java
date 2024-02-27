@@ -10,6 +10,7 @@ package helper.classes;
         import android.view.ViewGroup;
         import android.widget.ImageButton;
         import android.widget.ImageView;
+        import android.widget.LinearLayout;
         import android.widget.TextView;
         import android.widget.Toast;
 
@@ -21,7 +22,8 @@ package helper.classes;
 
 public class ViewDetectedImageHelper {
     Dialog dialog;
-    TextView type, timestamp, accuracy, location, inference, title;
+    TextView type, timestamp, accuracy, location, inference, title, responseTime;
+    LinearLayout responseTimeLL;
     private ImageButton closeBtn;
     private DetectionLogsInfo info;
     ImageView detectionImage;
@@ -77,6 +79,8 @@ public class ViewDetectedImageHelper {
         inference= dialog.findViewById(R.id.detectionLogsInference);
         title=dialog.findViewById(R.id.detectionLogsTitle);
         detectionImage=dialog.findViewById(R.id.detectionLogsImage);
+        responseTime = dialog.findViewById(R.id.detectionLogsResponseTime);
+        responseTimeLL= dialog.findViewById(R.id.responseTimeLL);
     }
 
     public void showDialog(DetectionLogsInfo info){
@@ -84,14 +88,20 @@ public class ViewDetectedImageHelper {
         timestamp.setText(info.getTimestamp());
         location.setText(info.getLocation());
         accuracy.setText(info.getAccuracy()+"%");
-        inference.setText(info.getInference());
+        inference.setText(info.getInference()+"ms");
         title.setText(info.getTitle());
         detectionImage.setImageResource(R.drawable.blank_detection);
+        if(info.getDetectionType().equals("Drowsy")){
+            responseTimeLL.setVisibility(View.VISIBLE);
+            responseTime.setText(String.format("%.2f",Double.parseDouble(info.getResponseTime())) +"s");
+        }
 
         Bitmap bitmap = firebaseDB.getImageFromLocal(context, info.getLocalPath(),info.getTitle());
         if(bitmap!=null){
             detectionImage.setImageBitmap(bitmap);
+
         }else{
+            Toast.makeText(context, "no image for", Toast.LENGTH_SHORT).show();
             firebaseDB.getImageFromServer(info.getTitle(),"detection_images", new FirebaseDatabase.BitmapTaskCallback() {
                 @Override
                 public void onSuccess(Bitmap bitmap) {
@@ -101,7 +111,6 @@ public class ViewDetectedImageHelper {
                 @Override
                 public void onFailure(String errorMessage) {
                     Log.w("ViewDetectionHelper", errorMessage);
-
                 }
             });
         }

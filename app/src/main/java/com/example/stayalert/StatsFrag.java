@@ -1,5 +1,6 @@
 package com.example.stayalert;
 
+import android.graphics.Color;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
@@ -19,14 +20,24 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.Description;
+import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 
 import firebase.classes.FirebaseDatabase;
 
@@ -42,7 +53,11 @@ public class StatsFrag extends Fragment implements AdapterView.OnItemSelectedLis
     ProgressBar progressBar;
     Spinner detectionResultsSpinner, detectionChartSpinner, detectionLogsSpinner;
     int count=0;
-    TextView drowsyCountTV, yawnCountTV, awakenssLevellTV;
+    TextView drowsyCountTV, yawnCountTV, averageResponseTV;
+    private LineChart lineChart;
+
+    private List<String> xValues;
+
 
 
 
@@ -64,7 +79,7 @@ public class StatsFrag extends Fragment implements AdapterView.OnItemSelectedLis
         detectionLogsSpinner=view.findViewById(R.id.detectionLogsSpinner);
         drowsyCountTV= view.findViewById(R.id.drowsyCountTV);
         yawnCountTV = view.findViewById(R.id.yawnCount);
-        awakenssLevellTV= view.findViewById(R.id.awakenessLevel);
+        averageResponseTV = view.findViewById(R.id.awakenessLevel);
 
         instantiateAdapter(detectionResultsSpinner);
         instantiateAdapter(detectionChartSpinner);
@@ -117,6 +132,54 @@ public class StatsFrag extends Fragment implements AdapterView.OnItemSelectedLis
         updateDetectionRecords();
         displayDetectionLogs();
 
+        lineChart = view.findViewById(R.id.detectionChart);
+
+        Description description = new Description();
+        description.setText("Students Record");
+        description.setPosition(150f,15f);
+        lineChart.setDescription(description);
+        lineChart.getAxisRight().setDrawLabels(false);
+
+        xValues = Arrays.asList("8:00","9:00","10:00","11:00");
+
+        XAxis xAxis = lineChart.getXAxis();
+        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+        xAxis.setValueFormatter(new IndexAxisValueFormatter(xValues));
+        xAxis.setLabelCount(4);
+        xAxis.setGranularity(1f);
+
+        YAxis yAxis = lineChart.getAxisLeft();
+        yAxis.setAxisMinimum(0f);
+        yAxis.setAxisMaximum(100f);
+        yAxis.setAxisLineWidth(2f);
+        yAxis.setAxisLineColor(Color.BLACK);
+        yAxis.setLabelCount(10);
+
+
+        List<Entry> entries1 = new ArrayList<>();
+        entries1.add(new Entry(0, 60f));
+        entries1.add(new Entry(1, 70f));
+        entries1.add(new Entry(2, 85f));
+        entries1.add(new Entry(3, 95f));
+
+
+        List<Entry> entries2 = new ArrayList<>();
+        entries2.add(new Entry(0, 50f));
+        entries2.add(new Entry(1, 85f));
+        entries2.add(new Entry(2, 65f));
+        entries2.add(new Entry(3, 80f));
+
+        LineDataSet dataSet1 = new LineDataSet(entries1, "Maths");
+        dataSet1.setColor(Color.BLUE);
+
+        LineDataSet dataSet2 = new LineDataSet(entries2, "Science");
+        dataSet2.setColor(Color.RED);
+
+        LineData lineData = new LineData(dataSet1, dataSet2);
+
+        lineChart.setData(lineData);
+
+        lineChart.invalidate();
 
 
 
@@ -132,7 +195,7 @@ public class StatsFrag extends Fragment implements AdapterView.OnItemSelectedLis
 
     public void displayDetectionLogs(){
         info= cameraActivity.detectionLogsInfo;
-        if(info!=null || !info.isEmpty()){
+        if(info!=null && !info.isEmpty()){
             progressBar.setVisibility(View.GONE);
             recyleViewAdapter = new DetectionLogsRecycleViewAdapter(info, (CameraActivity)getActivity());
             detectionLogsRV.setAdapter(recyleViewAdapter);
@@ -231,7 +294,7 @@ public class StatsFrag extends Fragment implements AdapterView.OnItemSelectedLis
 
         switch (stat){
             case "results":
-
+                cameraActivity.averageResponse=0;
                 cameraActivity.getDetectionRecordsCount(startDate, endDate, new CameraActivity.TaskCallback() {
                     @Override
                     public void onSuccess(Object result) {
@@ -261,7 +324,7 @@ public class StatsFrag extends Fragment implements AdapterView.OnItemSelectedLis
     }
 
     public void updateDetectionRecords(){
-        awakenssLevellTV.setText(cameraActivity.awakenessLevel+"%");
+        averageResponseTV.setText(String.format("%.2f", cameraActivity.averageResponse)+"s");
         drowsyCountTV.setText(cameraActivity.drowsyCount+"");
         yawnCountTV.setText(cameraActivity.yawnCountRes+"");
     }

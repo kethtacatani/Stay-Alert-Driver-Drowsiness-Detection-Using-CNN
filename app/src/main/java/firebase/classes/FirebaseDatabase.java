@@ -276,6 +276,8 @@ public class FirebaseDatabase {
         File dir = new File(CameraActivity.context.getFilesDir(), path);
         if(!dir.exists()){
             dir.mkdirs();
+        }else{
+            System.out.println("Fail local");
         }
 
         try {
@@ -499,10 +501,11 @@ public class FirebaseDatabase {
                         String location = getValue(documentFields.getData(), "location", "to be added");
                         String accuracy = getValue(documentFields.getData(), "accuracy", "");
                         String inference = getValue(documentFields.getData(), "inference", "");
+                        String responseTime = getValue(documentFields.getData(), "response_time", "");
                         String localPath = getValue(documentFields.getData(), "local_path", "");
                         String downloadURL = getValue(documentFields.getData(), "downloadURL", "");
 
-                        info.add( new DetectionLogsInfo(type,timestamp,location,accuracy,inference,fileName, localPath, downloadURL));
+                        info.add( new DetectionLogsInfo(type,timestamp,location,accuracy,inference,fileName, localPath, downloadURL,responseTime)); //must be in correct order
                     }
                     callback.onSuccess(info);
                 }
@@ -523,6 +526,61 @@ public class FirebaseDatabase {
         SimpleDateFormat dateFormat = new SimpleDateFormat("MMM d, yyyy 'at' h:mm a");
         timestampString = dateFormat.format(date);
         return timestampString;
+
+    }
+
+    public void getStatCount(String period){
+        readData("stats_count", user.getUid(), "default", new OnGetDataListener() {
+            @Override
+            public void onSuccess(DocumentSnapshot documentSnapshot) {
+                if(documentSnapshot.exists()){
+                    System.out.println("Exist");
+                }else{
+                    writeUserInfo(new HashMap<String, Object>() {{
+                        put("date", new Date());
+                    }}, "detection_count", user.getUid(), new TaskCallback<Void>() {
+                        @Override
+                        public void onSuccess(Void result) {
+                            Log.d(TAG,"Insert success");
+                        }
+
+                        @Override
+                        public void onFailure(String errorMessage) {
+                            Log.d(TAG,"Insert Failed: "+errorMessage);
+                        }
+                    });
+
+                }
+            }
+
+            @Override
+            public void onStart() {
+
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                Log.e(TAG+ " getStatCount: ",e.getLocalizedMessage());
+            }
+        });
+    }
+
+    public void updateStatCount(String period){
+        switch (period){
+            case "today":
+                break;
+            case "yesterday":
+                break;
+            case "3 days":
+                break;
+            case "7 days":
+                break;
+            case "30 days":
+                break;
+        }
+    }
+
+    public void moveCount(){
 
     }
 

@@ -63,4 +63,5 @@ dependencies {
     implementation 'com.airbnb.android:lottie:5.2.0'
 
     implementation 'com.github.joielechong:countrycodepicker:2.4.2'
+    implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
 }
