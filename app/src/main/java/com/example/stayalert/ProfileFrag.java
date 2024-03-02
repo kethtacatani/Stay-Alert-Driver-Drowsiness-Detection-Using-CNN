@@ -31,8 +31,10 @@ import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.EmailAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
 import com.rilixtech.widget.countrycodepicker.CountryCodePicker;
 
 import java.io.FileNotFoundException;
@@ -302,7 +304,8 @@ public class ProfileFrag extends Fragment implements View.OnTouchListener{
                                                         @Override
                                                         public void onComplete(@NonNull Task<Void> task) {
                                                             if (task.isSuccessful()) {
-                                                                firebaseDB.updateUserInfo(userNewPass, new FirebaseDatabase.TaskCallback<Void>() {
+                                                                DocumentReference ref = db.collection("users").document(auth.getUid());
+                                                                firebaseDB.updateUserInfo(userNewPass,ref, new FirebaseDatabase.TaskCallback<Void>() {
                                                                     @Override
                                                                     public void onSuccess(Void result) {
                                                                         dialogHelper.showDialog("Edit Profile","Password successfully changed");
@@ -462,7 +465,8 @@ public class ProfileFrag extends Fragment implements View.OnTouchListener{
     public void updateUserInfo(Map userData, String oldContact){
         //update user information
 
-        firebaseDB.updateUserInfo(userData, new FirebaseDatabase.TaskCallback<Void>() {
+        DocumentReference ref =db.collection("users").document(auth.getUid());
+        firebaseDB.updateUserInfo(userData,ref, new FirebaseDatabase.TaskCallback<Void>() {
 
             @Override
             public void onSuccess(Void result) {

@@ -39,7 +39,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Trace;
-import android.text.format.DateUtils;
 import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
@@ -511,6 +510,9 @@ public abstract class CameraActivity extends AppCompatActivity
         Log.d(TAG, "Get count failed");
       }
     });
+    firebaseDB.checkStatCount("drowsy");
+    firebaseDB.checkStatCount("yawn");
+    firebaseDB.checkStatCount("average_response");
 
 
   }
@@ -589,6 +591,7 @@ public abstract class CameraActivity extends AppCompatActivity
 
 
       updateDetectionLogs(query, detectionType.equals("yawn")?"Yawn":"Drowsy");
+      firebaseDB.incrementCount(detectionType.equals("closed")?"drowsy":detectionType,1);
 
 
 
@@ -600,7 +603,7 @@ public abstract class CameraActivity extends AppCompatActivity
   public void getDetectionCountOnLocal(){
     DocumentReference docRef = db.collection("users/"+user.getUid()+"/user_res/").document("detection_records");
 
-    docRef.get(Source.SERVER).addOnCompleteListener(task -> {
+    docRef.get(Source.CACHE).addOnCompleteListener(task -> {
       if (task.isSuccessful()) {
         DocumentSnapshot document = task.getResult();
         if (document.exists()) {
@@ -669,7 +672,7 @@ public abstract class CameraActivity extends AppCompatActivity
     void onFailure(String errorMessage);
   }
 
-  public Calendar getCurrentDate(){
+  public static Calendar getCurrentDate(){
     Calendar calendar = Calendar.getInstance();
     calendar.add(Calendar.DAY_OF_MONTH, 0);
 

@@ -229,7 +229,15 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/textViesw5" />
 
-
+            <TextView
+                android:id="@+id/timeRangeStats"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textColor="@color/black"
+                app:layout_constraintEnd_toEndOf="@+id/detectionChart"
+                app:layout_constraintStart_toStartOf="@+id/detectionChart"
+                app:layout_constraintTop_toBottomOf="@+id/textViesw5" />
 
 
         </androidx.constraintlayout.widget.ConstraintLayout>

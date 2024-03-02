@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Camera;
 import android.net.Uri;
+import android.os.Build;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -21,9 +22,14 @@ import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.AggregateField;
+import com.google.firebase.firestore.AggregateQuery;
+import com.google.firebase.firestore.AggregateQuerySnapshot;
+import com.google.firebase.firestore.AggregateSource;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
@@ -37,9 +43,15 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -182,8 +194,8 @@ public class FirebaseDatabase {
             }
         });
     }
-    public void updateUserInfo(Map userData, TaskCallback<Void> callback) {
-        db.collection("users").document(userID).update(userData)
+    public void updateUserInfo(Map userData,DocumentReference ref, TaskCallback<Void> callback) {
+        ref.update(userData)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
                         callback.onSuccess(null); // Passing null as there is no specific result for success
@@ -529,19 +541,33 @@ public class FirebaseDatabase {
 
     }
 
-    public void getStatCount(String period){
-        readData("stats_count", user.getUid(), "default", new OnGetDataListener() {
+    public void checkStatCount(String type){
+        readData(type+"_count", mAuth.getUid(), "default", new OnGetDataListener() {
             @Override
             public void onSuccess(DocumentSnapshot documentSnapshot) {
                 if(documentSnapshot.exists()){
-                    System.out.println("Exist");
+                    updateStatCount(documentSnapshot, type);
+
                 }else{
-                    writeUserInfo(new HashMap<String, Object>() {{
-                        put("date", new Date());
-                    }}, "detection_count", user.getUid(), new TaskCallback<Void>() {
+                    Map<String, Object> drowsyCount = new HashMap<>();
+                    drowsyCount.put("date", new Date());
+                    // Pad the numbers with zeros
+                    for (int i = 1; i < 25; i++) {
+                        drowsyCount.put("today"+String.format("%02d", i), 0);
+                    }
+
+                    for (int i = 1; i < 25; i++) {
+                        drowsyCount.put("yesterday"+String.format("%02d", i), 0);
+                    }
+
+                    for (int i = 1; i < 31; i++) {
+                        drowsyCount.put("day"+String.format("%02d", i), 0);
+                    }
+
+                    writeUserInfo(drowsyCount, type+"_count", mAuth.getUid(), new TaskCallback<Void>() {
                         @Override
                         public void onSuccess(Void result) {
-                            Log.d(TAG,"Insert success");
+                            Log.d(TAG,"Insert success "+type);
                         }
 
                         @Override
@@ -549,7 +575,6 @@ public class FirebaseDatabase {
                             Log.d(TAG,"Insert Failed: "+errorMessage);
                         }
                     });
-
                 }
             }
 
@@ -560,27 +585,102 @@ public class FirebaseDatabase {
 
             @Override
             public void onFailure(Exception e) {
-                Log.e(TAG+ " getStatCount: ",e.getLocalizedMessage());
+                Log.e(TAG+ " checkStatCount: ",e.getLocalizedMessage());
             }
         });
     }
 
-    public void updateStatCount(String period){
-        switch (period){
-            case "today":
-                break;
-            case "yesterday":
-                break;
-            case "3 days":
-                break;
-            case "7 days":
-                break;
-            case "30 days":
-                break;
-        }
+    public void incrementCount(String type, int value){
+        DocumentReference ref = db.collection(type+"_count").document(mAuth.getUid());
+
+        Calendar calendar = Calendar.getInstance();
+        int currentHour = calendar.get(Calendar.HOUR_OF_DAY)+1;
+        String stringHour=String.format("%02d",currentHour);
+
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("today"+stringHour, FieldValue.increment(value));
+        updates.put("day01", FieldValue.increment(value));
+
+        ref.update(updates).addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                if (task.isSuccessful()) {
+                    Log.d(TAG+" Increment","Success");
+                } else {
+                    Log.d(TAG+" Increment","Failed "+task.getException().getLocalizedMessage());
+                }
+            }
+        });
     }
 
-    public void moveCount(){
+
+
+    public void updateStatCount(DocumentSnapshot documentSnapshot, String type){
+
+        Timestamp timestamp = documentSnapshot.getTimestamp("date");
+        LocalDate dateFromFirestore=null;
+        LocalDate currentDate=null;
+        int daysDifference=0;
+        // Convert the timestamp to LocalDate
+        Instant instant = null;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            instant = timestamp.toDate().toInstant();
+            ZoneId zoneId = ZoneId.systemDefault();
+            dateFromFirestore = instant.atZone(zoneId).toLocalDate();
+            currentDate = LocalDate.now();
+            daysDifference =(int) ChronoUnit.DAYS.between(dateFromFirestore, currentDate);
+        }
+
+        if(daysDifference>0){
+
+            Map<String, Object> recentCountMap = new HashMap<>();
+            recentCountMap= documentSnapshot.getData();
+            Map<String, Object> daysCountMap = new HashMap<>();
+            daysCountMap.put("date", new Date());
+
+            //for yesterday
+            for (int i = 1; i < 25; i++) {
+                daysCountMap.put("today" +String.format("%02d",i), 0);
+            }
+
+            if(daysDifference==1){
+                for (int i = 1; i < 25; i++) {
+                    daysCountMap.put("yesterday" +String.format("%02d",i) , recentCountMap.get("today"+String.format("%02d",i)));
+                }
+            }else{
+                for (int i = 1; i < 25; i++) {
+                    daysCountMap.put("yesterday" +String.format("%02d",i), 0);
+                }
+            }
+
+            //for day
+            for(int i=1;i<=daysDifference;i++){
+                daysCountMap.put("day" +String.format("%02d",i) ,0);
+            }
+
+            for (int i = 1; i < 31; i++) {
+                if(daysDifference+i<31){
+                    daysCountMap.put("day" + String.format("%02d",daysDifference+i), recentCountMap.get("day"+String.format("%02d",i)));
+                }
+            }
+
+
+            DocumentReference ref = db.collection(type+"_count").document(mAuth.getUid());
+            updateUserInfo(daysCountMap,ref, new TaskCallback<Void>() {
+                @Override
+                public void onSuccess(Void result) {
+                    Log.d(TAG+ "updateStatCount","Success");
+                }
+
+                @Override
+                public void onFailure(String errorMessage) {
+                    Log.d(TAG,"Error inserting count");
+                }
+            });
+
+        }
+
+
 
     }
 
