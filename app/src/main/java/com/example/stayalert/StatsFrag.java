@@ -29,6 +29,7 @@ import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 import com.github.mikephil.charting.formatter.ValueFormatter;
+import com.github.mikephil.charting.utils.EntryXComparator;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -71,6 +72,8 @@ public class StatsFrag extends Fragment implements AdapterView.OnItemSelectedLis
     int daysRange=80;
 
     private List<String> xValues= new ArrayList<>();
+    ArrayList<Integer> drowsyList = new ArrayList<>();
+    ArrayList<Integer> yawnList = new ArrayList<>();
 
 
 
@@ -148,7 +151,7 @@ public class StatsFrag extends Fragment implements AdapterView.OnItemSelectedLis
 
         updateDetectionRecords();
         displayDetectionLogs();
-        viewDetectionChart("today");
+
 
 
 
@@ -318,23 +321,25 @@ public class StatsFrag extends Fragment implements AdapterView.OnItemSelectedLis
         if(range.equals("day3")){
             daysRange=3;
             Date tomorrowDate;
-            xValues.add("Date");
-            xValues.add(sdf.format(currentDate));
             for (int i = 0; i < 2; i++) {
                 calendar.add(Calendar.DAY_OF_MONTH, -1);
                 tomorrowDate = calendar.getTime();
                 xValues.add(sdf.format(tomorrowDate));
             }
+            Collections.reverse(xValues);
+            xValues.add(0,"Date");
+            xValues.add(sdf.format(currentDate));
         }else if(range.equals("day7")){
             daysRange=7;
             Date tomorrowDate;
-            xValues.add("Date");
-            xValues.add(sdf.format(currentDate));
             for (int i = 0; i < 5; i++) {
                 calendar.add(Calendar.DAY_OF_MONTH, -1);
                 tomorrowDate = calendar.getTime();
                 xValues.add(sdf.format(tomorrowDate));
             }
+            Collections.reverse(xValues);
+            xValues.add(0,"Date");
+            xValues.add(sdf.format(currentDate));
         }
 
 
@@ -343,40 +348,15 @@ public class StatsFrag extends Fragment implements AdapterView.OnItemSelectedLis
         yawnStartTime=0;
         drowsyStartTime=0;
 
-        ArrayList<Integer> drowsyList = new ArrayList<>();
-        ArrayList<Integer> yawnList = new ArrayList<>();
+
 
 
         firebaseDB.readData("drowsy_count", user.getUid(), "default", new FirebaseDatabase.OnGetDataListener() {
             @Override
             public void onSuccess(DocumentSnapshot documentSnapshot) {
                 if(documentSnapshot.exists()){
-                    for (int i = 1; i < 80; i++) {
-                        String field=((range.equals("day7") || range.equals("day3"))?"day":range)+String.format("%02d",i);
-                        if(documentSnapshot.contains(field) && i<= daysRange){
-                            int value= Integer.parseInt(documentSnapshot.getData().get(field).toString()) ;
-                            if (daysRange==3 || daysRange == 7) {
-                                drowsyList.add(value);
-                                highestYLength=value>highestYLength?value:highestYLength;
-                            }else if(value>0){
-                                drowsyStartTime= drowsyStartTime==0?i:drowsyStartTime;
-                                highestYLength=value>highestYLength?value:highestYLength;
-                                lowestTime=(i<lowestTime)?i:lowestTime;
-                                highestTime=(i>highestTime)?i:highestTime;
-                                drowsyList.add(value);
-                            }else if (!drowsyList.isEmpty()){
-                                drowsyList.add(0);
-                            }
-                        }else{
-                            break;
-                        }
-                    }
-                    while (!drowsyList.isEmpty() && drowsyList.get(drowsyList.size() - 1) == 0) {
-                        // Remove the last element if it's zero
-                        drowsyList.remove(drowsyList.size() - 1);
-                    }
-                    checkCount++;
-                    displayChart(drowsyList,yawnList, range);
+                    CameraActivity.drowsyCountDocument=documentSnapshot;
+                    processDrowsyCount(documentSnapshot,range);
                 }
             }
 
@@ -396,34 +376,8 @@ public class StatsFrag extends Fragment implements AdapterView.OnItemSelectedLis
             @Override
             public void onSuccess(DocumentSnapshot documentSnapshot) {
                 if(documentSnapshot.exists()){
-                    for (int i = 1; i < 80; i++) {
-                        String field=((range.equals("day7") || range.equals("day3"))?"day":range)+String.format("%02d",i);
-                        if(documentSnapshot.contains(field) && i<= daysRange){
-                            int value= Integer.parseInt(documentSnapshot.getData().get(field).toString()) ;
-                            if (daysRange==3 || daysRange == 7) {
-                                yawnList.add(value);
-                                highestYLength=value>highestYLength?value:highestYLength;
-                            }else if(value>0) {
-                                yawnStartTime = yawnStartTime == 0 ? i : yawnStartTime;
-                                highestYLength = value > highestYLength ? value : highestYLength;
-                                lowestTime = (i < lowestTime) ? i : lowestTime;
-                                highestTime = (i > highestTime) ? i : highestTime;
-                                yawnList.add(value);
-                            }else if (!yawnList.isEmpty()){
-                                yawnList.add(0);
-                            }
-                        }else{
-                            break;
-                        }
-                    }
-                    //remove trailing zeros at the end
-                    while (!yawnList.isEmpty() && yawnList.get(yawnList.size() - 1) == 0) {
-                        // Remove the last element if it's zero
-                        yawnList.remove(yawnList.size() - 1);
-                    }
-                    checkCount++;
-                    displayChart(drowsyList,yawnList, range);
-
+                    CameraActivity.yawnCountDocument=documentSnapshot;
+                    processYawnCount(documentSnapshot,range);
                 }
             }
 
@@ -440,6 +394,67 @@ public class StatsFrag extends Fragment implements AdapterView.OnItemSelectedLis
 
 
 
+    }
+
+    public void processDrowsyCount(DocumentSnapshot documentSnapshot, String range){
+        drowsyList.clear();
+        for (int i = 1; i < 80; i++) {
+            String field=((range.equals("day7") || range.equals("day3"))?"day":range)+String.format("%02d",i);
+            if(documentSnapshot.contains(field) && i<= daysRange){
+                int value= Integer.parseInt(documentSnapshot.getData().get(field).toString()) ;
+                if (daysRange==3 || daysRange == 7) {
+                    drowsyList.add(value);
+                    highestYLength=value>highestYLength?value:highestYLength;
+                }else if(value>0){
+                    drowsyStartTime= drowsyStartTime==0?i:drowsyStartTime;
+                    highestYLength=value>highestYLength?value:highestYLength;
+                    lowestTime=(i<lowestTime)?i:lowestTime;
+                    highestTime=(i>highestTime)?i:highestTime;
+                    drowsyList.add(value);
+                }else if (!drowsyList.isEmpty()){
+                    drowsyList.add(0);
+                }
+            }else{
+                break;
+            }
+        }
+        while (!drowsyList.isEmpty() && drowsyList.get(drowsyList.size() - 1) == 0) {
+            // Remove the last element if it's zero
+            drowsyList.remove(drowsyList.size() - 1);
+        }
+        checkCount++;
+        displayChart(drowsyList,yawnList, range);
+    }
+
+    public void processYawnCount(DocumentSnapshot documentSnapshot, String range) {
+        yawnList.clear();
+        for (int i = 1; i < 80; i++) {
+            String field=((range.equals("day7") || range.equals("day3"))?"day":range)+String.format("%02d",i);
+            if(documentSnapshot.contains(field) && i<= daysRange){
+                int value= Integer.parseInt(documentSnapshot.getData().get(field).toString()) ;
+                if (daysRange==3 || daysRange == 7) {
+                    yawnList.add(value);
+                    highestYLength=value>highestYLength?value:highestYLength;
+                }else if(value>0) {
+                    yawnStartTime = yawnStartTime == 0 ? i : yawnStartTime;
+                    highestYLength = value > highestYLength ? value : highestYLength;
+                    lowestTime = (i < lowestTime) ? i : lowestTime;
+                    highestTime = (i > highestTime) ? i : highestTime;
+                    yawnList.add(value);
+                }else if (!yawnList.isEmpty()){
+                    yawnList.add(0);
+                }
+            }else{
+                break;
+            }
+        }
+        //remove trailing zeros at the end
+        while (!yawnList.isEmpty() && yawnList.get(yawnList.size() - 1) == 0) {
+            // Remove the last element if it's zero
+            yawnList.remove(yawnList.size() - 1);
+        }
+        checkCount++;
+        displayChart(drowsyList,yawnList, range);
     }
 
     public void displayChart(ArrayList<Integer> drowsyList,ArrayList<Integer> yawnList, String range){
@@ -471,8 +486,8 @@ public class StatsFrag extends Fragment implements AdapterView.OnItemSelectedLis
                 timeRangeTV.setText("");
             }
         }else if(range.equals("day")){
-            xValues.add("Date");
-            xValues.add(sdf.format(currentDate));
+
+
             for (int i = 0; i < highestTime-lowestTime; i++) {
 
                 Date tomorrowDate;
@@ -480,6 +495,10 @@ public class StatsFrag extends Fragment implements AdapterView.OnItemSelectedLis
                 tomorrowDate = calendar.getTime();
                 xValues.add(sdf.format(tomorrowDate));
             }
+
+            Collections.reverse(xValues);
+            xValues.add(0,"Date");
+            xValues.add(sdf.format(currentDate));
         }
 
 
@@ -492,13 +511,6 @@ public class StatsFrag extends Fragment implements AdapterView.OnItemSelectedLis
         lineChart.getAxisRight().setDrawLabels(false);
         lineChart.getAxisRight().setDrawGridLines(false);
         lineChart.setTouchEnabled(true);
-
-
-
-
-
-
-
 
 
         List<Entry> drowsyCountList = new ArrayList<>();
@@ -551,6 +563,7 @@ public class StatsFrag extends Fragment implements AdapterView.OnItemSelectedLis
                 drowsyCountList.add(new Entry(0, 0));
                 if(range.equals("day")){
 
+
                     for (int i = 1; i <= labelCount-1; i++) {
                         if (!drowsyList.isEmpty() && drowsyStartTime - yawnStartTime < i && i <= drowsyList.size()) {
                             drowsyCountList.add(new Entry(i, drowsyList.get(i -drowsyStartTime)));
@@ -558,6 +571,7 @@ public class StatsFrag extends Fragment implements AdapterView.OnItemSelectedLis
                             drowsyCountList.add(new Entry(i, 0));
                         }
                     }
+
                 }else{
                     for (int i = 1; i <= labelCount-1; i++) {
                         if (!drowsyList.isEmpty() && drowsyStartTime - yawnStartTime < i) {
@@ -567,8 +581,6 @@ public class StatsFrag extends Fragment implements AdapterView.OnItemSelectedLis
                         }
                     }
                 }
-
-
 
             }
         }else{
@@ -592,6 +604,33 @@ public class StatsFrag extends Fragment implements AdapterView.OnItemSelectedLis
             }
 
         }
+
+
+        if(range.equals("day") || range.equals("day3") || range.equals("day7")) {
+            timeRangeTV.setText("");
+
+            List<Entry> cloneDrowsy = new ArrayList<>();
+            List<Entry> cloneYawn = new ArrayList<>();
+
+            drowsyCountList.add(new Entry(0, 0));
+            yawnCountList.add(new Entry(0, 0));
+
+            drowsyCountList.remove(0);
+            yawnCountList.remove(0);
+
+            for (int i = 0; i < drowsyCountList.size(); i++) {
+                cloneDrowsy.add(new Entry(i,drowsyCountList.get(drowsyCountList.size()-(i+1)).getY()));
+            }
+
+            for (int i = 0; i < yawnCountList.size(); i++) {
+                cloneYawn.add(new Entry(i,yawnCountList.get(yawnCountList.size()-(i+1)).getY()));
+            }
+
+            drowsyCountList= new ArrayList<>(cloneDrowsy);
+            yawnCountList= new ArrayList<>(cloneYawn);
+        }
+
+
 
         XAxis xAxis = lineChart.getXAxis();
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);

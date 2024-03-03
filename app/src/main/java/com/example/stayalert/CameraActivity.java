@@ -183,10 +183,14 @@ public abstract class CameraActivity extends AppCompatActivity
   public static double averageResponse=0.0;
   double currentResponseTime =0;
 
+  public static Map<String, Object> weatherMap = new HashMap<>();
+
   Bitmap detectedBitmap;
   String detectedEye, detectMS;
   private long startResponseTime = 0L;
 
+  public static DocumentSnapshot drowsyCountDocument;
+  public static DocumentSnapshot yawnCountDocument;
 
 
 
@@ -510,6 +514,8 @@ public abstract class CameraActivity extends AppCompatActivity
         Log.d(TAG, "Get count failed");
       }
     });
+
+    HomeFrag.getWeatherDetails("Calape","Philippines");
     firebaseDB.checkStatCount("drowsy");
     firebaseDB.checkStatCount("yawn");
     firebaseDB.checkStatCount("average_response");
@@ -766,6 +772,8 @@ public abstract class CameraActivity extends AppCompatActivity
       }
     });
   }
+
+
 
 
 

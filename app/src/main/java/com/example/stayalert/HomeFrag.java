@@ -49,15 +49,15 @@ public class HomeFrag extends Fragment {
     private static final String TAG = "HomeFrag";
     public static ImageButton viewDetectionBtn;
     TextView timeofDay;
-    TextView tempTV, humidTV, weatherType;
+    public static TextView tempTV, humidTV, weatherType;
     public static TextView statusDriverTV, nameDriverTV;
     FirebaseFirestore db;
     FirebaseAuth auth;
     FirebaseDatabase firebaseDB;
     Map<String, Object> userData = new HashMap<>();
-    private final String url = "https://api.openweathermap.org/data/2.5/weather";
-    private final String appid = "449466108ec00a49fe1c77ffe6f31406";
-    DecimalFormat df = new DecimalFormat("#.##");
+    private static final String url = "https://api.openweathermap.org/data/2.5/weather";
+    private static final String appid = "449466108ec00a49fe1c77ffe6f31406";
+    private static DecimalFormat df = new DecimalFormat("#.##");
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -96,7 +96,12 @@ public class HomeFrag extends Fragment {
 
         timeofDay.setText("Good "+getTimeOfDay());
 
-        getWeatherDetails("calape","Philippines");
+        if(!CameraActivity.weatherMap.isEmpty()){
+            displayWeatherInfo(CameraActivity.weatherMap);
+        }else{
+            getWeatherDetails("Calape", "Philippines");
+        }
+
 
         return view;
     }
@@ -118,7 +123,7 @@ public class HomeFrag extends Fragment {
     }
 
 
-    public void getWeatherDetails(String city, String country) {
+    public static void getWeatherDetails(String city, String country) {
         String tempUrl = "";
 
         if(!country.equals("")){
@@ -147,18 +152,18 @@ public class HomeFrag extends Fragment {
                     JSONObject jsonObjectSys = jsonResponse.getJSONObject("sys");
                     String countryName = jsonObjectSys.getString("country");
                     String cityName = jsonResponse.getString("name");
-                    output += "Current weather of " + cityName + " (" + countryName + ")"
-                            + "\n Temp: " + df.format(temp) + " °C"
-                            + "\n Feels Like: " + df.format(feelsLike) + " °C"
-                            + "\n Humidity: " + humidity + "%"
-                            + "\n Description: " + description
-                            + "\n Wind Speed: " + wind + "m/s (meters per second)"
-                            + "\n Cloudiness: " + clouds + "%"
-                            + "\n Pressure: " + pressure + " hPa";
+                    CameraActivity.weatherMap.put("description", description);
+                    CameraActivity.weatherMap.put("temp", temp);
+                    CameraActivity.weatherMap.put("feels_like", feelsLike);
+                    CameraActivity.weatherMap.put("pressure", pressure);
+                    CameraActivity. weatherMap.put("humidity", humidity);
+                    CameraActivity. weatherMap.put("wind", wind);
+                    CameraActivity. weatherMap.put("clouds", clouds);
+                    CameraActivity.  weatherMap.put("country", countryName);
+                    CameraActivity. weatherMap.put("city", cityName);
 
-                    tempTV.setText((int)temp+"°");
-                    humidTV.setText("H:"+humidity+"");
-                    weatherType.setText(description);
+                    displayWeatherInfo(CameraActivity.weatherMap);
+
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -174,6 +179,12 @@ public class HomeFrag extends Fragment {
         });
         RequestQueue requestQueue = Volley.newRequestQueue(CameraActivity.context);
         requestQueue.add(stringRequest);
+    }
+
+    public static void displayWeatherInfo(Map<String, Object> weatherMap){
+        tempTV.setText(String.format("%.0f", weatherMap.get("temp")) );
+        humidTV.setText("H:" + weatherMap.get("humidity") + "");
+        weatherType.setText((String) weatherMap.get("description"));
     }
 
 
