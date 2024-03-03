@@ -182,7 +182,7 @@ public class HomeFrag extends Fragment {
     }
 
     public static void displayWeatherInfo(Map<String, Object> weatherMap){
-        tempTV.setText(String.format("%.0f", weatherMap.get("temp")) );
+        tempTV.setText(String.format("%.0f", weatherMap.get("temp"))+"°" );
         humidTV.setText("H:" + weatherMap.get("humidity") + "");
         weatherType.setText((String) weatherMap.get("description"));
     }

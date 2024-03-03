@@ -151,6 +151,7 @@ public class StatsFrag extends Fragment implements AdapterView.OnItemSelectedLis
 
         updateDetectionRecords();
         displayDetectionLogs();
+        viewDetectionChart("today");
 
 
 
@@ -519,6 +520,9 @@ public class StatsFrag extends Fragment implements AdapterView.OnItemSelectedLis
         if(range.equals("today") || range.equals("yesterday") || range.equals("day")){
             int labelCount=highestTime-lowestTime+2;
 
+
+
+
             if(drowsyStartTime==lowestTime){
                 drowsyCountList.add(new Entry(0,0));
                 for (int i = 1; i <= labelCount-1; i++) {
@@ -533,13 +537,14 @@ public class StatsFrag extends Fragment implements AdapterView.OnItemSelectedLis
                 if(range.equals("day")){
 
                     for (int i = 1; i <= labelCount-1; i++) {
-                        if(!yawnList.isEmpty() && yawnStartTime-drowsyStartTime<i && i <= yawnList.size()){
-                            yawnCountList.add(new Entry(i, yawnList.get(i-yawnStartTime)));
+                        if(!yawnList.isEmpty() && yawnStartTime-drowsyStartTime<i && i <= yawnList.size()+(drowsyStartTime==yawnStartTime?0:1)){  //+(drowsyStartTime==yawnStartTime?0:1) i only add this code only at this line
+                            yawnCountList.add(new Entry(i, yawnList.get(i-(yawnStartTime-drowsyStartTime+1))));                                   // because it is executed automatically when drowsyStartTime==yawnStartTime
                         }else{
                             yawnCountList.add(new Entry(i, 0));
                         }
                     }
                 }else{
+
                     for (int i = 1; i <= labelCount-1; i++) {
                         if(!yawnList.isEmpty() && yawnStartTime-drowsyStartTime<i){
                             yawnCountList.add(new Entry(i, yawnList.get(i-(1+yawnStartTime-drowsyStartTime))));
@@ -565,14 +570,15 @@ public class StatsFrag extends Fragment implements AdapterView.OnItemSelectedLis
 
 
                     for (int i = 1; i <= labelCount-1; i++) {
-                        if (!drowsyList.isEmpty() && drowsyStartTime - yawnStartTime < i && i <= drowsyList.size()) {
-                            drowsyCountList.add(new Entry(i, drowsyList.get(i -drowsyStartTime)));
+                        if (!drowsyList.isEmpty() && drowsyStartTime - yawnStartTime < i && i <= drowsyList.size()+1) {
+                            drowsyCountList.add(new Entry(i, drowsyList.get(i -(drowsyStartTime-yawnStartTime+1))));
                         } else {
                             drowsyCountList.add(new Entry(i, 0));
                         }
                     }
 
                 }else{
+
                     for (int i = 1; i <= labelCount-1; i++) {
                         if (!drowsyList.isEmpty() && drowsyStartTime - yawnStartTime < i) {
                             drowsyCountList.add(new Entry(i, drowsyList.get(i -(1+drowsyStartTime-yawnStartTime))));
@@ -612,11 +618,13 @@ public class StatsFrag extends Fragment implements AdapterView.OnItemSelectedLis
             List<Entry> cloneDrowsy = new ArrayList<>();
             List<Entry> cloneYawn = new ArrayList<>();
 
-            drowsyCountList.add(new Entry(0, 0));
-            yawnCountList.add(new Entry(0, 0));
 
-            drowsyCountList.remove(0);
-            yawnCountList.remove(0);
+                drowsyCountList.add(new Entry(0, 0));
+                yawnCountList.add(new Entry(0, 0));
+
+                drowsyCountList.remove(0);
+                yawnCountList.remove(0);
+
 
             for (int i = 0; i < drowsyCountList.size(); i++) {
                 cloneDrowsy.add(new Entry(i,drowsyCountList.get(drowsyCountList.size()-(i+1)).getY()));
