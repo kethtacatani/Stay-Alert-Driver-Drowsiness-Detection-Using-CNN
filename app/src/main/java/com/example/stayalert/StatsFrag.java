@@ -44,6 +44,7 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Locale;
 
 import firebase.classes.FirebaseDatabase;
@@ -333,7 +334,7 @@ public class StatsFrag extends Fragment implements AdapterView.OnItemSelectedLis
         }else if(range.equals("day7")){
             daysRange=7;
             Date tomorrowDate;
-            for (int i = 0; i < 5; i++) {
+            for (int i = 0; i < 6; i++) {
                 calendar.add(Calendar.DAY_OF_MONTH, -1);
                 tomorrowDate = calendar.getTime();
                 xValues.add(sdf.format(tomorrowDate));
@@ -403,26 +404,19 @@ public class StatsFrag extends Fragment implements AdapterView.OnItemSelectedLis
             String field=((range.equals("day7") || range.equals("day3"))?"day":range)+String.format("%02d",i);
             if(documentSnapshot.contains(field) && i<= daysRange){
                 int value= Integer.parseInt(documentSnapshot.getData().get(field).toString()) ;
-                if (daysRange==3 || daysRange == 7) {
-                    drowsyList.add(value);
-                    highestYLength=value>highestYLength?value:highestYLength;
-                }else if(value>0){
-                    drowsyStartTime= drowsyStartTime==0?i:drowsyStartTime;
-                    highestYLength=value>highestYLength?value:highestYLength;
-                    lowestTime=(i<lowestTime)?i:lowestTime;
-                    highestTime=(i>highestTime)?i:highestTime;
-                    drowsyList.add(value);
-                }else if (!drowsyList.isEmpty()){
-                    drowsyList.add(0);
+                drowsyStartTime= drowsyStartTime==0?i:drowsyStartTime;
+                highestYLength=value>highestYLength?value:highestYLength;
+                drowsyList.add(value);
+                if(value>0){
+                    lowestTime = (i < lowestTime) ? i : lowestTime;
+                    highestTime = (i > highestTime) ? i : highestTime;
                 }
             }else{
                 break;
             }
         }
-        while (!drowsyList.isEmpty() && drowsyList.get(drowsyList.size() - 1) == 0) {
-            // Remove the last element if it's zero
-            drowsyList.remove(drowsyList.size() - 1);
-        }
+
+
         checkCount++;
         displayChart(drowsyList,yawnList, range);
     }
@@ -433,27 +427,19 @@ public class StatsFrag extends Fragment implements AdapterView.OnItemSelectedLis
             String field=((range.equals("day7") || range.equals("day3"))?"day":range)+String.format("%02d",i);
             if(documentSnapshot.contains(field) && i<= daysRange){
                 int value= Integer.parseInt(documentSnapshot.getData().get(field).toString()) ;
-                if (daysRange==3 || daysRange == 7) {
-                    yawnList.add(value);
-                    highestYLength=value>highestYLength?value:highestYLength;
-                }else if(value>0) {
-                    yawnStartTime = yawnStartTime == 0 ? i : yawnStartTime;
-                    highestYLength = value > highestYLength ? value : highestYLength;
+                yawnStartTime = yawnStartTime == 0 ? i : yawnStartTime;
+                highestYLength = value > highestYLength ? value : highestYLength;
+                yawnList.add(value);
+                if(value>0){
                     lowestTime = (i < lowestTime) ? i : lowestTime;
                     highestTime = (i > highestTime) ? i : highestTime;
-                    yawnList.add(value);
-                }else if (!yawnList.isEmpty()){
-                    yawnList.add(0);
                 }
             }else{
                 break;
             }
         }
         //remove trailing zeros at the end
-        while (!yawnList.isEmpty() && yawnList.get(yawnList.size() - 1) == 0) {
-            // Remove the last element if it's zero
-            yawnList.remove(yawnList.size() - 1);
-        }
+
         checkCount++;
         displayChart(drowsyList,yawnList, range);
     }
@@ -470,36 +456,52 @@ public class StatsFrag extends Fragment implements AdapterView.OnItemSelectedLis
 
         String timeRange="";
 
-        if(range.equals("today") || range.equals("yesterday")){
-            for (int i = 0; i < highestTime-lowestTime+2; i++) {
-                if(i==0){
-                    xValues.add((lowestTime==1 || lowestTime==13)?"12:00":convertTo12(lowestTime)-1+":00");
-                }else if (i==1){
-                    xValues.add((convertTo12(lowestTime))+":00");
-                }else {
-                    xValues.add((convertTo12(lowestTime+i-1))+":00");
+
+
+
+        if(highestTime==1 && lowestTime==24){
+            drowsyList.clear();
+            yawnList.clear();
+        }else{
+            if(range.equals("today") || range.equals("yesterday")){
+                for (int i = 0; i < highestTime-lowestTime+2; i++) {
+                    if(i==0){
+                        xValues.add((lowestTime==1 || lowestTime==13)?"12:00":convertTo12(lowestTime)-1+":00");
+                    }else if (i==1){
+                        xValues.add((convertTo12(lowestTime))+":00");
+                    }else {
+                        xValues.add((convertTo12(lowestTime+i-1))+":00");
+                    }
                 }
+                if(!drowsyList.isEmpty() || !yawnList.isEmpty()){
+                    timeRange= xValues.get(0)+ ((lowestTime-1)>12?" PM":" AM")+" - "+xValues.get(xValues.size()-1)+ (highestTime>12?" PM":" AM");
+                    timeRangeTV.setText(timeRange);
+                }else{
+                    timeRangeTV.setText("");
+                }
+                yawnList= removeElements(yawnList,yawnList.size()-highestTime, lowestTime-1);
+                drowsyList= removeElements(drowsyList,drowsyList.size()-highestTime, lowestTime-1);
+
+            }else if(range.equals("day")){
+
+                for (int i = 0; i < highestTime-lowestTime+1; i++) {
+
+                    Date date;
+                    calendar.add(Calendar.DAY_OF_MONTH, -1);
+                    date = calendar.getTime();
+                    xValues.add(sdf.format(date));
+                }
+
+                Collections.reverse(xValues);
+                xValues.add(0,"Date");
+                xValues.add(sdf.format(currentDate));
+
+                yawnList= removeElements(yawnList,yawnList.size()-highestTime, lowestTime-1);
+                drowsyList= removeElements(drowsyList,drowsyList.size()-highestTime, lowestTime-1);
             }
-            if(!drowsyList.isEmpty() || !yawnList.isEmpty()){
-                timeRange= xValues.get(0)+ ((lowestTime-1)>12?" PM":" AM")+" - "+xValues.get(xValues.size()-1)+ (highestTime>12?" PM":" AM");
-                timeRangeTV.setText(timeRange);
-            }else{
-                timeRangeTV.setText("");
-            }
-        }else if(range.equals("day")){
 
 
-            for (int i = 0; i < highestTime-lowestTime; i++) {
 
-                Date tomorrowDate;
-                calendar.add(Calendar.DAY_OF_MONTH, -1);
-                tomorrowDate = calendar.getTime();
-                xValues.add(sdf.format(tomorrowDate));
-            }
-
-            Collections.reverse(xValues);
-            xValues.add(0,"Date");
-            xValues.add(sdf.format(currentDate));
         }
 
 
@@ -513,130 +515,6 @@ public class StatsFrag extends Fragment implements AdapterView.OnItemSelectedLis
         lineChart.getAxisRight().setDrawGridLines(false);
         lineChart.setTouchEnabled(true);
 
-
-        List<Entry> drowsyCountList = new ArrayList<>();
-        List<Entry> yawnCountList = new ArrayList<>();
-
-        if(range.equals("today") || range.equals("yesterday") || range.equals("day")){
-            int labelCount=highestTime-lowestTime+2;
-
-
-
-
-            if(drowsyStartTime==lowestTime){
-                drowsyCountList.add(new Entry(0,0));
-                for (int i = 1; i <= labelCount-1; i++) {
-                    if(i<=drowsyList.size()){
-                        drowsyCountList.add(new Entry(i, drowsyList.get(i-1)));
-                    }else{
-                        drowsyCountList.add(new Entry(i, 0));
-                    }
-                }
-
-                yawnCountList.add(new Entry(0,0));
-                if(range.equals("day")){
-
-                    for (int i = 1; i <= labelCount-1; i++) {
-                        if(!yawnList.isEmpty() && yawnStartTime-drowsyStartTime<i && i <= yawnList.size()+(drowsyStartTime==yawnStartTime?0:1)){  //+(drowsyStartTime==yawnStartTime?0:1) i only add this code only at this line
-                            yawnCountList.add(new Entry(i, yawnList.get(i-(yawnStartTime-drowsyStartTime+1))));                                   // because it is executed automatically when drowsyStartTime==yawnStartTime
-                        }else{
-                            yawnCountList.add(new Entry(i, 0));
-                        }
-                    }
-                }else{
-
-                    for (int i = 1; i <= labelCount-1; i++) {
-                        if(!yawnList.isEmpty() && yawnStartTime-drowsyStartTime<i){
-                            yawnCountList.add(new Entry(i, yawnList.get(i-(1+yawnStartTime-drowsyStartTime))));
-                        }else{
-                            yawnCountList.add(new Entry(i, 0));
-                        }
-                    }
-                }
-
-
-            }else if (yawnStartTime==lowestTime) {
-                yawnCountList.add(new Entry(0, 0));
-                for (int i = 1; i <= labelCount-1; i++) {
-                    if (i<=yawnList.size()) {
-                        yawnCountList.add(new Entry(i, yawnList.get(i - 1)));
-                    } else {
-                        yawnCountList.add(new Entry(i, 0));
-                    }
-                }
-
-                drowsyCountList.add(new Entry(0, 0));
-                if(range.equals("day")){
-
-
-                    for (int i = 1; i <= labelCount-1; i++) {
-                        if (!drowsyList.isEmpty() && drowsyStartTime - yawnStartTime < i && i <= drowsyList.size()+1) {
-                            drowsyCountList.add(new Entry(i, drowsyList.get(i -(drowsyStartTime-yawnStartTime+1))));
-                        } else {
-                            drowsyCountList.add(new Entry(i, 0));
-                        }
-                    }
-
-                }else{
-
-                    for (int i = 1; i <= labelCount-1; i++) {
-                        if (!drowsyList.isEmpty() && drowsyStartTime - yawnStartTime < i) {
-                            drowsyCountList.add(new Entry(i, drowsyList.get(i -(1+drowsyStartTime-yawnStartTime))));
-                        } else {
-                            drowsyCountList.add(new Entry(i, 0));
-                        }
-                    }
-                }
-
-            }
-        }else{
-
-            drowsyCountList.add(new Entry(0,0));
-            for (int i = 1; i < xValues.size(); i++) {
-                if(i<=drowsyList.size()){
-                    drowsyCountList.add(new Entry(i,drowsyList.get(i-1)));
-                }else{
-                    drowsyCountList.add(new Entry(i, 0));
-                }
-            }
-
-            yawnCountList.add(new Entry(0,0));
-            for (int i = 1; i < xValues.size(); i++) {
-                if(i<=yawnList.size()){
-                    yawnCountList.add(new Entry(i,yawnList.get(i-1)));
-                }else{
-                    yawnCountList.add(new Entry(i, 0));
-                }
-            }
-
-        }
-
-
-        if(range.equals("day") || range.equals("day3") || range.equals("day7")) {
-            timeRangeTV.setText("");
-
-            List<Entry> cloneDrowsy = new ArrayList<>();
-            List<Entry> cloneYawn = new ArrayList<>();
-
-
-                drowsyCountList.add(new Entry(0, 0));
-                yawnCountList.add(new Entry(0, 0));
-
-                drowsyCountList.remove(0);
-                yawnCountList.remove(0);
-
-
-            for (int i = 0; i < drowsyCountList.size(); i++) {
-                cloneDrowsy.add(new Entry(i,drowsyCountList.get(drowsyCountList.size()-(i+1)).getY()));
-            }
-
-            for (int i = 0; i < yawnCountList.size(); i++) {
-                cloneYawn.add(new Entry(i,yawnCountList.get(yawnCountList.size()-(i+1)).getY()));
-            }
-
-            drowsyCountList= new ArrayList<>(cloneDrowsy);
-            yawnCountList= new ArrayList<>(cloneYawn);
-        }
 
 
 
@@ -656,6 +534,40 @@ public class StatsFrag extends Fragment implements AdapterView.OnItemSelectedLis
         yAxis.setLabelCount(highestYLength+1);
 
 
+        List<Entry> drowsyCountList = new ArrayList<>();
+        List<Entry> yawnCountList = new ArrayList<>();
+
+        drowsyCountList.add( new Entry(0, 0));
+        yawnCountList.add( new Entry(0, 0));
+
+        if(range.equals("day") || range.equals("day3") || range.equals("day7")){
+            timeRangeTV.setText("");
+
+            for (int i = 0; i < drowsyList.size(); i++) {
+                drowsyCountList.add(new Entry(i+1, drowsyList.get(drowsyList.size() - 1 - i)));
+            }
+
+            for (int i = 0; i < yawnList.size(); i++) {
+                yawnCountList.add(new Entry(i+1, yawnList.get(yawnList.size() - 1 - i)));
+            }
+
+            //check if no detection for day1 in day30 chart
+            if(Integer.parseInt(CameraActivity.drowsyCountDocument.getData().get("day01").toString())==0 && Integer.parseInt(CameraActivity.yawnCountDocument.getData().get("day01").toString())==0 && range.equals("day")){
+                drowsyCountList.add(new Entry(drowsyCountList.size(), 0));
+                yawnCountList.add(new Entry(yawnCountList.size(), 0));
+            }
+
+        }else{
+            for (int i = 0; i < drowsyList.size(); i++) {
+                drowsyCountList.add(new Entry(i+1, drowsyList.get(i)));
+            }
+
+            for (int i = 0; i < yawnList.size(); i++) {
+                yawnCountList.add(new Entry(i+1, yawnList.get(i)));
+            }
+        }
+
+
         LineDataSet dataSet1 = new LineDataSet(drowsyCountList, "Drowsy");
         dataSet1.setColor(Color.BLUE);
         dataSet1.setValueFormatter(new MyValueFormatter());
@@ -671,6 +583,26 @@ public class StatsFrag extends Fragment implements AdapterView.OnItemSelectedLis
         lineChart.setData(lineData);
 
         lineChart.invalidate();
+    }
+
+    private static ArrayList<Integer> removeElements(ArrayList<Integer> list, int endRemove, int startRemove) {
+        if (endRemove > list.size() || startRemove > list.size()) {
+            throw new IllegalArgumentException("n1 or n2 exceeds the size of the list");
+        }
+
+        ArrayList<Integer> newList = new ArrayList<>();
+
+        // Add elements from original list excluding the first n2 elements
+        for (int i = startRemove; i < list.size(); i++) {
+            newList.add(list.get(i));
+        }
+
+        // Remove n1 elements from the end of the new list
+        for (int i = 0; i < endRemove; i++) {
+            newList.remove(newList.size() - 1);
+        }
+
+        return newList;
     }
 
     public int convertTo12(int hour){
