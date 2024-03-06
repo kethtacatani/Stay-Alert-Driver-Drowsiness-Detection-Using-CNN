@@ -65,4 +65,6 @@ dependencies {
 
     implementation 'com.github.joielechong:countrycodepicker:2.4.2'
     implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
+
+    implementation 'com.mapbox.maps:android:10.14.1'
 }

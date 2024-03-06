@@ -1,9 +1,15 @@
 package com.example.stayalert;
 
+import static com.mapbox.maps.plugin.gestures.GesturesUtils.getGestures;
+import static com.mapbox.maps.plugin.locationcomponent.LocationComponentUtils.getLocationComponent;
+
 import android.os.Bundle;
 
-import androidx.annotation.NonNull;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.Nullable;
+import androidx.appcompat.content.res.AppCompatResources;
 import androidx.fragment.app.Fragment;
 
 import android.util.Log;
@@ -21,13 +27,27 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.etebarian.meowbottomnavigation.MeowBottomNavigation;
+import com.example.stayalert.databinding.ActivityHomeBinding;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.mapbox.android.gestures.MoveGestureDetector;
+import com.mapbox.geojson.Point;
+import com.mapbox.maps.CameraOptions;
+import com.mapbox.maps.MapView;
+import com.mapbox.maps.Style;
+import com.mapbox.maps.plugin.LocationPuck2D;
+import com.mapbox.maps.plugin.gestures.OnMoveListener;
+import com.mapbox.maps.plugin.locationcomponent.LocationComponentPlugin;
+import com.mapbox.maps.plugin.locationcomponent.OnIndicatorBearingChangedListener;
+import com.mapbox.maps.plugin.locationcomponent.OnIndicatorPositionChangedListener;
 
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -38,6 +58,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import firebase.classes.FirebaseDatabase;
+import kotlin.Unit;
+import kotlin.jvm.functions.Function1;
 
 ///**
 // * A simple {@link Fragment} subclass.
@@ -58,6 +80,53 @@ public class HomeFrag extends Fragment {
     private static final String url = "https://api.openweathermap.org/data/2.5/weather";
     private static final String appid = "449466108ec00a49fe1c77ffe6f31406";
     private static DecimalFormat df = new DecimalFormat("#.##");
+
+    private MapView mapView;
+    FloatingActionButton floatingActionButton;
+
+    private final ActivityResultLauncher<String> activityResultLauncher = registerForActivityResult(new ActivityResultContracts.RequestPermission(), new ActivityResultCallback<Boolean>() {
+        @Override
+        public void onActivityResult(Boolean result) {
+            if (result) {
+                Toast.makeText(CameraActivity.context, "Permission granted!", Toast.LENGTH_SHORT).show();
+            }
+        }
+    });
+
+    private final OnIndicatorBearingChangedListener onIndicatorBearingChangedListener = new OnIndicatorBearingChangedListener() {
+        @Override
+        public void onIndicatorBearingChanged(double v) {
+            mapView.getMapboxMap().setCamera(new CameraOptions.Builder().bearing(v).build());
+        }
+    };
+
+    private final OnIndicatorPositionChangedListener onIndicatorPositionChangedListener = new OnIndicatorPositionChangedListener() {
+        @Override
+        public void onIndicatorPositionChanged(@NonNull Point point) {
+            mapView.getMapboxMap().setCamera(new CameraOptions.Builder().center(point).zoom(20.0).build());
+            getGestures(mapView).setFocalPoint(mapView.getMapboxMap().pixelForCoordinate(point));
+        }
+    };
+
+    private final OnMoveListener onMoveListener = new OnMoveListener() {
+        @Override
+        public void onMoveBegin(@NonNull MoveGestureDetector moveGestureDetector) {
+            getLocationComponent(mapView).removeOnIndicatorBearingChangedListener(onIndicatorBearingChangedListener);
+            getLocationComponent(mapView).removeOnIndicatorPositionChangedListener(onIndicatorPositionChangedListener);
+            getGestures(mapView).removeOnMoveListener(onMoveListener);
+            floatingActionButton.show();
+        }
+
+        @Override
+        public boolean onMove(@NonNull MoveGestureDetector moveGestureDetector) {
+            return false;
+        }
+
+        @Override
+        public void onMoveEnd(@NonNull MoveGestureDetector moveGestureDetector) {
+
+        }
+    };
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -101,6 +170,39 @@ public class HomeFrag extends Fragment {
         }else{
             getWeatherDetails("Calape", "Philippines");
         }
+
+        mapView = view.findViewById(R.id.mapView);
+        floatingActionButton = view.findViewById(R.id.focusLocation);
+
+
+
+        floatingActionButton.hide();
+        mapView.getMapboxMap().loadStyleUri(Style.MAPBOX_STREETS, new Style.OnStyleLoaded() {
+            @Override
+            public void onStyleLoaded(@NonNull Style style) {
+
+
+                mapView.getMapboxMap().setCamera(new CameraOptions.Builder().zoom(1000.0).build());
+                LocationComponentPlugin locationComponentPlugin = getLocationComponent(mapView);
+                locationComponentPlugin.setEnabled(true);
+                LocationPuck2D locationPuck2D = new LocationPuck2D();
+                locationPuck2D.setBearingImage(AppCompatResources.getDrawable(CameraActivity.context, R.drawable.ic_baseline_location_on_24));
+                locationComponentPlugin.setLocationPuck(locationPuck2D);
+                locationComponentPlugin.addOnIndicatorBearingChangedListener(onIndicatorBearingChangedListener);
+                locationComponentPlugin.addOnIndicatorPositionChangedListener(onIndicatorPositionChangedListener);
+                getGestures(mapView).addOnMoveListener(onMoveListener);
+
+                floatingActionButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        locationComponentPlugin.addOnIndicatorBearingChangedListener(onIndicatorBearingChangedListener);
+                        locationComponentPlugin.addOnIndicatorPositionChangedListener(onIndicatorPositionChangedListener);
+                        getGestures(mapView).addOnMoveListener(onMoveListener);
+                        floatingActionButton.hide();
+                    }
+                });
+            }
+        });
 
 
         return view;
@@ -182,9 +284,11 @@ public class HomeFrag extends Fragment {
     }
 
     public static void displayWeatherInfo(Map<String, Object> weatherMap){
-        tempTV.setText(String.format("%.0f", weatherMap.get("temp"))+"°" );
-        humidTV.setText("H:" + weatherMap.get("humidity") + "");
-        weatherType.setText((String) weatherMap.get("description"));
+        if(weatherMap!=null && tempTV!=null){
+            tempTV.setText(String.format("%.0f", weatherMap.get("temp"))+"°" );
+            humidTV.setText("H:" + weatherMap.get("humidity") + "");
+            weatherType.setText((String) weatherMap.get("description"));
+        }
     }
 
 
