@@ -58,7 +58,7 @@ public class Sign_in extends AppCompatActivity {
     Runnable connectivityCheckRunnable;
     FirebaseAuth mAuth;
     FirebaseUser user;
-    TextView creatAccTV, usernameErrTV, passErrTV;
+    TextView creatAccTV, usernameErrTV, passErrTV, forgotPass;
     GoogleSignInClient googleSignInClient;
     CollectionReference collection;
     EditText username, password;
@@ -77,19 +77,25 @@ public class Sign_in extends AppCompatActivity {
             viewCameraPermission();
         }
 
-        isStoragePermissionGranted();
+        if(!ifHasStoragePermission()){
+            viewStoragePermission();
+        }
         // Check if user is signed in (non-null) and update UI accordingly.
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
         firebaseDB = new FirebaseDatabase();
         user = FirebaseAuth.getInstance().getCurrentUser();
+        dialogHelper=new DialogHelper(Sign_in.this);
 
         if(user != null){
+
+            dialogHelper.showLoadingDialog("Logging In","Please wait...");
             getUserInfo();
+
+        }
+        else{
         }
     }
-
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -101,9 +107,6 @@ public class Sign_in extends AppCompatActivity {
             decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
         }
 
-
-
-
         GoogleSignInOptions options = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.default_web_client_id))
                 .requestEmail()
@@ -111,7 +114,7 @@ public class Sign_in extends AppCompatActivity {
         googleSignInClient = GoogleSignIn.getClient(this,options);
         googleBtn= findViewById(R.id.BTNgoogle);
 
-        dialogHelper=new DialogHelper(Sign_in.this);
+
 
         creatAccTV = (TextView)findViewById(R.id.TVcreateAcc);
         signInBtn = ( Button)findViewById(R.id.BTNsignin);
@@ -120,6 +123,7 @@ public class Sign_in extends AppCompatActivity {
         password = findViewById(R.id.ETpass);
         usernameErrTV = findViewById(R.id.TVusernameErr);
         passErrTV=findViewById(R.id.TVpassErr);
+        forgotPass= findViewById(R.id.TVforgot);
 
         String email=getIntent().getStringExtra("email");
         if(email!=null){
@@ -142,12 +146,23 @@ public class Sign_in extends AppCompatActivity {
 
         });
 
-
         googleBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = googleSignInClient.getSignInIntent();
                 startActivityForResult(intent,1234);
+            }
+        });
+
+        forgotPass.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(getApplicationContext(), ForgotPassActivity.class);
+                if(!username.getText().toString().trim().isEmpty()){
+                    intent.putExtra("email",username.getText().toString().trim());
+                }
+                startActivity(intent);
+                finish();
             }
         });
 
@@ -247,7 +262,9 @@ public class Sign_in extends AppCompatActivity {
                     Log.w(TAG,"No data exist");
                     signUpUser(user.getEmail());
                 }else{
-                    if(ifHasCameraPermission() && ifHasStoragePermission()){ signInUser();}
+                    if(ifHasCameraPermission() && ifHasStoragePermission()){
+                        signInUser();
+                    }
                 }
             }
 
@@ -388,18 +405,22 @@ public class Sign_in extends AppCompatActivity {
         signInBtn.setText("Sign in");
     }
     public boolean ifHasStoragePermission(){
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                == PackageManager.PERMISSION_DENIED) {
-            return false;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_IMAGES)
+                    == PackageManager.PERMISSION_DENIED) {
+                return false;
+            }
+        }else {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    == PackageManager.PERMISSION_DENIED) {
+                return false;
+            }
+
         }
-        return  true;
+        return true;
     }
 
-    public void viewStoragePermission(){
-        ActivityCompat.requestPermissions(this,
-                new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                110);
-    }
+
 
     public boolean ifHasCameraPermission(){
         if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.CAMERA)
@@ -411,24 +432,17 @@ public class Sign_in extends AppCompatActivity {
     public void viewCameraPermission(){
         ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.CAMERA},100);
     }
+    
 
-    public  boolean isStoragePermissionGranted() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                    == PackageManager.PERMISSION_GRANTED) {
-                Log.v(TAG,"Permission is granted");
-                return true;
-            } else {
+    public void viewStoragePermission(){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.READ_MEDIA_IMAGES},110);
+        }else{
+            ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.WRITE_EXTERNAL_STORAGE},110);
+        }
 
-                Log.v(TAG,"Permission is revoked");
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 110);
-                return false;
-            }
-        }
-        else { //permission is automatically granted on sdk<23 upon installation
-            Log.v(TAG,"Permission is granted");
-            return true;
-        }
+
+
     }
 
     @Override

@@ -2,10 +2,10 @@ package com.example.stayalert;
 
 public class DetectionLogsInfo {
     private String timestamp;
-    private String detectionType, accuracy,location,inference, title, localPath,imageLink;
+    private String detectionType, accuracy,location,inference, title, localPath,imageLink, responseTime;
 
     // Constructor
-    public DetectionLogsInfo(String detectionType, String timestamp, String location, String accuracy, String inference, String title, String localPath, String imageLink) {
+    public DetectionLogsInfo(String detectionType, String timestamp, String location, String accuracy, String inference, String title, String localPath, String imageLink, String responseTIme) {
         this.timestamp = timestamp;
         this.detectionType = detectionType;
         this.location =location;
@@ -14,6 +14,7 @@ public class DetectionLogsInfo {
         this.title=title;
         this.localPath=localPath;
         this.imageLink=imageLink;
+        this.responseTime =responseTIme;
     }
 
     // Getter methods
@@ -42,6 +43,9 @@ public class DetectionLogsInfo {
     }
     public String getImageLink(){
         return imageLink;
+    }
+    public String getResponseTime(){
+        return responseTime;
     }
 
     // Setter methods (optional)

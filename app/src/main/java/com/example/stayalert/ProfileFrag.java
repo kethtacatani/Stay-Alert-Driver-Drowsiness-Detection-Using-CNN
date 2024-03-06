@@ -1,12 +1,15 @@
 package com.example.stayalert;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -28,10 +31,14 @@ import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.EmailAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
 import com.rilixtech.widget.countrycodepicker.CountryCodePicker;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -58,6 +65,9 @@ public class ProfileFrag extends Fragment implements View.OnTouchListener{
     private DialogHelper dialogHelper;
     String dialogAction="";
     CountryCodePicker ccp;
+    public static final int PICK_IMAGE= 20;
+    boolean profilePicChanged = false;
+    Bitmap picBitmap, oldPic;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -156,6 +166,10 @@ public class ProfileFrag extends Fragment implements View.OnTouchListener{
                     FirebaseAuth.getInstance().signOut();
                     googleSignInClient.signOut();
                 }else if(dialogAction.equals("discard")){
+                    if(profilePicChanged){
+                        profilePicChanged=false;
+                        profileImage.setImageBitmap(oldPic);
+                    }
                     displayTBG();
                 }
 
@@ -175,7 +189,13 @@ public class ProfileFrag extends Fragment implements View.OnTouchListener{
                         dialogHelper.showDialog("Change Password","You need to sing up first");
                     }
                 }else{
-                    displayTBG();
+                    if(!isNoChanges()){
+                        dialogHelper.discardDialog();
+                        dialogAction="discard";
+                        dialogHelper.showDialog("Edit Profile","Discard changes?");
+                    }else{
+                        displayTBG();
+                    }
                 }
 
             }
@@ -184,6 +204,8 @@ public class ProfileFrag extends Fragment implements View.OnTouchListener{
         profileCam.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                startActivityForResult(intent, PICK_IMAGE);
 
             }
         });
@@ -243,6 +265,10 @@ public class ProfileFrag extends Fragment implements View.OnTouchListener{
                                     });
                                 }else{
                                     updateUserInfo(userData,null);
+                                    if(profilePicChanged){
+                                        saveProfilePicToServer();
+                                        profilePicChanged=false;
+                                    }
                                 }
                             }else{
                                 contactIL.setError("Invalid phone number*");
@@ -278,7 +304,8 @@ public class ProfileFrag extends Fragment implements View.OnTouchListener{
                                                         @Override
                                                         public void onComplete(@NonNull Task<Void> task) {
                                                             if (task.isSuccessful()) {
-                                                                firebaseDB.updateUserInfo(userNewPass, new FirebaseDatabase.TaskCallback<Void>() {
+                                                                DocumentReference ref = db.collection("users").document(auth.getUid());
+                                                                firebaseDB.updateUserInfo(userNewPass,ref, new FirebaseDatabase.TaskCallback<Void>() {
                                                                     @Override
                                                                     public void onSuccess(Void result) {
                                                                         dialogHelper.showDialog("Edit Profile","Password successfully changed");
@@ -376,15 +403,70 @@ public class ProfileFrag extends Fragment implements View.OnTouchListener{
             }
         });
 
+        displayProfilePic();
+
         return view;
 
 
     }
 
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data)
+    {
+        if (requestCode == PICK_IMAGE) {
+            if (data != null) {
+                Uri imageUri = data.getData();
+                try {
+                    picBitmap = MediaStore.Images.Media.getBitmap(getActivity().getContentResolver(), imageUri);
+                    profileImage.setImageBitmap(picBitmap);
+                    profilePicChanged=true;
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    public void saveProfilePicToServer(){
+        String result[] =firebaseDB.saveImageToLocal("profile_pic",picBitmap,"userRes");
+        Map<String, Object> imageInfo = new HashMap<>();
+        imageInfo.put("image_info","profile_pic");
+        imageInfo.put("file_name",result[1]);
+        imageInfo.put("local_path",result[0]);
+        imageInfo.put("firestore_path","users/"+user.getUid()+"/user_res/"+result[1]);
+        imageInfo.put("storage_path","users/"+user.getUid()+"/user_res");
+
+        firebaseDB.saveFileInfoToFirestore(imageInfo, "upload_queue");
+        firebaseDB.saveFileInfoToFirestore(imageInfo, "user_res");
+    }
+
+    public void displayProfilePic(){
+        Bitmap bitmap = firebaseDB.getImageFromLocal(cameraActivity, auth.getUid()+"/userRes","profile_pic.jpg");
+        if(bitmap!=null){
+            profileImage.setImageBitmap(bitmap);
+        }else{
+            firebaseDB.getImageFromServer("profile_pic.jpg",auth.getUid()+"/user_res",  new FirebaseDatabase.BitmapTaskCallback() {
+                @Override
+                public void onSuccess(Bitmap bitmap) {
+                    oldPic=bitmap;
+                    profileImage.setImageBitmap(bitmap);
+                }
+
+                @Override
+                public void onFailure(String errorMessage) {
+                    Log.w("ViewDetectionHelper", errorMessage);
+                }
+            });
+        }
+        oldPic=bitmap;
+    }
+
     public void updateUserInfo(Map userData, String oldContact){
         //update user information
 
-        firebaseDB.updateUserInfo(userData, new FirebaseDatabase.TaskCallback<Void>() {
+        DocumentReference ref =db.collection("users").document(auth.getUid());
+        firebaseDB.updateUserInfo(userData,ref, new FirebaseDatabase.TaskCallback<Void>() {
 
             @Override
             public void onSuccess(Void result) {
@@ -503,7 +585,7 @@ public class ProfileFrag extends Fragment implements View.OnTouchListener{
         if(fName.getText().toString().trim().equals(userData.get("first_name").toString())  && mName.getText().toString().trim().equals(userData.get("middle_name").toString())
                 && lName.getText().toString().trim().equals(userData.get("last_name").toString()) && suffix.getText().toString().trim().equals(userData.get("suffix").toString())
                 && contact.getText().toString().replace(" ", "").equals(userData.get("contact").toString())  && address.getText().toString().trim().equals(userData.get("address").toString())
-                && age.getText().toString().trim().equals(userData.get("age").toString())){
+                && age.getText().toString().trim().equals(userData.get("age").toString()) && !profilePicChanged){
             return true;
         }
         return false;

@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Camera;
 import android.net.Uri;
+import android.os.Build;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -21,9 +22,14 @@ import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.AggregateField;
+import com.google.firebase.firestore.AggregateQuery;
+import com.google.firebase.firestore.AggregateQuerySnapshot;
+import com.google.firebase.firestore.AggregateSource;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
@@ -37,9 +43,15 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -182,8 +194,8 @@ public class FirebaseDatabase {
             }
         });
     }
-    public void updateUserInfo(Map userData, TaskCallback<Void> callback) {
-        db.collection("users").document(userID).update(userData)
+    public void updateUserInfo(Map userData,DocumentReference ref, TaskCallback<Void> callback) {
+        ref.update(userData)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
                         callback.onSuccess(null); // Passing null as there is no specific result for success
@@ -228,9 +240,9 @@ public class FirebaseDatabase {
         void onFailure(String errorMessage);
     }
 
-    public Bitmap getImageFromServer(String fileName, BitmapTaskCallback callback) {
+    public Bitmap getImageFromServer(String fileName,String folder, BitmapTaskCallback callback) {
         try {
-            StorageReference storageRef = storage.getReference().child("users/"+mAuth.getUid()+"/detection_images/"+fileName);
+            StorageReference storageRef = storage.getReference().child("users/"+mAuth.getUid()+"/"+folder+"/"+fileName);
             final long ONE_MEGABYTE = 1024 * 1024;
             storageRef.getBytes(ONE_MEGABYTE).addOnSuccessListener(new OnSuccessListener<byte[]>() {
                 @Override
@@ -238,7 +250,7 @@ public class FirebaseDatabase {
                     System.out.println("success byte");
                     Bitmap bitmap=BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
                     if(bitmap!=null){
-                        saveImageToLocal(fileName,bitmap,(fileName.contains("local")?"detections":"user_images"));
+                        saveImageToLocal(fileName,bitmap,(fileName.contains("local")?"detections":"userRes"));
                         callback.onSuccess(bitmap);
                     }
                 }
@@ -276,10 +288,18 @@ public class FirebaseDatabase {
         File dir = new File(CameraActivity.context.getFilesDir(), path);
         if(!dir.exists()){
             dir.mkdirs();
+        }else{
+            System.out.println("Fail local");
         }
 
         try {
-            String fileName=(nameExtension.contains("local_"))?nameExtension:"local_"+time +"_"+nameExtension+".jpg";
+            String fileName="local_"+time +"_"+nameExtension+".jpg";
+            if(nameExtension.contains("local_")){
+                fileName =nameExtension;
+            }else if(nameExtension.contains("profile_pic")){
+                fileName="profile_pic.jpg";
+            }
+
             File imageFile = new File(dir, fileName);
             FileOutputStream fos = new FileOutputStream(imageFile);
             compressImage(bitmap).compress(Bitmap.CompressFormat.JPEG, 100, fos);
@@ -315,6 +335,9 @@ public class FirebaseDatabase {
     public UploadTask isImageUploaded(String storagePath,String localPath, String fileName, OnInterfaceListener listener){
 
         Bitmap bitmap= getImageFromLocal(CameraActivity.context, localPath,fileName);
+        if(bitmap==null){
+            return null;
+        }
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
         byte[] data = baos.toByteArray();
@@ -425,9 +448,6 @@ public class FirebaseDatabase {
         int width = bm.getWidth();
         int height = bm.getHeight();
 
-
-
-
         int maxWidth=480;
         int maxHeight=480;
 
@@ -493,10 +513,11 @@ public class FirebaseDatabase {
                         String location = getValue(documentFields.getData(), "location", "to be added");
                         String accuracy = getValue(documentFields.getData(), "accuracy", "");
                         String inference = getValue(documentFields.getData(), "inference", "");
+                        String responseTime = getValue(documentFields.getData(), "response_time", "");
                         String localPath = getValue(documentFields.getData(), "local_path", "");
                         String downloadURL = getValue(documentFields.getData(), "downloadURL", "");
 
-                        info.add( new DetectionLogsInfo(type,timestamp,location,accuracy,inference,fileName, localPath, downloadURL));
+                        info.add( new DetectionLogsInfo(type,timestamp,location,accuracy,inference,fileName, localPath, downloadURL,responseTime)); //must be in correct order
                     }
                     callback.onSuccess(info);
                 }
@@ -514,9 +535,152 @@ public class FirebaseDatabase {
     public String dateFormat(Timestamp timestamp) {
         String timestampString = null;
         Date date = timestamp.toDate();
-        SimpleDateFormat dateFormat = new SimpleDateFormat("MMM d, yyyy 'at' h:mm a", Locale.getDefault());
+        SimpleDateFormat dateFormat = new SimpleDateFormat("MMM d, yyyy 'at' h:mm a");
         timestampString = dateFormat.format(date);
         return timestampString;
+
+    }
+
+    public void checkStatCount(String type){
+        readData(type+"_count", mAuth.getUid(), "default", new OnGetDataListener() {
+            @Override
+            public void onSuccess(DocumentSnapshot documentSnapshot) {
+                if(documentSnapshot.exists()){
+                    updateStatCount(documentSnapshot, type);
+
+                }else{
+                    Map<String, Object> drowsyCount = new HashMap<>();
+                    drowsyCount.put("date", new Date());
+                    // Pad the numbers with zeros
+                    for (int i = 1; i < 25; i++) {
+                        drowsyCount.put("today"+String.format("%02d", i), 0);
+                    }
+
+                    for (int i = 1; i < 25; i++) {
+                        drowsyCount.put("yesterday"+String.format("%02d", i), 0);
+                    }
+
+                    for (int i = 1; i < 31; i++) {
+                        drowsyCount.put("day"+String.format("%02d", i), 0);
+                    }
+
+                    writeUserInfo(drowsyCount, type+"_count", mAuth.getUid(), new TaskCallback<Void>() {
+                        @Override
+                        public void onSuccess(Void result) {
+                            Log.d(TAG,"Insert success "+type);
+                        }
+
+                        @Override
+                        public void onFailure(String errorMessage) {
+                            Log.d(TAG,"Insert Failed: "+errorMessage);
+                        }
+                    });
+                }
+            }
+
+            @Override
+            public void onStart() {
+
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                Log.e(TAG+ " checkStatCount: ",e.getLocalizedMessage());
+            }
+        });
+    }
+
+    public void incrementCount(String type, int value){
+        DocumentReference ref = db.collection(type+"_count").document(mAuth.getUid());
+
+        Calendar calendar = Calendar.getInstance();
+        int currentHour = calendar.get(Calendar.HOUR_OF_DAY)+1;
+        String stringHour=String.format("%02d",currentHour);
+
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("today"+stringHour, FieldValue.increment(value));
+        updates.put("day01", FieldValue.increment(value));
+
+        ref.update(updates).addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                if (task.isSuccessful()) {
+                    Log.d(TAG+" Increment","Success");
+                } else {
+                    Log.d(TAG+" Increment","Failed "+task.getException().getLocalizedMessage());
+                }
+            }
+        });
+    }
+
+
+
+    public void updateStatCount(DocumentSnapshot documentSnapshot, String type){
+
+        Timestamp timestamp = documentSnapshot.getTimestamp("date");
+        LocalDate dateFromFirestore=null;
+        LocalDate currentDate=null;
+        int daysDifference=0;
+        // Convert the timestamp to LocalDate
+        Instant instant = null;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            instant = timestamp.toDate().toInstant();
+            ZoneId zoneId = ZoneId.systemDefault();
+            dateFromFirestore = instant.atZone(zoneId).toLocalDate();
+            currentDate = LocalDate.now();
+            daysDifference =(int) ChronoUnit.DAYS.between(dateFromFirestore, currentDate);
+        }
+
+        if(daysDifference>0){
+
+            Map<String, Object> recentCountMap = new HashMap<>();
+            recentCountMap= documentSnapshot.getData();
+            Map<String, Object> daysCountMap = new HashMap<>();
+            daysCountMap.put("date", new Date());
+
+            //for yesterday
+            for (int i = 1; i < 25; i++) {
+                daysCountMap.put("today" +String.format("%02d",i), 0);
+            }
+
+            if(daysDifference==1){
+                for (int i = 1; i < 25; i++) {
+                    daysCountMap.put("yesterday" +String.format("%02d",i) , recentCountMap.get("today"+String.format("%02d",i)));
+                }
+            }else{
+                for (int i = 1; i < 25; i++) {
+                    daysCountMap.put("yesterday" +String.format("%02d",i), 0);
+                }
+            }
+
+            //for day
+            for(int i=1;i<=daysDifference;i++){
+                daysCountMap.put("day" +String.format("%02d",i) ,0);
+            }
+
+            for (int i = 1; i < 31; i++) {
+                if(daysDifference+i<31){
+                    daysCountMap.put("day" + String.format("%02d",daysDifference+i), recentCountMap.get("day"+String.format("%02d",i)));
+                }
+            }
+
+
+            DocumentReference ref = db.collection(type+"_count").document(mAuth.getUid());
+            updateUserInfo(daysCountMap,ref, new TaskCallback<Void>() {
+                @Override
+                public void onSuccess(Void result) {
+                    Log.d(TAG+ "updateStatCount","Success");
+                }
+
+                @Override
+                public void onFailure(String errorMessage) {
+                    Log.d(TAG,"Error inserting count");
+                }
+            });
+
+        }
+
+
 
     }
 

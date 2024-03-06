@@ -18,12 +18,6 @@
         >
 
 
-        <ImageView
-            android:id="@+id/testImage"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            tools:srcCompat="@tools:sample/avatars" />
-
         <TextView
             android:id="@+id/TVTitle"
             android:layout_width="match_parent"
@@ -34,6 +28,19 @@
             android:textSize="18sp"
             android:gravity="center"
             android:text="Login Failed" />
+
+        <com.airbnb.lottie.LottieAnimationView
+            android:id="@+id/Dialogloading"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginLeft="3dp"
+            android:layout_marginTop="-10dp"
+            android:elevation="10dp"
+            android:visibility="gone"
+            app:lottie_autoPlay="false"
+            app:lottie_loop="true"
+            app:lottie_colorFilter="@color/primary"
+            app:lottie_rawRes="@raw/loading" />
 
         <TextView
             android:id="@+id/TVInfo"
@@ -57,18 +64,18 @@
 
             <TextView
                 android:id="@+id/TVCancel"
-                android:clickable="true"
-                android:layout_weight="1"
-                android:background="@drawable/grey_btn_ripple"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@drawable/grey_btn_ripple"
+                android:clickable="true"
                 android:fontFamily="@font/poppins_regular"
-                android:textColor="@color/primary"
-                android:paddingBottom="4dp"
-                android:paddingTop="4dp"
-                android:textSize="16sp"
                 android:gravity="center"
-                android:text="Okay" />
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp"
+                android:text="Okay"
+                android:textColor="@color/primary"
+                android:textSize="16sp" />
 
             <TextView
                 android:id="@+id/TVAction"

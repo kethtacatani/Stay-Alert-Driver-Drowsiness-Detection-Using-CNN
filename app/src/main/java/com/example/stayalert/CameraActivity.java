@@ -19,7 +19,6 @@ package com.example.stayalert;
 import android.Manifest;
 import android.app.Fragment;
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
@@ -48,7 +47,6 @@ import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -59,37 +57,36 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.etebarian.meowbottomnavigation.MeowBottomNavigation;
 import com.example.stayalert.env.ImageUtils;
 import com.example.stayalert.env.Logger;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.AggregateField;
+import com.google.firebase.firestore.AggregateQuery;
+import com.google.firebase.firestore.AggregateQuerySnapshot;
+import com.google.firebase.firestore.AggregateSource;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.Source;
 import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.UploadTask;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 import firebase.classes.FirebaseDatabase;
 import helper.classes.DialogHelper;
@@ -101,6 +98,8 @@ public abstract class CameraActivity extends AppCompatActivity
         Camera.PreviewCallback,
 //        CompoundButton.OnCheckedChangeListener,
         View.OnClickListener {
+
+
   MeowBottomNavigation bottomNavigation;
   private static final Logger LOGGER = new Logger();
   private static final String TAG = "CameraActivity";
@@ -154,7 +153,9 @@ public abstract class CameraActivity extends AppCompatActivity
   public long lastProcessingTimeMs;
   public float confidenceLevel=0;
 
-  private String[] values = new String[30];
+  public static boolean isOfflineMode=false;
+
+
   private int currentIndex = 0;
   private int currentIndexYawn  = 0;
   private int closeCount = 0;
@@ -162,7 +163,7 @@ public abstract class CameraActivity extends AppCompatActivity
   private Runnable runnableCode;
   boolean ring=false;
   Ringtone ringtone;
-  boolean offlineMode=false, appStopped=false;
+  boolean  appStopped=false;
   Handler schedHandler;
   Runnable connectivityCheckRunnable;
   String statusDriver=" ACTIVE ";
@@ -175,6 +176,22 @@ public abstract class CameraActivity extends AppCompatActivity
   DialogHelper dialogHelper;
 
   ArrayList<String> deviceStrings = new ArrayList<String>();
+
+  public static ArrayList<DetectionLogsInfo> detectionLogsInfo = new ArrayList<>();
+  public static Query query;
+  public static int drowsyCount=0, yawnCountRes=0;
+  public static double averageResponse=0.0;
+  double currentResponseTime =0;
+
+  public static Map<String, Object> weatherMap = new HashMap<>();
+
+  Bitmap detectedBitmap;
+  String detectedEye, detectMS;
+  private long startResponseTime = 0L;
+
+  public static DocumentSnapshot drowsyCountDocument;
+  public static DocumentSnapshot yawnCountDocument;
+
 
 
   @Override
@@ -220,39 +237,56 @@ public abstract class CameraActivity extends AppCompatActivity
 
 
 
+    String[] values = new String[30];
 
     runnableCode = new Runnable() {
       @Override
       public void run() {
-        String newValue = eyeStatus;
-        if ("closed".equals(newValue) && closeCount<30) {
+        String eyeValue = eyeStatus;
+
+        if ("closed".equals(eyeValue) && closeCount<30) {
           closeCount++;
         }else if (closeCount>0){
           closeCount--;
         }
-        values[currentIndex] = newValue;
+        values[currentIndex] = eyeValue;
         currentIndex = (currentIndex + 1) % 30; // Wrap around to the beginning of the array
         double closePercentage = (closeCount / 30.0) * 100.0;
 
 
-        if(closePercentage>90 && !ringtone.isPlaying() && !appStopped){
+        if(closePercentage>70 && !ringtone.isPlaying() && !appStopped){
           Toast.makeText(CameraActivity.this, "Please WAKE UP!!!!", Toast.LENGTH_SHORT).show();
-
           // Play the default ringtone
-
-          ringtone.play();
-          if(statusDriver.contains("ACTIVE")){
-            saveDetectedImage(copyBitmap,eyeStatus, lastProcessingTimeMs+"");
+          if(detectedEye==null && values[values.length-1]!=null){
+            ringtone.play();
+            detectedBitmap= copyBitmap;
+            detectedEye=eyeStatus;
+            detectMS=lastProcessingTimeMs+"";
+            startResponseTime= System.currentTimeMillis();
+            statusDriver=" DROWSY ";
           }
-          statusDriver=" DROWSY ";
+
+        }
+        else if(closePercentage<60){
+          if(detectedEye!=null && values[values.length-1]!=null){
+            System.out.println("insert");
+            currentResponseTime = (double) (System.currentTimeMillis() - (double)startResponseTime - 1500.0)/1000.0;
+            if(currentResponseTime<0){
+              currentResponseTime=0.3;
+            }
+            startResponseTime = 0L;
+
+            saveDetectedImage(detectedBitmap,detectedEye, detectMS+"",currentResponseTime);
+            detectedEye=null;
+            ringtone.stop();
+            statusDriver=" ACTIVE ";
+            //start timer for alert response
+          }
+
 
 
         }
-        else if(closePercentage<90){
-          statusDriver=" ACTIVE ";
-          ringtone.stop();
-
-        }
+        msTV.setText(statusDriver+" "+(int)closePercentage);
 
         handler.postDelayed(this, 100); // Schedule the task to run again after 100 milliseconds
       }
@@ -267,26 +301,26 @@ public abstract class CameraActivity extends AppCompatActivity
     mouthRunnable = new Runnable() {
       @Override
       public void run() {
-        String newValue = mouthStatus;
-        if ("yawn".equals(newValue) && yawnCount<30) {
+        String mouthValue = mouthStatus;
+        if ("yawn".equals(mouthValue) && yawnCount<30) {
           yawnCount++;
         }else if (yawnCount>0){
           yawnCount--;
         }
-        valuesYawn[currentIndexYawn] = newValue;
+        valuesYawn[currentIndexYawn] = mouthValue;
         currentIndexYawn = (currentIndexYawn + 1) % 30; // Wrap around to the beginning of the array
         double yawnPercentage = (yawnCount / 30.0) * 100.0;
 
 
-        if(yawnPercentage>90 && !ringtone.isPlaying() && !appStopped){
+        if(yawnPercentage>70 && !ringtone.isPlaying() && !appStopped ){
           Toast.makeText(CameraActivity.this, "YAWNING", Toast.LENGTH_SHORT).show();
 
 
 //          if(statusDriverMouth.contains("ACTIVE")){
 //            firebaseDB.saveImageToLocal(getApplicationContext(),""+timestamp,cropCopyBitmap,"detections");
 //          }
-          if(statusDriverMouth.contains("ACTIVE")){
-            saveDetectedImage(copyBitmap,mouthStatus,lastProcessingTimeMs+"");
+          if(statusDriverMouth.contains("ACTIVE") && valuesYawn[valuesYawn.length-1]!=null){
+            saveDetectedImage(copyBitmap,mouthStatus,lastProcessingTimeMs+"",0);
           }
           statusDriverMouth=" YAWNING ";
 
@@ -302,11 +336,6 @@ public abstract class CameraActivity extends AppCompatActivity
       }
     };
     handler.post(mouthRunnable);
-
-
-
-
-
 
 
 
@@ -466,10 +495,50 @@ public abstract class CameraActivity extends AppCompatActivity
         minusImageView.performClick();
         updateActiveModel();
         firebaseDB.checkSync();
+
+
       }
-    }, 3000);
+    }, 6000);
+
+    refreshDefaultQuery();
+
+    updateDetectionLogs(null,"");
+    getDetectionRecordsCount(null, null, new TaskCallback() {
+      @Override
+      public void onSuccess(Object result) {
+        Log.d(TAG, "Get count success");
+      }
+
+      @Override
+      public void onFailure(String errorMessage) {
+        Log.d(TAG, "Get count failed");
+      }
+    });
+
+    HomeFrag.getWeatherDetails("Calape","Philippines");
+    firebaseDB.checkStatCount("drowsy");
+    firebaseDB.checkStatCount("yawn");
+    firebaseDB.checkStatCount("average_response");
 
 
+  }
+
+  private void refreshDefaultQuery() {
+    Calendar calendar = Calendar.getInstance();
+    calendar.add(Calendar.DAY_OF_MONTH, 0);
+
+    // Set the time to 12:00 AM
+    calendar.set(Calendar.HOUR_OF_DAY, 0);
+    calendar.set(Calendar.MINUTE, 0);
+    calendar.set(Calendar.SECOND, 0);
+    calendar.set(Calendar.MILLISECOND, 0);
+    Date startDate= calendar.getTime();
+
+    query= db.collection("users/"+user.getUid()+"/image_detection")
+            .whereGreaterThanOrEqualTo("timestamp", startDate)
+            .whereLessThanOrEqualTo("timestamp", new Date())
+            .orderBy("timestamp", Query.Direction.DESCENDING)
+            .limit(10);
 
   }
 
@@ -505,7 +574,7 @@ public abstract class CameraActivity extends AppCompatActivity
 
   }
 
-  public void saveDetectedImage(Bitmap bitmap,String detectionType, String ms){
+  public void saveDetectedImage(Bitmap bitmap,String detectionType, String ms, double responseTime){
     if(detectionType.equals("open")||detectionType.equals("no_yawn")){
       return;
     }
@@ -521,15 +590,191 @@ public abstract class CameraActivity extends AppCompatActivity
       imageInfo.put("storage_path","users/"+user.getUid()+"/detection_images");
       imageInfo.put("inference",ms);
       imageInfo.put("accuracy",(int) ((Math.round(confidenceLevel * 100.0f) / 100.0f)*100));
+      imageInfo.put("response_time",responseTime);
 
-      firebaseDB.saveFileInfoToFirestore(imageInfo,"upload_queue");
-      firebaseDB.saveFileInfoToFirestore(imageInfo,"image_detection");
+      firebaseDB.saveFileInfoToFirestore(imageInfo, "upload_queue");
+      firebaseDB.saveFileInfoToFirestore(imageInfo, "image_detection");
+
+
+      updateDetectionLogs(query, detectionType.equals("yawn")?"Yawn":"Drowsy");
+      firebaseDB.incrementCount(detectionType.equals("closed")?"drowsy":detectionType,1);
+
 
 
       //can be possible to start display of image even if saved to cache
       //if save to server trigger syncing
     }
   }
+
+  public void getDetectionCountOnLocal(){
+    DocumentReference docRef = db.collection("users/"+user.getUid()+"/user_res/").document("detection_records");
+
+    docRef.get(Source.CACHE).addOnCompleteListener(task -> {
+      if (task.isSuccessful()) {
+        DocumentSnapshot document = task.getResult();
+        if (document.exists()) {
+          drowsyCount= Integer.parseInt(document.get("today_count").toString());
+//          syncToServer();
+        } else {
+          Log.d(TAG+" getCount","No connection to database");
+        }
+      } else {
+        // Handle failures
+        Exception exception = task.getException();
+        Log.w(TAG, "+ getCount: Error getting document", exception);
+      }
+    });
+  }
+
+  public void setDetectionCountOnLocal(int count){
+    Map<String, Object> countInfo = new HashMap<>();
+    countInfo.put("today_count", count);
+    firebaseDB.writeUserInfo(countInfo, "users/" + user.getUid() + "/user_res/", "detection_records", new FirebaseDatabase.TaskCallback<Void>() {
+      @Override
+      public void onSuccess(Void result) {
+        Log.d(TAG+" getCount","Set  successful");
+      }
+
+      @Override
+      public void onFailure(String errorMessage) {
+        Log.d(TAG+" getCount","Set  fail "+errorMessage);
+      }
+    });
+  }
+
+  public void updateDetectionLogs(Query query, String detectionType){
+    if(query!=null){
+      this.query=query;
+    }
+    refreshDefaultQuery();
+    detectionLogsInfo = firebaseDB.getDetectionLogsInfo(this.query, new FirebaseDatabase.ArrayListTaskCallback<Void>() {
+      @Override
+      public void onSuccess(ArrayList<DetectionLogsInfo> arrayList) {
+        detectionLogsInfo =arrayList;
+        if(detectionType.equals("Yawn")){
+          yawnCountRes++;
+        }else if(detectionType.equals("Drowsy")){
+          averageResponse= ((averageResponse*drowsyCount)+currentResponseTime)/(drowsyCount+1);
+          drowsyCount++;
+        }
+        StatsFrag statsFrag = (StatsFrag)getSupportFragmentManager().findFragmentByTag("StatsFrag");
+        if(statsFrag!=null&& statsFrag.isVisible()){
+          StatsFrag fragment = (StatsFrag) getSupportFragmentManager().findFragmentById(R.id.frame_layout);
+            fragment.displayDetectionLogs();
+            fragment.updateDetectionRecords();
+        }
+      }
+
+      @Override
+      public void onFailure(String errorMessage) {
+        System.out.println("error "+errorMessage);
+
+      }
+    });
+  }
+
+  public interface TaskCallback<T> {
+    void onSuccess(T result);
+    void onFailure(String errorMessage);
+  }
+
+  public static Calendar getCurrentDate(){
+    Calendar calendar = Calendar.getInstance();
+    calendar.add(Calendar.DAY_OF_MONTH, 0);
+
+    // Set the time to 12:00 AM
+    calendar.set(Calendar.HOUR_OF_DAY, 0);
+    calendar.set(Calendar.MINUTE, 0);
+    calendar.set(Calendar.SECOND, 0);
+    calendar.set(Calendar.MILLISECOND, 0);
+
+    return calendar;
+  }
+
+  public void getDetectionRecordsCount(Date startDate, Date endDate, TaskCallback callback){
+
+    if(startDate==null){
+      getDetectionCountOnLocal();
+    }
+
+    Date newStartDate = getCurrentDate().getTime();
+
+    Query yawnCountQuery = db.collection("users/"+user.getUid()+"/image_detection").whereEqualTo("detection_name", "Yawn");
+    Query drowsyCountQuery = db.collection("users/"+user.getUid()+"/image_detection").whereEqualTo("detection_name", "Drowsy");
+    AggregateQuery countQueryYawn = yawnCountQuery
+            .whereGreaterThanOrEqualTo("timestamp", (startDate!=null)?startDate:newStartDate)
+            .whereLessThanOrEqualTo("timestamp", (endDate!=null)?endDate:new Date())
+            .count();
+    AggregateQuery countQueryDrowsy = drowsyCountQuery
+            .whereGreaterThanOrEqualTo("timestamp", (startDate!=null)?startDate:newStartDate)
+            .whereLessThanOrEqualTo("timestamp", (endDate!=null)?endDate:new Date())
+            .count();
+
+    countQueryYawn.get(AggregateSource.SERVER).addOnCompleteListener(new OnCompleteListener<AggregateQuerySnapshot>() {
+      @Override
+      public void onComplete(@NonNull Task<AggregateQuerySnapshot> task) {
+        if (task.isSuccessful()) {
+          // Count fetched successfully
+          AggregateQuerySnapshot snapshot = task.getResult();
+          yawnCountRes=(int)snapshot.getCount();
+          callback.onSuccess(true);
+        } else {
+          Log.d(TAG, "Count failed: ", task.getException());
+        }
+      }
+    });
+
+    countQueryDrowsy.get(AggregateSource.SERVER).addOnCompleteListener(new OnCompleteListener<AggregateQuerySnapshot>() {
+      @Override
+      public void onComplete(@NonNull Task<AggregateQuerySnapshot> task) {
+        if (task.isSuccessful()) {
+          // Count fetched successfully
+          AggregateQuerySnapshot snapshot = task.getResult();
+          drowsyCount=(int)snapshot.getCount();
+          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            Date date = new Date();
+            if(startDate!=null){
+              date= startDate;
+            }
+            if(date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate().equals(LocalDate.now())){
+              setDetectionCountOnLocal(drowsyCount);
+              System.out.println("is today");
+            }
+          }
+          callback.onSuccess(true);
+        } else {
+          Log.d(TAG, "Count failed: ", task.getException());
+        }
+      }
+    });
+
+    Query query= db.collection("users/"+user.getUid()+"/image_detection").whereEqualTo("detection_name", "Drowsy").whereGreaterThanOrEqualTo("timestamp", (startDate!=null)?startDate:newStartDate)
+            .whereLessThanOrEqualTo("timestamp", (endDate!=null)?endDate:new Date());
+    AggregateQuery aggregateQuery = query.aggregate(AggregateField.average("response_time"));
+    aggregateQuery.get(AggregateSource.SERVER).addOnCompleteListener(new OnCompleteListener<AggregateQuerySnapshot>() {
+      @Override
+      public void onComplete(@NonNull Task<AggregateQuerySnapshot> task) {
+        if (task.isSuccessful()) {
+          // Aggregate fetched successfully
+          AggregateQuerySnapshot snapshot = task.getResult();
+          Double average = snapshot.get(AggregateField.average("response_time"));
+          if (average != null) {
+            callback.onSuccess(true);
+            averageResponse= average;
+          }
+          else{
+            Log.d(TAG, "Aggregation failed: Null");
+          }
+
+        } else {
+          Log.d(TAG, "Aggregation failed: "+ task.getException().getLocalizedMessage());
+        }
+      }
+    });
+  }
+
+
+
 
 
   @Override
@@ -556,7 +801,7 @@ public abstract class CameraActivity extends AppCompatActivity
 
   private void replaceFragment(androidx.fragment.app.Fragment fragment) {
     FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-    transaction.replace(R.id.frame_layout,fragment);
+    transaction.replace(R.id.frame_layout,fragment,fragment.getClass().getSimpleName());
     transaction.commit();
   }
   public void changeFrameLayoutElevation() {

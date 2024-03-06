@@ -10,6 +10,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.airbnb.lottie.LottieAnimationView;
 import com.example.stayalert.CameraActivity;
 import com.example.stayalert.R;
 
@@ -17,6 +18,7 @@ public class DialogHelper {
     private Dialog dialog;
     private TextView dialogTitle;
     private TextView dialogInfo,dialogOkay, dialogAction;
+    private LottieAnimationView dialogLoading;
 
     public DialogHelper(Context context) {
         instantiate(context);
@@ -76,6 +78,7 @@ public class DialogHelper {
         dialogInfo = dialog.findViewById(R.id.TVInfo);
         dialogOkay = dialog.findViewById(R.id.TVCancel);
         dialogAction =  dialog.findViewById(R.id.TVAction);
+        dialogLoading= dialog.findViewById(R.id.Dialogloading);
     }
 
     public void showDialog(String title, String info) {
@@ -84,11 +87,15 @@ public class DialogHelper {
         dialog.show();
     }
 
-    public void showTestImage(Bitmap bitmap){
-        ImageView imageView= dialog.findViewById(R.id.testImage);
-        imageView.setImageBitmap(bitmap);
+    public void showLoadingDialog(String title,String info){
+        dialogTitle.setText(title);
+        dialogLoading.setVisibility(View.VISIBLE);
+        dialogInfo.setText(info);
+        dialogOkay.setVisibility(View.GONE);
+        dialogLoading.playAnimation();
         dialog.show();
     }
+
 
     public void dismissDialog() {
         if (dialog != null && dialog.isShowing()) {
@@ -122,7 +129,11 @@ public class DialogHelper {
 
 
     public void normalDialog(){
-
+        if(dialogLoading.getVisibility()==View.VISIBLE){
+            dialogLoading.setVisibility(View.GONE);
+            dialogOkay.setVisibility(View.VISIBLE);
+            dialogLoading.pauseAnimation();
+        }
         dialogAction.setVisibility(View.GONE);
         dialogOkay.setText("Okay");
     }
