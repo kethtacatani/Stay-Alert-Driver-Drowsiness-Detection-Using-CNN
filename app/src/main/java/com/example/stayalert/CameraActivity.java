@@ -286,7 +286,7 @@ public abstract class CameraActivity extends AppCompatActivity
 
 
         }
-        msTV.setText(statusDriver+" "+(int)closePercentage);
+//        msTV.setText(statusDriver+" "+(int)closePercentage);
 
         handler.postDelayed(this, 100); // Schedule the task to run again after 100 milliseconds
       }

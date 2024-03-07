@@ -410,6 +410,7 @@ public class Sign_in extends AppCompatActivity {
                     == PackageManager.PERMISSION_DENIED) {
                 return false;
             }
+
         }else {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
                     == PackageManager.PERMISSION_DENIED) {

@@ -8,6 +8,7 @@
     <uses-feature
         android:glEsVersion="0x00030001"
         android:required="true" />
+    <meta-data android:name="com.mapbox.maps.location.gms.SKIP_IF_INVALID_VERSION" android:value="true"/>
 
     <uses-permission android:name="android.permission.CAMERA" />
 
@@ -26,6 +27,7 @@
 
     <!-- Include only if your app benefits from precise location access. -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
 
 
     <application
