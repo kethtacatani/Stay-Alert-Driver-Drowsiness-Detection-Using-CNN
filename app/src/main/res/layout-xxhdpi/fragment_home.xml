@@ -217,6 +217,22 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
+            android:id="@+id/weatherMore"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="5dp"
+            android:layout_marginTop="2dp"
+            android:clickable="true"
+            android:fontFamily="@font/nunitosans_semibold"
+            android:gravity="right"
+            android:text="More information"
+            android:textColor="@drawable/forgot_pass_button"
+            android:textSize="15sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+
+        <TextView
             android:id="@+id/weatherTypeTV"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -261,14 +277,16 @@
         <EditText
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="35sp"
             android:layout_marginStart="10sp"
-            android:layout_marginEnd="50sp"
+            android:layout_marginEnd="70sp"
+            android:padding="10dp"
             android:elevation="4dp"
             android:hint="Search"
-            android:layout_marginTop="10sp"
             android:layout_below="@id/maneuverView"
             android:inputType="text"
             android:id="@+id/searchET"
+            android:background="@drawable/background_frame"
             app:layout_constraintEnd_toEndOf="@+id/mapView"
             app:layout_constraintTop_toTopOf="@+id/mapView"
             app:startIconDrawable="@drawable/ic_baseline_search_24"
@@ -279,25 +297,24 @@
             android:id="@+id/soundButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@id/searchET"
             android:layout_alignParentEnd="true"
-            android:layout_marginEnd="16sp"
+            android:layout_marginEnd="10sp"
             app:layout_constraintEnd_toEndOf="@+id/mapView"
             app:layout_constraintTop_toBottomOf="@+id/searchET" />
 
         <com.mapbox.search.ui.view.SearchResultsView
+            android:id="@+id/search_results_view"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/search_results_view"
+            android:layout_marginEnd="70sp"
+            android:layout_marginStart="10sp"
             android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="16dp"
-            android:visibility="gone"
             android:elevation="4dp"
             android:paddingTop="8dp"
             android:paddingBottom="22dp"
-            app:layout_constraintEnd_toEndOf="@+id/mapView"
-            app:layout_constraintBottom_toTopOf="@+id/mapView"
-            android:layout_below="@id/searchET" />
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="@+id/searchET"
+            app:layout_constraintTop_toBottomOf="@+id/searchET" />
 
         <com.google.android.material.button.MaterialButton
             android:layout_width="match_parent"

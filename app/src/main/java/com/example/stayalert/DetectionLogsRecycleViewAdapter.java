@@ -1,7 +1,6 @@
 package com.example.stayalert;
 
 import android.content.Context;
-import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,7 +8,6 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
@@ -31,7 +29,7 @@ public class DetectionLogsRecycleViewAdapter  extends  RecyclerView.Adapter<Dete
     @NonNull
     @Override
     public DetectionLogsViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.recycler_view_row,parent,false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.rv_logs_row,parent,false);
         DetectionLogsViewHolder detectionLogsViewHolder = new DetectionLogsViewHolder(view);
 
         return detectionLogsViewHolder;

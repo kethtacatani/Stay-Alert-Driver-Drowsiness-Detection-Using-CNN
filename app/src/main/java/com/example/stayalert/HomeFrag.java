@@ -22,6 +22,8 @@ import androidx.appcompat.content.res.AppCompatResources;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 
 import android.os.Handler;
 import android.os.Looper;
@@ -33,6 +35,7 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -159,6 +162,8 @@ public class HomeFrag extends Fragment {
     TextView timeofDay;
     public static TextView tempTV, humidTV, weatherType;
     public static TextView statusDriverTV, nameDriverTV;
+    TextView tempCloud, humid, wind, rain, feelsLike, cityCountry;
+
     FirebaseFirestore db;
     FirebaseAuth auth;
     FirebaseDatabase firebaseDB;
@@ -257,9 +262,9 @@ public class HomeFrag extends Fragment {
                 @NonNull
                 @Override
                 public Unit invoke(@NonNull SpeechError input) {
-                        if(!muteSpeech) {
-                            mapboxVoiceInstructionsPlayer.play(input.getFallback(), voiceInstructionsPlayerCallback);
-                        }
+                    if(!muteSpeech) {
+                        mapboxVoiceInstructionsPlayer.play(input.getFallback(), voiceInstructionsPlayerCallback);
+                    }
                     return Unit.INSTANCE;
                 }
             }, new Expected.Transformer<SpeechValue, Unit>() {
@@ -320,13 +325,11 @@ public class HomeFrag extends Fragment {
                 public Object invoke(@NonNull List<Maneuver> input) {
                     if(maneuverOn){
                         mapboxManeuverView.setVisibility(View.VISIBLE);
-                        setRoute.setText("Cancel");
-                    }else{
-                        setRoute.setText("Get Directions");
                     }
                     mapboxManeuverView.renderManeuvers(maneuverApi.getManeuvers(routeProgress));
 
                     return new Object();
+
                 }
             });
         }
@@ -353,6 +356,15 @@ public class HomeFrag extends Fragment {
         tempTV= view.findViewById(R.id.temperatureTV);
         humidTV= view.findViewById(R.id.hAndLTV);
         weatherType= view.findViewById(R.id.weatherTypeTV);
+
+        tempCloud = view.findViewById(R.id.weatherTempAndDesc);
+        humid = view.findViewById(R.id.weatherTempAndDesc);
+        rain = view.findViewById(R.id.weatherTempAndDesc);
+        wind = view.findViewById(R.id.weatherWindSpeed);
+        feelsLike = view.findViewById(R.id.weatherFeelsLike);
+        cityCountry = view.findViewById(R.id.weatherCityCountry);
+
+
 
         CameraActivity cameraActivity = (CameraActivity) getActivity();
         userData= cameraActivity.userInfo;
@@ -414,43 +426,50 @@ public class HomeFrag extends Fragment {
         searchResultsView = view.findViewById(R.id.search_results_view);
         searchResultsView.initialize(new SearchResultsView.Configuration(new CommonSearchViewConfiguration()));
 
+
         placeAutocompleteUiAdapter = new PlaceAutocompleteUiAdapter(searchResultsView, placeAutocomplete, LocationEngineProvider.getBestLocationEngine(CameraActivity.context));
 
-        final Handler handler = new Handler(Looper.getMainLooper());
+        final Handler mapHandler = new Handler(Looper.getMainLooper());
         searchET.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
                 if(ignoreNextQueryUpdate){
                     ignoreNextQueryUpdate=false;
                 }else{
-                    placeAutocompleteUiAdapter.search(s.toString(), new Continuation<Unit>() {
-                        @androidx.annotation.NonNull
-                        @Override
-                        public CoroutineContext getContext() {
-                            return EmptyCoroutineContext.INSTANCE;
-                        }
+                    //commented becaus of apu sessions reached to billing level
 
-                        @Override
-                        public void resumeWith(@androidx.annotation.NonNull Object o) {
-                            handler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    searchResultsView.setVisibility(View.VISIBLE);
-                                }
-                            });
-                        }
-                    });
+//                    placeAutocompleteUiAdapter.search(s.toString(), new Continuation<Unit>() {
+//                        @androidx.annotation.NonNull
+//                        @Override
+//                        public CoroutineContext getContext() {
+//                            return EmptyCoroutineContext.INSTANCE;
+//                        }
+//
+//                        @Override
+//                        public void resumeWith(@androidx.annotation.NonNull Object o) {
+//                            mapHandler.post(new Runnable() {
+//                                @Override
+//                                public void run() {
+//                                    if(!searchET.getText().toString().isEmpty()){
+//                                        searchResultsView.setVisibility(View.VISIBLE);
+//                                    }
+//                                }
+//                            });
+//                        }
+//                    });
                 }
             }
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-
             }
 
             @Override
             public void afterTextChanged(Editable s) {
-
+                if(searchET.getText().toString().isEmpty()){
+                    System.out.println("trueee");
+                    searchResultsView.setVisibility(View.GONE);
+                }
             }
         });
 
@@ -530,18 +549,26 @@ public class HomeFrag extends Fragment {
                         muteSpeech=true;
                         fetchRoute(point);
 
+
                         setRoute.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View view) {
                                 if(setRoute.getText().toString().equals("Get Directions")){
+                                    setRoute.setText("Cancel");
+                                    searchET.setVisibility(View.GONE);
                                     muteSpeech=false;
                                     maneuverOn=true;
                                     fetchRoute(point);
                                     focusLocationBtn.performClick();
                                 }else  if(setRoute.getText().toString().equals("Cancel")){
+                                    setRoute.setText("Get Directions");
                                     maneuverOn=false;
                                     trueNorth=true;
                                     mapboxManeuverView.setVisibility(View.GONE);
+                                    searchET.setVisibility(View.VISIBLE);
+                                    maneuverApi.cancel();
+                                    mapboxNavigation.unregisterRoutesObserver(routesObserver);
+
                                 }
 
                             }
@@ -598,9 +625,20 @@ public class HomeFrag extends Fragment {
             }
         });
 
+        TextView weatherMore= view.findViewById(R.id.weatherMore);
+
+        weatherMore.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                CameraActivity.lastFragment= new HomeFrag();
+                cameraActivity.addFragment(new WeatherFrag());
+            }
+        });
+
 
         return view;
     }
+
 
 
     public String getTimeOfDay() {
@@ -642,25 +680,36 @@ public class HomeFrag extends Fragment {
                     float pressure = jsonObjectMain.getInt("pressure");
                     int humidity = jsonObjectMain.getInt("humidity");
                     JSONObject jsonObjectWind = jsonResponse.getJSONObject("wind");
-                    String wind = jsonObjectWind.getString("speed");
+//                    JSONObject jsonObjectRain = jsonResponse.getJSONObject("rain");
+                    double wind = jsonObjectWind.getDouble("speed")* 3.6;
+//                    String rain = jsonObjectRain.getString("1h");
                     JSONObject jsonObjectClouds = jsonResponse.getJSONObject("clouds");
                     String clouds = jsonObjectClouds.getString("all");
                     JSONObject jsonObjectSys = jsonResponse.getJSONObject("sys");
                     String countryName = jsonObjectSys.getString("country");
                     String cityName = jsonResponse.getString("name");
-                    CameraActivity.weatherMap.put("description", description);
-                    CameraActivity.weatherMap.put("temp", temp);
-                    CameraActivity.weatherMap.put("feels_like", feelsLike);
-                    CameraActivity.weatherMap.put("pressure", pressure);
-                    CameraActivity. weatherMap.put("humidity", humidity);
-                    CameraActivity. weatherMap.put("wind", wind);
-                    CameraActivity. weatherMap.put("clouds", clouds);
-                    CameraActivity.  weatherMap.put("country", countryName);
-                    CameraActivity. weatherMap.put("city", cityName);
+
+                    Map<String, Object> weatherMap = new HashMap<>();
+                    weatherMap.put("description", description);
+                    weatherMap.put("temp", temp);
+//                    CameraActivity.weatherMap.put("rain", rain);
+                    weatherMap.put("feels_like", feelsLike);
+                    weatherMap.put("pressure", pressure);
+                    weatherMap.put("clouds", clouds);
+                    weatherMap.put("humidity", humidity);
+                     weatherMap.put("wind", wind);
+                     weatherMap.put("clouds", clouds);
+                      weatherMap.put("country", countryName);
+                     weatherMap.put("city", cityName);
+
+                     CameraActivity.weatherMap = new HashMap<>(weatherMap);
+
+
 
                     displayWeatherInfo(CameraActivity.weatherMap);
 
                 } catch (JSONException e) {
+                    System.out.println("Weather get error "+e.getLocalizedMessage());
                     e.printStackTrace();
                 }
             }
@@ -682,8 +731,10 @@ public class HomeFrag extends Fragment {
             tempTV.setText(String.format("%.0f", weatherMap.get("temp"))+"°" );
             humidTV.setText("H:" + weatherMap.get("humidity") + "");
             weatherType.setText((String) weatherMap.get("description"));
+
         }
     }
+
 
     @SuppressLint("MissingPermission")
     private void fetchRoute(Point point) {
@@ -708,6 +759,7 @@ public class HomeFrag extends Fragment {
                     public void onRoutesReady(@NonNull List<NavigationRoute> list, @NonNull RouterOrigin routerOrigin) {
                         mapboxNavigation.setNavigationRoutes(list);
                         setRoute.setEnabled(true);
+                        setRoute.setText(maneuverOn?"Cancel":"Get Directions");
                     }
 
                     @Override

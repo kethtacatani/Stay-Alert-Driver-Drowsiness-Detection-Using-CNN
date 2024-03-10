@@ -57,6 +57,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.etebarian.meowbottomnavigation.MeowBottomNavigation;
@@ -114,6 +115,7 @@ public abstract class CameraActivity extends AppCompatActivity
   protected int previewHeight = 0;
   private boolean debug = false;
   protected Handler handler;
+  private Handler scanHandler;
   private HandlerThread handlerThread;
   private boolean useCamera2API;
   private boolean isProcessingFrame = false;
@@ -121,7 +123,7 @@ public abstract class CameraActivity extends AppCompatActivity
   private int[] rgbBytes = null;
   private int yRowStride;
   protected int defaultModelIndex = 0;
-  protected int defaultDeviceIndex = 0;
+  protected int defaultDeviceIndex = 1;
   private Runnable postInferenceCallback;
   private Runnable imageConverter;
   protected ArrayList<String> modelStrings = new ArrayList<String>();
@@ -192,6 +194,8 @@ public abstract class CameraActivity extends AppCompatActivity
   public static DocumentSnapshot drowsyCountDocument;
   public static DocumentSnapshot yawnCountDocument;
 
+  public static androidx.fragment.app.Fragment lastFragment;
+
 
 
   @Override
@@ -218,7 +222,7 @@ public abstract class CameraActivity extends AppCompatActivity
     dialogHelper= new DialogHelper(this);
     setContentView(R.layout.tfe_od_activity_camera);
     frameLayout = findViewById(R.id.container);
-    Handler handler = new Handler();
+    scanHandler = new Handler();
     Uri defaultRingtoneUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
     // Create a Ringtone object from the URI
     ringtone = RingtoneManager.getRingtone(CameraActivity.this, defaultRingtoneUri);
@@ -288,10 +292,10 @@ public abstract class CameraActivity extends AppCompatActivity
         }
 //        msTV.setText(statusDriver+" "+(int)closePercentage);
 
-        handler.postDelayed(this, 100); // Schedule the task to run again after 100 milliseconds
+        scanHandler.postDelayed(this, 100); // Schedule the task to run again after 100 milliseconds
       }
     };
-    handler.post(runnableCode);
+    scanHandler.post(runnableCode);
 
     //FOR MOUTH
 
@@ -332,10 +336,10 @@ public abstract class CameraActivity extends AppCompatActivity
         if(HomeFrag.statusDriverTV!=null){
           HomeFrag.statusDriverTV.setText((statusDriver.contains("ACTIVE"))?statusDriverMouth:statusDriver);
         }
-        handler.postDelayed(this, 100); // Schedule the task to run again after 100 milliseconds
+        scanHandler.postDelayed(this, 100); // Schedule the task to run again after 100 milliseconds
       }
     };
-    handler.post(mouthRunnable);
+    scanHandler.post(mouthRunnable);
 
 
 
@@ -793,17 +797,32 @@ public abstract class CameraActivity extends AppCompatActivity
     }
     ringtone.stop();
     appStopped=true;
-    handler.removeCallbacks(runnableCode);
+    scanHandler.removeCallbacks(runnableCode);
     finish();
   }
 
 
 
-  private void replaceFragment(androidx.fragment.app.Fragment fragment) {
+  public void replaceFragment(androidx.fragment.app.Fragment fragment) {
     FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
     transaction.replace(R.id.frame_layout,fragment,fragment.getClass().getSimpleName());
     transaction.commit();
   }
+
+  public void addFragment(androidx.fragment.app.Fragment fragment) {
+    FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+    transaction.add(R.id.frame_layout, fragment, fragment.getClass().getSimpleName());
+    transaction.addToBackStack(null); // This allows the user to press the back button to return to the previous fragment
+    transaction.commit();
+  }
+
+  public void removeFragment() {
+    FragmentManager fragmentManager = getSupportFragmentManager();
+    if (fragmentManager.getBackStackEntryCount() > 0) {
+      fragmentManager.popBackStack();
+    }
+  }
+
   public void changeFrameLayoutElevation() {
     int newElevation= elevation;
     if (frameLayout != null) {
