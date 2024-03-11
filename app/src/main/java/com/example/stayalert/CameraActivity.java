@@ -349,26 +349,26 @@ public abstract class CameraActivity extends AppCompatActivity
       public Unit invoke(MeowBottomNavigation.Model model) {
         switch (model.getId()){
           case 1:
-            replaceFragment(new MenuFrag());
+            addFragment(new MenuFrag());
             Toast.makeText(CameraActivity.this, "Menu", Toast.LENGTH_SHORT).show();
             break;
           case 2:
-            replaceFragment(new PhoneFrag());
+            addFragment(new PhoneFrag());
             Toast.makeText(CameraActivity.this, "Phone", Toast.LENGTH_SHORT).show();
 
             break;
           case 3:
-            replaceFragment(new HomeFrag());
+            addFragment(new HomeFrag());
             Toast.makeText(CameraActivity.this, "Home", Toast.LENGTH_SHORT).show();
 
             break;
           case 4:
-            replaceFragment(new StatsFrag());
+            addFragment(new StatsFrag());
             Toast.makeText(CameraActivity.this, "Stats", Toast.LENGTH_SHORT).show();
 
             break;
           case 5:
-            replaceFragment(new ProfileFrag());
+            addFragment(new ProfileFrag());
             Toast.makeText(CameraActivity.this, "Profile", Toast.LENGTH_SHORT).show();
 
             break;
@@ -557,7 +557,7 @@ public abstract class CameraActivity extends AppCompatActivity
         Log.d(TAG, "DocumentSnapshot datas: " + documentSnapshot.getData());
         userInfo = documentSnapshot.getData();
         bottomNavigation.show(3,true);
-        replaceFragment(new HomeFrag());
+        addFragment(new HomeFrag());
         bottomNavigation.clearCount(1);
       }
 
@@ -571,7 +571,7 @@ public abstract class CameraActivity extends AppCompatActivity
         Log.d(TAG,"Failed getting user info: "+e);
         Toast.makeText(CameraActivity.this, "Unable to load user information", Toast.LENGTH_SHORT).show();
         bottomNavigation.show(3,true);
-        replaceFragment(new HomeFrag());
+        addFragment(new HomeFrag());
         bottomNavigation.clearCount(1);
       }
     });
@@ -810,11 +810,26 @@ public abstract class CameraActivity extends AppCompatActivity
   }
 
   public void addFragment(androidx.fragment.app.Fragment fragment) {
-    FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-    transaction.add(R.id.frame_layout, fragment, fragment.getClass().getSimpleName());
-    transaction.addToBackStack(null); // This allows the user to press the back button to return to the previous fragment
-    transaction.commit();
+    FragmentManager fragmentManager = getSupportFragmentManager();
+    int backStackEntryCount = fragmentManager.getBackStackEntryCount();
+
+
+    if(fragment instanceof HomeFrag && backStackEntryCount>1){
+      removeFragment();
+    }else{
+      for (int i = 0; i < backStackEntryCount - 1; i++) {
+        fragmentManager.popBackStack();
+      }
+      FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+      transaction.add(R.id.frame_layout, fragment, fragment.getClass().getSimpleName());
+      transaction.addToBackStack(null); // This allows the user to press the back button to return to the previous fragment
+      transaction.commit();
+    }
+
+    System.out.println("countse "+backStackEntryCount);
   }
+
+
 
   public void removeFragment() {
     FragmentManager fragmentManager = getSupportFragmentManager();

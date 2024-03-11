@@ -38,7 +38,12 @@ public class WeatherFrag extends Fragment {
         closeWeatherIB.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                cameraActivity.removeFragment();
+                if(CameraActivity.lastFragment instanceof MenuFrag){
+                    CameraActivity.lastFragment=null;
+                    cameraActivity.addFragment(new MenuFrag());
+                }else{
+                    cameraActivity.removeFragment();
+                }
             }
         });
 

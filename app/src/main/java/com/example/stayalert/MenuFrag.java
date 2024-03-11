@@ -57,6 +57,7 @@ public class MenuFrag extends Fragment {
         weather.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                CameraActivity.lastFragment= new MenuFrag();
                 cameraActivity.addFragment(new WeatherFrag());
             }
         });
