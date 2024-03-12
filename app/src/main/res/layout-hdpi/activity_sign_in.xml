@@ -174,7 +174,7 @@
             android:fontFamily="@font/poppins_semibold"
             android:gravity="right"
             android:text="Forgot password?"
-            android:textColor="@drawable/forgot_pass_button"
+            android:textColor="@drawable/primary_black_selector"
             android:textSize="14sp"
             app:layout_constraintEnd_toEndOf="@+id/ETpassLayout"
             app:layout_constraintTop_toBottomOf="@+id/ETpassLayout" />

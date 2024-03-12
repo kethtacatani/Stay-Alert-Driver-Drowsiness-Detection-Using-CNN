@@ -19,6 +19,7 @@
         <entry key="..\:/Android Studio Projects/app/src/main/res/layout/activity_main.xml" value="0.4" />
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/drawable-v24/background_frame.xml" value="0.2555" />
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/drawable-v24/background_oval_frame.xml" value="0.2555" />
+        <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/drawable-v24/black_primary_button.xml" value="0.181" />
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/drawable-v24/dialog_bg.xml" value="0.235" />
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/drawable/background_weather_border.xml" value="0.181" />
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/drawable/bg_line_below.xml" value="0.1785" />
@@ -62,7 +63,7 @@
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/layout/fragment_weather.xml" value="0.20833333333333334" />
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/layout/pop_up_dialog.xml" value="0.264" />
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/layout/recycler_view_row.xml" value="0.264" />
-        <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/layout/rv_contacts_row.xml" value="0.264" />
+        <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/layout/rv_contacts_row.xml" value="0.4" />
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/layout/rv_logs_row.xml" value="0.20863616930312098" />
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/layout/tfe_od_activity_camera.xml" value="0.1" />
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/layout/tfe_od_camera_connection_fragment_tracking.xml" value="0.2" />

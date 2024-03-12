@@ -78,28 +78,30 @@
 
 
                 <TextView
-                    android:id="@+id/textView6"
+                    android:id="@+id/contactFavorites"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginRight="30dp"
-                    android:background="@drawable/bg_line_below_text"
+                    android:layout_marginRight="20dp"
                     android:paddingBottom="2dp"
-                    android:text="  Recent  "
+                    android:clickable="true"
+                    android:text="  Favorites  "
                     android:fontFamily="@font/nunitosans_semibold"
                     android:textSize="25sp"
-                    android:textColor="@color/primary"
+                    android:textColor="@drawable/black_primary_selector"
                     />
 
                 <TextView
-                    android:id="@+id/textView7"
+                    android:id="@+id/phoneContacts"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="30dp"
+                    android:layout_marginLeft="20dp"
+                    android:clickable="true"
                     android:paddingBottom="2dp"
+                    android:background="@drawable/bg_line_below_text"
                     android:text=" Contacts "
                     android:fontFamily="@font/nunitosans_semibold"
                     android:textSize="25sp"
-                    android:textColor="@color/black"
+                    android:textColor="@drawable/primary_black_selector"
                     />
             </LinearLayout>
 
@@ -112,13 +114,15 @@
                     android:id="@+id/contactsRV"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    tools:layout_editor_absoluteX="1dp"
-                    tools:layout_editor_absoluteY="1dp" />
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
             </androidx.constraintlayout.widget.ConstraintLayout>
         </LinearLayout>
 
         <ImageButton
-            android:id="@+id/imageButton"
+            android:id="@+id/addContactFavorites"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginRight="10dp"

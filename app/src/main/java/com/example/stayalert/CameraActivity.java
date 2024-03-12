@@ -17,10 +17,12 @@
 package com.example.stayalert;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Fragment;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.hardware.Camera;
 import android.hardware.camera2.CameraAccessException;
@@ -39,6 +41,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Trace;
+import android.provider.ContactsContract;
 import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
@@ -195,6 +198,8 @@ public abstract class CameraActivity extends AppCompatActivity
   public static DocumentSnapshot yawnCountDocument;
 
   public static androidx.fragment.app.Fragment lastFragment;
+  public static ArrayList<ContactsInfo> contactInfoList = new ArrayList<>();
+  public static ArrayList<ContactsInfo> favoritesInfoList = new ArrayList<>();
 
 
 
@@ -524,6 +529,8 @@ public abstract class CameraActivity extends AppCompatActivity
     firebaseDB.checkStatCount("yawn");
     firebaseDB.checkStatCount("average_response");
 
+    getContactList();
+
 
   }
 
@@ -778,7 +785,51 @@ public abstract class CameraActivity extends AppCompatActivity
   }
 
 
+  public void getContactList(){
+    Uri uri = ContactsContract.Contacts.CONTENT_URI;
+    String sort = ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME+"ASC";
+    Cursor cursor = getContentResolver().query(
+            uri, null,null,null,sort
+    );
 
+    if (cursor.getCount()>0){
+      while (cursor.moveToNext()){
+        @SuppressLint("Range") String id = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts._ID));
+
+        @SuppressLint("Range") String name = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
+
+//                // Get the contact photo URI
+//                Uri photoUri = Uri.withAppendedPath(ContentUris.withAppendedId(ContactsContract.Contacts.CONTENT_URI, Long.parseLong(id)),
+//                        ContactsContract.Contacts.Photo.CONTENT_DIRECTORY);
+//
+//                // Get the contact photo
+//                InputStream inputStream = ContactsContract.Contacts.openContactPhotoInputStream(getActivity().getContentResolver(), photoUri);
+//                Bitmap photoBitmap = null;
+//                if (inputStream != null) {
+//                    photoBitmap = BitmapFactory.decodeStream(inputStream);
+//                }
+
+        Uri uriPhone = ContactsContract.CommonDataKinds.Phone.CONTENT_URI;
+
+        String selection = ContactsContract.CommonDataKinds.Phone.CONTACT_ID+" =?";
+
+        Cursor cursor1= getContentResolver().query(
+                uriPhone, null, selection, new String[]{id},null
+        );
+
+        if (cursor1.moveToNext()){
+          @SuppressLint("Range") String number = cursor1.getString(cursor1.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+
+          contactInfoList.add(new ContactsInfo(name, number, null));
+
+          cursor1.close();
+        }
+      }
+      cursor.close();
+    }
+
+
+  }
 
 
   @Override
@@ -1141,6 +1192,7 @@ public abstract class CameraActivity extends AppCompatActivity
 
     String cameraId = rearCam ? "0":chooseCamera();
 
+//    String cameraId = rearCam ? chooseCamera():"0";
     Fragment fragment;
     if (useCamera2API) {
       CameraConnectionFragment camera2Fragment =
@@ -1168,6 +1220,7 @@ public abstract class CameraActivity extends AppCompatActivity
 
 
   }
+
 
   protected void fillBytes(final Plane[] planes, final byte[][] yuvBytes) {
     // Because of the variable row stride it's not possible to know in

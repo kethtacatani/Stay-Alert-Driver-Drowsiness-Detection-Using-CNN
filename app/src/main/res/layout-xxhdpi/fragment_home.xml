@@ -226,7 +226,7 @@
             android:fontFamily="@font/nunitosans_semibold"
             android:gravity="right"
             android:text="More information"
-            android:textColor="@drawable/forgot_pass_button"
+            android:textColor="@drawable/primary_black_selector"
             android:textSize="15sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
