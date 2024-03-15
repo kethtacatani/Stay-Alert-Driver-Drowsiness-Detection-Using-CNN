@@ -144,7 +144,7 @@
                     android:id="@+id/viewDetectionBtn"
                     android:layout_width="30dp"
                     android:layout_height="30dp"
-                    android:background="@color/transparent"
+                    android:background="@drawable/grey_btn_ripple"
                     android:layout_marginRight="16dp"
                     android:src="@drawable/ic_user_scan"
                     app:layout_constraintEnd_toEndOf="parent"

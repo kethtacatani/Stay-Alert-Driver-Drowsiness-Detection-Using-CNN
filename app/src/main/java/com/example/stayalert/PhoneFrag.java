@@ -2,7 +2,9 @@ package com.example.stayalert;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.activity.result.ActivityResultCallback;
@@ -43,6 +45,10 @@ public class PhoneFrag extends Fragment {
 
         if (ActivityCompat.checkSelfPermission(CameraActivity.context, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
             activityResultLauncher.launch(Manifest.permission.READ_CONTACTS);
+        }
+
+        if (ActivityCompat.checkSelfPermission(CameraActivity.context, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+            activityResultLauncher.launch(Manifest.permission.CALL_PHONE);
         }
 
         contactsRV = view.findViewById(R.id.contactsRV);
@@ -111,6 +117,13 @@ public class PhoneFrag extends Fragment {
             public void afterTextChanged(Editable s) {
                 ArrayList<ContactsInfo> searchedInfoList = new ArrayList<>(searchContacts(CameraActivity.contactInfoList,searchET.getText().toString().trim()));
                 displayContactList(searchedInfoList);
+            }
+        });
+
+        addFavorites.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
             }
         });
 

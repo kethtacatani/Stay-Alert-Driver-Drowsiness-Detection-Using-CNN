@@ -24,7 +24,7 @@
             android:layout_height="wrap_content"
             android:layout_marginRight="8dp"
             android:layout_marginTop="8dp"
-            android:background="@color/transparent"
+            android:background="@drawable/grey_btn_ripple"
             android:layout_gravity="right"
             android:src="@drawable/ic_baseline_close_fullscreen_24" />
 

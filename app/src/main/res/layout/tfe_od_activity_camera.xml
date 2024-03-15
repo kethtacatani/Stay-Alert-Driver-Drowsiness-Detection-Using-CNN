@@ -54,7 +54,7 @@
             android:id="@+id/backBtn"
             android:layout_width="60dp"
             android:layout_height="60dp"
-            android:background="@color/transparent"
+            android:background="@drawable/grey_btn_ripple"
             android:layout_alignParentEnd="true"
             android:layout_alignParentBottom="true"
             android:layout_marginBottom ="20dp"

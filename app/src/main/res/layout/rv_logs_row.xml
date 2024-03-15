@@ -10,7 +10,7 @@
         android:id="@+id/viewDetectedImageBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@color/transparent"
+        android:background="@drawable/grey_btn_ripple"
         android:src="@drawable/ic_view_detection_log"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />

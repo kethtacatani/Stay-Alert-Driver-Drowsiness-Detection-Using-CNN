@@ -120,6 +120,11 @@ public class DialogHelper {
         dialogOkay.setText("Cancel");
         dialogAction.setText("Sign in");
     }
+    public void customDialog(String action){
+        dialogAction.setVisibility(View.VISIBLE);
+        dialogOkay.setText("Cancel");
+        dialogAction.setText(action);
+    }
 
     public void discardDialog(){
         dialogAction.setVisibility(View.VISIBLE);
