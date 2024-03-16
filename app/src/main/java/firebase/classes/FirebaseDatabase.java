@@ -11,6 +11,7 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 
 import com.example.stayalert.CameraActivity;
+import com.example.stayalert.ContactsInfo;
 import com.example.stayalert.DetectionLogsInfo;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.tasks.Continuation;
@@ -526,6 +527,37 @@ public class FirebaseDatabase {
                 // Handle failures
                 Exception exception = task.getException();
                 Log.d(TAG+ "getDetectionLogsIndo","Error getting documents: " + exception.getLocalizedMessage());
+                callback.onFailure(exception.getLocalizedMessage());
+            }
+        });
+        return null;
+    }
+
+    public interface ArrayListTaskCallbackContact<T> {
+        void onSuccess(ArrayList<ContactsInfo> arrayList);
+        void onFailure(String errorMessage);
+    }
+
+    public ArrayList<ContactsInfo> getFavoritesList(Query query,ArrayListTaskCallbackContact<Void> callback) {
+        ArrayList<ContactsInfo> infos = new ArrayList<>();
+
+        query.get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                QuerySnapshot querySnapshot = task.getResult();
+                if (querySnapshot != null) {
+                    for (DocumentSnapshot documentFields : querySnapshot.getDocuments()) {
+                        String contactName = getValue(documentFields.getData(), "contactName", "");
+                        String contactNumber = getValue(documentFields.getData(), "contactNumber", "");
+
+                        infos.add( new ContactsInfo(contactName,contactNumber,null)); //must be in correct order
+                    }
+                    callback.onSuccess(infos);
+                }
+
+            } else {
+                // Handle failures
+                Exception exception = task.getException();
+                Log.d(TAG+ "getContactsInfo","Error getting documents: " + exception.getLocalizedMessage());
                 callback.onFailure(exception.getLocalizedMessage());
             }
         });

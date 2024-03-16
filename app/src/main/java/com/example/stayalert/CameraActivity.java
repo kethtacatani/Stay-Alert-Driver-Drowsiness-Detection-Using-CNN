@@ -530,6 +530,7 @@ public abstract class CameraActivity extends AppCompatActivity
     firebaseDB.checkStatCount("average_response");
 
     getContactList();
+    getContactFavoritesList();
 
 
   }
@@ -798,17 +799,6 @@ public abstract class CameraActivity extends AppCompatActivity
 
         @SuppressLint("Range") String name = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
 
-//                // Get the contact photo URI
-//                Uri photoUri = Uri.withAppendedPath(ContentUris.withAppendedId(ContactsContract.Contacts.CONTENT_URI, Long.parseLong(id)),
-//                        ContactsContract.Contacts.Photo.CONTENT_DIRECTORY);
-//
-//                // Get the contact photo
-//                InputStream inputStream = ContactsContract.Contacts.openContactPhotoInputStream(getActivity().getContentResolver(), photoUri);
-//                Bitmap photoBitmap = null;
-//                if (inputStream != null) {
-//                    photoBitmap = BitmapFactory.decodeStream(inputStream);
-//                }
-
         Uri uriPhone = ContactsContract.CommonDataKinds.Phone.CONTENT_URI;
 
         String selection = ContactsContract.CommonDataKinds.Phone.CONTACT_ID+" =?";
@@ -827,8 +817,21 @@ public abstract class CameraActivity extends AppCompatActivity
       }
       cursor.close();
     }
+  }
 
+  public void getContactFavoritesList(){
+    Query query = db.collection("users/"+user.getUid()+"/contact_favorites");
+    firebaseDB.getFavoritesList(query, new FirebaseDatabase.ArrayListTaskCallbackContact<Void>() {
+      @Override
+      public void onSuccess(ArrayList<ContactsInfo> arrayList) {
+        favoritesInfoList= arrayList;
+      }
 
+      @Override
+      public void onFailure(String errorMessage) {
+        Log.e(TAG, errorMessage);
+      }
+    });
   }
 
 
@@ -871,13 +874,14 @@ public abstract class CameraActivity extends AppCompatActivity
       for (int i = 0; i < backStackEntryCount - 1; i++) {
         fragmentManager.popBackStack();
       }
+
+
       FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
       transaction.add(R.id.frame_layout, fragment, fragment.getClass().getSimpleName());
       transaction.addToBackStack(null); // This allows the user to press the back button to return to the previous fragment
       transaction.commit();
     }
 
-    System.out.println("countse "+backStackEntryCount);
   }
 
 

@@ -10,6 +10,7 @@ import android.os.Bundle;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
@@ -28,14 +29,21 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 
-public class PhoneFrag extends Fragment {
+import helper.classes.DialogHelper;
+
+public class PhoneFrag extends Fragment implements View.OnClickListener {
 
     RecyclerView contactsRV;
     ContactsRecycleViewAdapter contactsRecycleViewAdapter;
     LinearLayoutManager linearLayoutManager;
     TextView contactsTV, favoritesTV;
-    ImageButton addFavorites;
-    EditText searchET;
+    ImageButton dialPadBtn;
+    EditText searchET, phoneNumberET;
+    TextView phone1, phone2, phone3,phone4,phone5,phone6,phone7,phone8,phone9,phone0,phoneAsterisk,phoneNumberSign, closeBtn;
+    ImageButton callBtn, deleteBtn;
+    ConstraintLayout dialPadLayout;
+    DialogHelper helper;
+    ArrayList<ContactsInfo> mergedList = new ArrayList<>();
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -43,19 +51,50 @@ public class PhoneFrag extends Fragment {
         // Inflate the layout for this fragment
         View view= inflater.inflate(R.layout.fragment_phone, container, false);
 
-        if (ActivityCompat.checkSelfPermission(CameraActivity.context, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(CameraActivity.context, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(CameraActivity.context, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED)  {
             activityResultLauncher.launch(Manifest.permission.READ_CONTACTS);
-        }
-
-        if (ActivityCompat.checkSelfPermission(CameraActivity.context, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
             activityResultLauncher.launch(Manifest.permission.CALL_PHONE);
         }
+
 
         contactsRV = view.findViewById(R.id.contactsRV);
         contactsTV = view.findViewById(R.id.phoneContacts);
         favoritesTV= view.findViewById(R.id.contactFavorites);
-        addFavorites = view.findViewById(R.id.addContactFavorites);
+        dialPadBtn = view.findViewById(R.id.dialPadBtn);
         searchET = view.findViewById(R.id.phoneSearchTV);
+        phone0 = view.findViewById(R.id.phone0tv);
+        phone1 = view.findViewById(R.id.phone1tv);
+        phone2 = view.findViewById(R.id.phone2tv);
+        phone3 = view.findViewById(R.id.phone3tv);
+        phone4 = view.findViewById(R.id.phone4tv);
+        phone5 = view.findViewById(R.id.phone5tv);
+        phone6 = view.findViewById(R.id.phone6tv);
+        phone7 = view.findViewById(R.id.phone7tv);
+        phone8 = view.findViewById(R.id.phone8tv);
+        phone9 = view.findViewById(R.id.phone9tv);
+        phoneAsterisk = view.findViewById(R.id.phoneAsterisktv);
+        phoneNumberSign = view.findViewById(R.id.phoneNumberSigntv);
+        callBtn = view.findViewById(R.id.callBtn);
+        deleteBtn= view.findViewById(R.id.deleteBtn);
+        phoneNumberET = view.findViewById(R.id.phoneNumberET);
+        dialPadLayout = view.findViewById(R.id.dialPadLayout);
+        closeBtn= view.findViewById(R.id.phoneClosetv);
+
+        helper = new DialogHelper(getActivity(), new DialogHelper.DialogClickListener() {
+            @Override
+            public void onOkayClicked() {
+                //used to cancel
+            }
+
+            @Override
+            public void onActionClicked() {
+                Intent intent = new Intent(Intent.ACTION_DIAL);
+                intent.setData(Uri.parse("tel:"+phoneNumberET.getText().toString()));
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity((intent));
+            }
+        });
+
 
 
 
@@ -64,7 +103,9 @@ public class PhoneFrag extends Fragment {
         contactsRV.setLayoutManager(linearLayoutManager);
         CameraActivity cameraActivity=(CameraActivity)getActivity();
 
-        displayContactList(CameraActivity.contactInfoList);
+
+
+        displayContactList(CameraActivity.favoritesInfoList);
 
         contactsTV.setOnClickListener(new View.OnClickListener() {
             @SuppressLint("ResourceType")
@@ -120,12 +161,57 @@ public class PhoneFrag extends Fragment {
             }
         });
 
-        addFavorites.setOnClickListener(new View.OnClickListener() {
+        phoneNumberET.addTextChangedListener(new TextWatcher() {
             @Override
-            public void onClick(View v) {
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                // This method is called before the text is changed.
+            }
 
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                // This method is called whenever the text is changed.
+                // The new text is s.toString().
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                if(phoneNumberET.getText().toString().trim().isEmpty()){
+                    phoneNumberET.setVisibility(View.GONE);
+                }else{
+                    ArrayList<ContactsInfo> searchedInfoList = new ArrayList<>(searchContacts(CameraActivity.contactInfoList,phoneNumberET.getText().toString().trim()));
+                    displayContactList(searchedInfoList);
+                }
             }
         });
+
+        dialPadBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialPadLayout.setVisibility(View.VISIBLE);
+            }
+        });
+        closeBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialPadLayout.setVisibility(View.GONE);
+                displayContactList(CameraActivity.contactInfoList);
+            }
+        });
+
+        phone0.setOnClickListener(this);
+        phone1.setOnClickListener(this);
+        phone2.setOnClickListener(this);
+        phone3.setOnClickListener(this);
+        phone4.setOnClickListener(this);
+        phone5.setOnClickListener(this);
+        phone6.setOnClickListener(this);
+        phone7.setOnClickListener(this);
+        phone8.setOnClickListener(this);
+        phone9.setOnClickListener(this);
+        phoneAsterisk.setOnClickListener(this);
+        phoneNumberSign.setOnClickListener(this);
+        deleteBtn.setOnClickListener(this);
+        callBtn.setOnClickListener(this);
 
         return view;
     }
@@ -174,5 +260,71 @@ public class PhoneFrag extends Fragment {
             }
         }
         return searchedList;
+    }
+
+    public void dialpadOnclick(String dialBtn){
+        phoneNumberET.setVisibility(View.VISIBLE);
+        phoneNumberET.setText(phoneNumberET.getText().toString()+dialBtn);
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.phone1tv:
+                dialpadOnclick("1");
+                break;
+            case R.id.phone2tv:
+                dialpadOnclick("2");
+                break;
+            case R.id.phone3tv:
+                dialpadOnclick("3");
+                break;
+            case R.id.phone4tv:
+                dialpadOnclick("4");
+                break;
+            case R.id.phone5tv:
+                dialpadOnclick("5");
+                break;
+            case R.id.phone6tv:
+                dialpadOnclick("6");
+                break;
+            case R.id.phone7tv:
+                dialpadOnclick("7");
+                break;
+            case R.id.phone8tv:
+                dialpadOnclick("8");
+                break;
+            case R.id.phone9tv:
+                dialpadOnclick("9");
+                break;
+            case R.id.phone0tv:
+                dialpadOnclick("0");
+                break;
+            case R.id.phoneAsterisktv:
+                dialpadOnclick("*");
+                break;
+            case R.id.phoneNumberSigntv:
+                dialpadOnclick("#");
+                break;
+            case R.id.callBtn:
+                String currentText = phoneNumberET.getText().toString();
+                if (currentText.length() > 2) {
+                    helper.customDialog("Call anyway");
+                    helper.showDialog("Phone Call", "This action will exit the app");
+                }
+
+                break;
+            case R.id.deleteBtn:
+                String currentTexts = phoneNumberET.getText().toString();
+                if (currentTexts.length() > 0) {
+                    String newText = currentTexts.substring(0, currentTexts.length() - 1);
+                    phoneNumberET.setText(newText);
+                }else{
+                    phoneNumberET.setVisibility(View.GONE);
+                }
+                break;
+            default:
+                break;
+        }
     }
 }
