@@ -434,7 +434,14 @@ public class DetectorActivity extends com.example.stayalert.CameraActivity imple
     public Bitmap cropToSquare(Bitmap srcBmp){
         Bitmap dstBmp;
         Matrix matrix = new Matrix();
-        matrix.postRotate(270);
+        int orientation = getResources().getConfiguration().orientation;
+        System.out.println("orient "+orientation);
+        if(orientation==2){
+            matrix.postRotate(180);
+        }else{
+            matrix.postRotate(270);
+        }
+
         matrix.preScale(1 ,-1);
         if (srcBmp.getWidth() >= srcBmp.getHeight()){
 

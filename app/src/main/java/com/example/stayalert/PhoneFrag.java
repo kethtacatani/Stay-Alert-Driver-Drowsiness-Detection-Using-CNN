@@ -188,6 +188,7 @@ public class PhoneFrag extends Fragment implements View.OnClickListener {
             @Override
             public void onClick(View v) {
                 dialPadLayout.setVisibility(View.VISIBLE);
+                dialPadBtn.setVisibility(View.GONE);
             }
         });
         closeBtn.setOnClickListener(new View.OnClickListener() {
@@ -195,6 +196,7 @@ public class PhoneFrag extends Fragment implements View.OnClickListener {
             public void onClick(View v) {
                 dialPadLayout.setVisibility(View.GONE);
                 displayContactList(CameraActivity.contactInfoList);
+                dialPadBtn.setVisibility(View.VISIBLE);
             }
         });
 

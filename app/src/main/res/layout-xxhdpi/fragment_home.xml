@@ -336,6 +336,7 @@
             android:layout_above="@id/setRoute"
             android:layout_alignParentEnd="true"
             android:layout_margin="16sp"
+            android:backgroundTint="@color/primary"
             android:src="@drawable/ic_baseline_my_location_24"
             app:layout_constraintBottom_toBottomOf="@+id/setRoute"
             app:layout_constraintBottom_toTopOf="@+id/setRoute"

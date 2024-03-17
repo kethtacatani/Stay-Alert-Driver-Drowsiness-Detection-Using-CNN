@@ -8,10 +8,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageButton;
 
 
 public class MenuFrag extends Fragment {
-    Button map,scan, weather,notif;
+    ImageButton map,scan, weather,notif;
 
 
     @Override
