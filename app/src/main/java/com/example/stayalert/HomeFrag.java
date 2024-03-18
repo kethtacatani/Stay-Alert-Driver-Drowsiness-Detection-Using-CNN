@@ -10,6 +10,8 @@ import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
@@ -19,6 +21,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.Nullable;
 import androidx.appcompat.content.res.AppCompatResources;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
@@ -158,12 +161,13 @@ import kotlin.jvm.functions.Function1;
 public class HomeFrag extends Fragment {
 
     private static final String TAG = "HomeFrag";
-    public static ImageButton viewDetectionBtn;
+    public static ImageButton viewDetectionBtn, closeMap;
     TextView timeofDay;
     public static TextView tempTV, humidTV, weatherType;
     public static TextView statusDriverTV, nameDriverTV;
     TextView tempCloud, humid, wind, rain, feelsLike, cityCountry;
-
+    public static ConstraintLayout driverInfoLayout, weatherInfoLayout;
+    public static LinearLayout driverStatusLayout;
     FirebaseFirestore db;
     FirebaseAuth auth;
     FirebaseDatabase firebaseDB;
@@ -338,7 +342,21 @@ public class HomeFrag extends Fragment {
     private static final double ARRIVAL_THRESHOLD_METERS = 20.0;
 
 
+    public static void minimizeMap(){
+        if(driverInfoLayout!=null){
+            driverInfoLayout.setVisibility(View.VISIBLE);
+            driverStatusLayout.setVisibility(View.VISIBLE);
+            weatherInfoLayout.setVisibility(View.VISIBLE);
+            closeMap.setImageResource(R.drawable.ic_expand_round_duotone_line);
+        }
+    }
 
+    public static  void maximizeMap(){
+        driverInfoLayout.setVisibility(View.GONE);
+        driverStatusLayout.setVisibility(View.GONE);
+        weatherInfoLayout.setVisibility(View.GONE);
+        closeMap.setImageResource(R.drawable.ic_close_round_fill);
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -348,6 +366,11 @@ public class HomeFrag extends Fragment {
         firebaseDB = new FirebaseDatabase();
         db = FirebaseFirestore.getInstance();
         auth = FirebaseAuth.getInstance();
+
+        driverInfoLayout= view.findViewById(R.id.driverInfoLayout);
+        driverStatusLayout= view.findViewById(R.id.driverStatusLayout);
+        weatherInfoLayout = view.findViewById(R.id.weatherInfoLayout);
+        closeMap = view.findViewById(R.id.closeMap);
 
         viewDetectionBtn = view.findViewById(R.id.viewDetectionBtn);
         timeofDay = view.findViewById(R.id.timeOfDayTV);
@@ -379,7 +402,6 @@ public class HomeFrag extends Fragment {
             public void onClick(View v) {
                 CameraActivity.elevation= 30;
                 cameraActivity.changeFrameLayoutElevation();
-
             }
         });
 
@@ -391,6 +413,22 @@ public class HomeFrag extends Fragment {
         }else{
             getWeatherDetails("Calape", "Philippines");
         }
+
+        closeMap.setOnClickListener(v -> {
+            if(CameraActivity.bottomNavIndex==1){
+                minimizeMap();
+                cameraActivity.addFragment(new MenuFrag());
+
+
+            }else{
+                Drawable currentDrawable = closeMap.getDrawable();
+                if (currentDrawable.getConstantState().equals(getResources().getDrawable(R.drawable.ic_close_round_fill).getConstantState())) {
+                    minimizeMap();
+                }else{
+                    maximizeMap();
+                }
+            }
+        });
 
         mapView = view.findViewById(R.id.mapView);
         focusLocationBtn = view.findViewById(R.id.focusLocation);

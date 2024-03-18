@@ -13,6 +13,7 @@
     <!-- TODO: Update blank fragment layout -->
 
     <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/driverInfoLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
@@ -58,6 +59,7 @@
 
 
     <LinearLayout
+        android:id="@+id/driverStatusLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginLeft="15dp"
@@ -160,6 +162,7 @@
     </LinearLayout>
 
     <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/weatherInfoLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@drawable/weather_rectangle"
@@ -258,10 +261,15 @@
 
         android:background="@color/white">
 
+
+
         <com.mapbox.maps.MapView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:id="@+id/mapView"/>
+            android:id="@+id/mapView">
+
+
+        </com.mapbox.maps.MapView>
 
         <com.mapbox.navigation.ui.maneuver.view.MapboxManeuverView
             android:id="@+id/maneuverView"
@@ -273,6 +281,17 @@
             app:layout_constraintTop_toBottomOf="@+id/searchET"
             app:layout_constraintEnd_toEndOf="@+id/mapView"
             app:layout_constraintStart_toStartOf="@+id/mapView" />
+
+        <ImageButton
+            android:id="@+id/closeMap"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="6sp"
+            android:background="@drawable/grey_btn_ripple_circle"
+            android:src="@drawable/ic_expand_round_duotone_line"
+            android:visibility="visible"
+            app:layout_constraintTop_toTopOf="parent"
+            mapbox:layout_constraintEnd_toEndOf="parent" />
 
         <EditText
             android:layout_width="match_parent"
@@ -336,6 +355,7 @@
             android:layout_above="@id/setRoute"
             android:layout_alignParentEnd="true"
             android:layout_margin="16sp"
+            android:backgroundTint="@color/primary"
             android:src="@drawable/ic_baseline_my_location_24"
             app:layout_constraintBottom_toBottomOf="@+id/setRoute"
             app:layout_constraintBottom_toTopOf="@+id/setRoute"

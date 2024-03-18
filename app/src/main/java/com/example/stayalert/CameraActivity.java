@@ -106,6 +106,7 @@ public abstract class CameraActivity extends AppCompatActivity
 
 
   MeowBottomNavigation bottomNavigation;
+  public static int bottomNavIndex=3;
   private static final Logger LOGGER = new Logger();
   private static final String TAG = "CameraActivity";
   private static final int PERMISSIONS_REQUEST = 1;
@@ -355,25 +356,32 @@ public abstract class CameraActivity extends AppCompatActivity
       public Unit invoke(MeowBottomNavigation.Model model) {
         switch (model.getId()){
           case 1:
+            bottomNavIndex=1;
             addFragment(new MenuFrag());
             Toast.makeText(CameraActivity.this, "Menu", Toast.LENGTH_SHORT).show();
+
             break;
           case 2:
+            bottomNavIndex=2;
             addFragment(new PhoneFrag());
             Toast.makeText(CameraActivity.this, "Phone", Toast.LENGTH_SHORT).show();
 
             break;
           case 3:
+            bottomNavIndex=3;
             addFragment(new HomeFrag());
             Toast.makeText(CameraActivity.this, "Home", Toast.LENGTH_SHORT).show();
 
+
             break;
           case 4:
+            bottomNavIndex=4;
             addFragment(new StatsFrag());
             Toast.makeText(CameraActivity.this, "Stats", Toast.LENGTH_SHORT).show();
 
             break;
           case 5:
+            bottomNavIndex=5;
             addFragment(new ProfileFrag());
             Toast.makeText(CameraActivity.this, "Profile", Toast.LENGTH_SHORT).show();
 
@@ -870,9 +878,16 @@ public abstract class CameraActivity extends AppCompatActivity
     int backStackEntryCount = fragmentManager.getBackStackEntryCount();
 
 
-    if(fragment instanceof HomeFrag && backStackEntryCount>1){
+    if((fragment instanceof HomeFrag && backStackEntryCount>1)){
       removeFragment();
+      HomeFrag.minimizeMap();
     }else{
+
+      if(bottomNavIndex==3 && backStackEntryCount > 0){
+        HomeFrag.minimizeMap();
+        return;
+      }
+
       for (int i = 0; i < backStackEntryCount - 1; i++) {
         fragmentManager.popBackStack();
       }
