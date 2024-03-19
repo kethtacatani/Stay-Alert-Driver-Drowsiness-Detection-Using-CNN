@@ -180,8 +180,8 @@ public class HomeFrag extends Fragment {
     public  static boolean muteSpeech=true;
 
     MapView mapView;
-    MaterialButton setRoute;
     FloatingActionButton focusLocationBtn;
+    ImageButton setRoute;
     private final NavigationLocationProvider navigationLocationProvider = new NavigationLocationProvider();
     private MapboxRouteLineView routeLineView;
     private MapboxRouteLineApi routeLineApi;
@@ -550,8 +550,8 @@ public class HomeFrag extends Fragment {
         setRoute.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(setRoute.getText().toString().contains("Cancel")){
-                    setRoute.setText("Set Route");
+                if(setRoute.getContentDescription().toString().contains("Cancel")){
+                    setRoute.setContentDescription("Set Route");
                     trueNorth=true;
                     mapboxManeuverView.setVisibility(View.GONE);
                 }
@@ -591,21 +591,24 @@ public class HomeFrag extends Fragment {
                         setRoute.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View view) {
-                                if(setRoute.getText().toString().equals("Get Directions")){
-                                    setRoute.setText("Cancel");
+                                System.out.println("set " +setRoute.getContentDescription().toString());
+                                if(setRoute.getContentDescription().toString().equals("Get Directions")){
+                                    setRoute.setContentDescription("Cancel");
+                                    setRoute.setImageResource(R.drawable.ic_baseline_cancel_24);
                                     searchET.setVisibility(View.GONE);
                                     muteSpeech=false;
                                     maneuverOn=true;
                                     fetchRoute(point);
                                     focusLocationBtn.performClick();
-                                }else  if(setRoute.getText().toString().equals("Cancel")){
-                                    setRoute.setText("Get Directions");
+                                }else  if(setRoute.getContentDescription().toString().equals("Cancel")){
+                                    setRoute.setContentDescription("Get Directions");
+                                    setRoute.setImageResource(R.drawable.ic_baseline_assistant_direction_24);
                                     maneuverOn=false;
                                     trueNorth=true;
                                     mapboxManeuverView.setVisibility(View.GONE);
                                     searchET.setVisibility(View.VISIBLE);
                                     maneuverApi.cancel();
-                                    mapboxNavigation.unregisterRoutesObserver(routesObserver);
+//                                    mapboxNavigation.unregisterRoutesObserver(routesObserver);
 
                                 }
 
@@ -782,7 +785,7 @@ public class HomeFrag extends Fragment {
             public void onSuccess(LocationEngineResult result) {
                 Location location = result.getLastLocation();
                 setRoute.setEnabled(false);
-                setRoute.setText("Fetching route...");
+                setRoute.setContentDescription("Fetching route...");
 
                 RouteOptions.Builder builder = RouteOptions.builder();
                 Point origin = Point.fromLngLat(Objects.requireNonNull(location).getLongitude(), location.getLatitude());
@@ -797,13 +800,13 @@ public class HomeFrag extends Fragment {
                     public void onRoutesReady(@NonNull List<NavigationRoute> list, @NonNull RouterOrigin routerOrigin) {
                         mapboxNavigation.setNavigationRoutes(list);
                         setRoute.setEnabled(true);
-                        setRoute.setText(maneuverOn?"Cancel":"Get Directions");
+                        setRoute.setContentDescription(maneuverOn?"Cancel":"Get Directions");
                     }
 
                     @Override
                     public void onFailure(@NonNull List<RouterFailure> list, @NonNull RouteOptions routeOptions) {
                         setRoute.setEnabled(true);
-                        setRoute.setText("Set route");
+                        setRoute.setContentDescription("Set route");
                         Toast.makeText(CameraActivity.context, "Route request failed", Toast.LENGTH_SHORT).show();
                     }
 
