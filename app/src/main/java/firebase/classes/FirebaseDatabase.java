@@ -3,16 +3,33 @@ package firebase.classes;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Camera;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
-import android.os.Build;
+import android.text.format.DateUtils;
 import android.util.Log;
+import android.view.View;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 
 import com.example.stayalert.CameraActivity;
-import com.example.stayalert.ContactsInfo;
-import com.example.stayalert.DetectionLogsInfo;
+import com.example.stayalert.HomeFrag;
+import com.example.stayalert.R;
+import com.example.stayalert.custom.classes.ChartGenerator;
+import com.example.stayalert.custom.classes.ContactsInfo;
+import com.example.stayalert.custom.classes.DetectionLogsInfo;
+import com.example.stayalert.custom.classes.NotificationInfo;
+import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.Description;
+import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
+import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -23,7 +40,6 @@ import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.AggregateField;
 import com.google.firebase.firestore.AggregateQuery;
 import com.google.firebase.firestore.AggregateQuerySnapshot;
 import com.google.firebase.firestore.AggregateSource;
@@ -35,10 +51,12 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.Source;
-import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
+import com.google.firestore.v1.DocumentTransform;
+
+import org.checkerframework.checker.units.qual.C;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -50,6 +68,7 @@ import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -69,12 +88,14 @@ public class FirebaseDatabase {
     Exception exception =null;
     FirebaseStorage storage;
     private boolean isSyncing = false;
+    int unReadCount=0;
 
     public FirebaseDatabase(){
         db = FirebaseFirestore.getInstance();
         mAuth = FirebaseAuth.getInstance();
         userID = mAuth.getUid();
         storage= FirebaseStorage.getInstance();
+
     }
 
 
@@ -622,7 +643,7 @@ public class FirebaseDatabase {
         });
     }
 
-    public void incrementCount(String type, int value){
+    public void incrementCount(String type, double value){
         DocumentReference ref = db.collection(type+"_count").document(mAuth.getUid());
 
         Calendar calendar = Calendar.getInstance();
@@ -714,6 +735,124 @@ public class FirebaseDatabase {
 
 
 
+    }
+
+
+
+
+    public void updateCheckin(){
+        Object timestampObject = CameraActivity.userInfo.get("last_sign_in");
+        com.google.firebase.Timestamp firestoreTimestamp = (com.google.firebase.Timestamp) timestampObject;
+        Date lastSignInDate = firestoreTimestamp.toDate();
+        if(!DateUtils.isToday(lastSignInDate.getTime())){
+            updateUserInfo(new HashMap<String, Object>() {{
+                put("last_sign_in", new Date());
+            }}, db.collection("users").document(mAuth.getUid()), new FirebaseDatabase.TaskCallback<Void>() {
+                @Override
+                public void onSuccess(Void result) {
+                    Log.e(TAG,"Success updatingCheckIn ");
+                }
+
+                @Override
+                public void onFailure(String errorMessage) {
+                    Log.e(TAG,"Error updatingCheckIn "+errorMessage);
+                }
+            });
+        }
+    }
+
+    public void sendNotif(){
+
+
+    }
+
+    public interface ArrayListTaskCallbackNotif<T> {
+        void onSuccess(ArrayList<NotificationInfo> arrayList);
+        void onFailure(String errorMessage);
+    }
+
+    public void getNotificationsList(){
+        Query query = db.collection("users/"+mAuth.getUid()+"/user_notifications")
+                .orderBy("timestamp", Query.Direction.DESCENDING)
+                .limit(20);
+        getNotifList(query, new FirebaseDatabase.ArrayListTaskCallbackNotif<Void>() {
+            @Override
+            public void onSuccess(ArrayList<NotificationInfo> arrayList) {
+                CameraActivity.notificationsInfo=arrayList;
+                Log.d(TAG,"get notif list success");
+            }
+
+            @Override
+            public void onFailure(String errorMessage) {
+                System.out.println("get notif list failed "+errorMessage);
+            }
+        });
+    }
+
+    public ArrayList<NotificationInfo> getNotifList(Query query, ArrayListTaskCallbackNotif<Void> callback) {
+        ArrayList<NotificationInfo> infos = new ArrayList<>();
+
+        query.get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                QuerySnapshot querySnapshot = task.getResult();
+                if (querySnapshot != null) {
+                    for (DocumentSnapshot documentFields : querySnapshot.getDocuments()) {
+                        String title = getValue(documentFields.getData(), "title", "");
+                        String message = getValue(documentFields.getData(), "message", "");
+                        Timestamp firestoreTimestamp = documentFields.getTimestamp("timestamp");
+                        SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yy", Locale.ENGLISH);
+                        Date lastSignInDate = firestoreTimestamp.toDate();
+                        String detectionDate = sdf.format(lastSignInDate);
+                        ArrayList<Integer> drowsyList= (ArrayList<Integer>)documentFields.get("drowsy_list");
+                        ArrayList<Integer> yawnList= (ArrayList<Integer>)documentFields.get("yawn_list");
+                        ArrayList<Integer> timeValues= (ArrayList<Integer>)documentFields.get("time_values");
+                        boolean wasRead= documentFields.getBoolean("wasRead");
+
+                        Bitmap icon= BitmapFactory.decodeResource(CameraActivity.context.getResources(),
+                                R.drawable.ic_read_message);
+                        if(wasRead){
+                            icon = BitmapFactory.decodeResource(CameraActivity.context.getResources(),
+                                    R.drawable.ic_unread_message);
+                        }
+                        infos.add( new NotificationInfo(title,detectionDate,message,detectionDate,drowsyList,yawnList,timeValues,wasRead,icon)); //must be in correct order
+                    }
+                    callback.onSuccess(infos);
+                }
+
+            } else {
+                // Handle failures
+                Exception exception = task.getException();
+                Log.d(TAG+ "getNotificationsInfo","Error getting documents: " + exception.getLocalizedMessage());
+                callback.onFailure(exception.getLocalizedMessage());
+            }
+        });
+        return null;
+    }
+
+    public void checkNotification(){
+        Query query =  db.collection("users/"+user.getUid()+"/user_notifications").whereEqualTo("wasRead", false);
+
+        AggregateQuery unReadCountAQ = query.count();
+                unReadCountAQ.get(AggregateSource.SERVER).addOnCompleteListener(new OnCompleteListener<AggregateQuerySnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<AggregateQuerySnapshot> task) {
+                if (task.isSuccessful()) {
+                    // Count fetched successfully
+                    AggregateQuerySnapshot snapshot = task.getResult();
+                    unReadCount=(int)snapshot.getCount();
+                } else {
+                    Log.d(TAG, "Count failed: ", task.getException());
+                }
+            }
+        });
+    }
+
+    public static Bitmap loadBitmapFromView(View v) {
+        Bitmap b = Bitmap.createBitmap( 640, 720, Bitmap.Config.ARGB_8888);
+        Canvas c = new Canvas(b);
+        v.layout(v.getLeft(), v.getTop(), v.getRight(), v.getBottom());
+        v.draw(c);
+        return b;
     }
 
 

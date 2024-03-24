@@ -1,4 +1,4 @@
-package com.example.stayalert;
+package com.example.stayalert.custom.classes;
 
 public class DetectionLogsInfo {
     private String timestamp;

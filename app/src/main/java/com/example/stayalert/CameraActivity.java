@@ -18,7 +18,6 @@ package com.example.stayalert;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.app.Fragment;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -43,6 +42,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Trace;
 import android.provider.ContactsContract;
+import android.text.format.DateUtils;
 import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
@@ -65,6 +65,10 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.etebarian.meowbottomnavigation.MeowBottomNavigation;
+import com.example.stayalert.custom.classes.ChartGenerator;
+import com.example.stayalert.custom.classes.ContactsInfo;
+import com.example.stayalert.custom.classes.DetectionLogsInfo;
+import com.example.stayalert.custom.classes.NotificationInfo;
 import com.example.stayalert.env.ImageUtils;
 import com.example.stayalert.env.Logger;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -179,12 +183,13 @@ public abstract class CameraActivity extends AppCompatActivity
   FirebaseFirestore db;
   FirebaseDatabase firebaseDB;
   FirebaseStorage storage = FirebaseStorage.getInstance();
-  public Map<String, Object> userInfo = new HashMap<>();
+  public static Map<String, Object> userInfo = new HashMap<>();
   DialogHelper dialogHelper;
 
   ArrayList<String> deviceStrings = new ArrayList<String>();
 
   public static ArrayList<DetectionLogsInfo> detectionLogsInfo = new ArrayList<>();
+  public static ArrayList<NotificationInfo> notificationsInfo = new ArrayList<>();
   public static Query query;
   public static int drowsyCount=0, yawnCountRes=0;
   public static double averageResponse=0.0;
@@ -202,6 +207,7 @@ public abstract class CameraActivity extends AppCompatActivity
   public static androidx.fragment.app.Fragment lastFragment;
   public static ArrayList<ContactsInfo> contactInfoList = new ArrayList<>();
   public static ArrayList<ContactsInfo> favoritesInfoList = new ArrayList<>();
+  public static ChartGenerator chartGenerator;
 
 
 
@@ -219,6 +225,7 @@ public abstract class CameraActivity extends AppCompatActivity
     db = FirebaseFirestore.getInstance();
     user = FirebaseAuth.getInstance().getCurrentUser();
     getUserInfo();
+
 
     CameraManager cameraManager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
 
@@ -535,9 +542,18 @@ public abstract class CameraActivity extends AppCompatActivity
     });
 
     HomeFrag.getWeatherDetails("Calape","Philippines");
+
+    chartGenerator = new ChartGenerator();
+    chartGenerator.setRange("today");
+    chartGenerator.fetchDetectionCounts();
+
+    //moves count if past n days
     firebaseDB.checkStatCount("drowsy");
     firebaseDB.checkStatCount("yawn");
     firebaseDB.checkStatCount("average_response");
+
+
+
 
     getContactList();
     getContactFavoritesList();
@@ -596,6 +612,8 @@ public abstract class CameraActivity extends AppCompatActivity
 
   }
 
+
+
   public void saveDetectedImage(Bitmap bitmap,String detectionType, String ms, double responseTime){
     if(detectionType.equals("open")||detectionType.equals("no_yawn")){
       return;
@@ -620,11 +638,9 @@ public abstract class CameraActivity extends AppCompatActivity
 
       updateDetectionLogs(query, detectionType.equals("yawn")?"Yawn":"Drowsy");
       firebaseDB.incrementCount(detectionType.equals("closed")?"drowsy":detectionType,1);
+      firebaseDB.incrementCount("average_response",responseTime);
 
 
-
-      //can be possible to start display of image even if saved to cache
-      //if save to server trigger syncing
     }
   }
 
@@ -690,7 +706,6 @@ public abstract class CameraActivity extends AppCompatActivity
       @Override
       public void onFailure(String errorMessage) {
         System.out.println("error "+errorMessage);
-
       }
     });
   }
@@ -883,7 +898,7 @@ public abstract class CameraActivity extends AppCompatActivity
       HomeFrag.minimizeMap();
     }else{
 
-      if(bottomNavIndex==3 && backStackEntryCount > 0){
+      if(bottomNavIndex==3 && backStackEntryCount > 0 && !(lastFragment instanceof HomeFrag)){
         HomeFrag.minimizeMap();
         return;
       }

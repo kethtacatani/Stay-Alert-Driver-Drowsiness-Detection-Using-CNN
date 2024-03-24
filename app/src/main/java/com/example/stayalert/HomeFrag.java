@@ -7,6 +7,8 @@ import static com.mapbox.navigation.base.extensions.RouteOptionsExtensions.apply
 import static com.mapbox.maps.plugin.gestures.GesturesUtils.addOnMapClickListener;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -162,6 +164,7 @@ public class HomeFrag extends Fragment {
 
     private static final String TAG = "HomeFrag";
     public static ImageButton viewDetectionBtn, closeMap;
+    public static ImageButton notifIcon;
     TextView timeofDay;
     public static TextView tempTV, humidTV, weatherType;
     public static TextView statusDriverTV, nameDriverTV;
@@ -372,6 +375,7 @@ public class HomeFrag extends Fragment {
         weatherInfoLayout = view.findViewById(R.id.weatherInfoLayout);
         closeMap = view.findViewById(R.id.closeMap);
 
+        notifIcon = view.findViewById(R.id.notifIcon);
         viewDetectionBtn = view.findViewById(R.id.viewDetectionBtn);
         timeofDay = view.findViewById(R.id.timeOfDayTV);
         statusDriverTV= view.findViewById(R.id.statusDriverTV);
@@ -406,6 +410,8 @@ public class HomeFrag extends Fragment {
         });
 
 
+
+
         timeofDay.setText("Good "+getTimeOfDay());
 
         if(!CameraActivity.weatherMap.isEmpty()){
@@ -416,8 +422,9 @@ public class HomeFrag extends Fragment {
 
         closeMap.setOnClickListener(v -> {
             if(CameraActivity.bottomNavIndex==1){
-                minimizeMap();
+
                 cameraActivity.addFragment(new MenuFrag());
+                minimizeMap();
 
 
             }else{
@@ -676,8 +683,30 @@ public class HomeFrag extends Fragment {
             }
         });
 
+        notifIcon.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                CameraActivity.lastFragment= new HomeFrag();
+                cameraActivity.addFragment(new NotificationFragment());
+                changeNotifIcon(false);
+            }
+        });
+
+
 
         return view;
+    }
+
+    public static void changeNotifIcon(boolean bool){
+        SharedPreferences sharedPreferences = CameraActivity.context.getSharedPreferences("notification_state", Context.MODE_PRIVATE);
+        boolean notificationMarked = sharedPreferences.getBoolean("notification_marked", bool);
+
+        // Set the notification icon based on the notification state
+        if (notificationMarked) {
+            notifIcon.setImageResource(R.drawable.ic_bell_pin_new_notif);
+        } else {
+            notifIcon.setImageResource(R.drawable.ic_bell_no_notif);
+        }
     }
 
 

@@ -43,7 +43,8 @@ public class MenuFrag extends Fragment {
         notif.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                CameraActivity.lastFragment= new MenuFrag();
+                cameraActivity.addFragment(new NotificationFragment());
             }
         });
 

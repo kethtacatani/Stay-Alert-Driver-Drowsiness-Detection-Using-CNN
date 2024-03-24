@@ -10,6 +10,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.stayalert.custom.classes.DetectionLogsInfo;
+
 import java.util.ArrayList;
 
 import helper.classes.ViewDetectedImageHelper;

@@ -3,7 +3,6 @@ package helper.classes;
 
         import android.app.Dialog;
         import android.content.Context;
-        import android.content.DialogInterface;
         import android.graphics.Bitmap;
         import android.util.Log;
         import android.view.View;
@@ -14,8 +13,7 @@ package helper.classes;
         import android.widget.TextView;
         import android.widget.Toast;
 
-        import com.example.stayalert.CameraActivity;
-        import com.example.stayalert.DetectionLogsInfo;
+        import com.example.stayalert.custom.classes.DetectionLogsInfo;
         import com.example.stayalert.R;
 
         import firebase.classes.FirebaseDatabase;

@@ -1,4 +1,4 @@
-package com.example.stayalert;
+package com.example.stayalert.custom.classes;
 
 import android.graphics.Bitmap;
 

@@ -40,6 +40,7 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.rilixtech.widget.countrycodepicker.CountryCodePicker;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
@@ -200,6 +201,7 @@ public class Sign_up extends AppCompatActivity {
                 userData.put("email", email.getText().toString().trim());
                 userData.put("password", pass.getText().toString());
                 userData.put("sign_in_method", signUpMethod);
+                userData.put("last_sign_in", new Date());
 
 
                 if(!fName.getText().toString().trim().isEmpty()  && !lName.getText().toString().trim().isEmpty()

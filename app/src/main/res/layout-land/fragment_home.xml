@@ -61,14 +61,15 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/timeOfDayTV" />
 
-                <ImageView
-                    android:id="@+id/imageView4"
+                <ImageButton
+                    android:id="@+id/notifIcon"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginRight="5dp"
-                    android:src="@drawable/ic_bell"
-                    app:layout_constraintBottom_toBottomOf="parent"
+                    android:layout_marginRight="15dp"
+                    android:layout_marginTop="25dp"
+                    android:src="@drawable/ic_bell_no_notif"
                     app:layout_constraintEnd_toEndOf="parent"
+                    android:background="@drawable/grey_btn_ripple_circle"
                     app:layout_constraintTop_toTopOf="parent" />
 
 
