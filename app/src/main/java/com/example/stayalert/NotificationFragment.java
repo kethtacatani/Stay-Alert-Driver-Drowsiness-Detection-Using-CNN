@@ -27,16 +27,16 @@ import java.util.ArrayList;
 
 public class NotificationFragment extends Fragment {
 
-    LinearLayout notificationMessageLayout;
-    ConstraintLayout notificationListLayout;
-    NotificationsRecycleViewAdapter recyleViewAdapter;
-    ArrayList<NotificationInfo> info = new ArrayList<>();
-    LineChart notificationChart;
-    public static TextView notificationTitle,notificationMessage, notificataionSummary, notificationMessageDate, notificationMessageBack;
+    public static LinearLayout notificationMessageLayout;
+    public static ConstraintLayout notificationListLayout;
+    public static NotificationsRecycleViewAdapter recyleViewAdapter;
+    public static ArrayList<NotificationInfo> info = new ArrayList<>();
+    public static LineChart notificationChart;
+    public static TextView notificationTitle,notificationMessage, notificataionSummary, notificationMessageDate, notificationMessageBack, notificationName;
     public static CameraActivity cameraActivity;
-    ChartGenerator chartGenerator;
+    public static ChartGenerator chartGenerator;
     ImageButton closeNotif;
-    RecyclerView notificationsListRV;
+    public static RecyclerView notificationsListRV;
     LinearLayoutManager linearLayoutManager;
     ProgressBar progressBar;
 
@@ -61,6 +61,7 @@ public class NotificationFragment extends Fragment {
         closeNotif = view.findViewById(R.id.closeNotification);
         notificationsListRV = view.findViewById(R.id.notificationsRV);
         progressBar= view.findViewById(R.id.detectionLogsPB);
+        notificationName = view.findViewById(R.id.notificationName);
 
         notificationsListRV.setHasFixedSize(false);
         linearLayoutManager = new LinearLayoutManager((CameraActivity)getActivity());
@@ -76,6 +77,8 @@ public class NotificationFragment extends Fragment {
             public void onClick(View v) {
                 notificationMessageLayout.setVisibility(View.GONE);
                 notificationListLayout.setVisibility(View.VISIBLE);
+                notificationName.setText("Notifications");
+
             }
         });
 
@@ -94,5 +97,11 @@ public class NotificationFragment extends Fragment {
         return view;
     }
 
+    public static void refreshRV(){
+        info=CameraActivity.notificationsInfo;
+        recyleViewAdapter = new NotificationsRecycleViewAdapter(info);
+        notificationsListRV.setAdapter(recyleViewAdapter);
+        recyleViewAdapter.notifyDataSetChanged();
+    }
 
 }

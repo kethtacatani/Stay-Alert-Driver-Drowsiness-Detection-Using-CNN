@@ -742,8 +742,12 @@ public class FirebaseDatabase {
 
     public void updateCheckin(){
         Object timestampObject = CameraActivity.userInfo.get("last_sign_in");
-        com.google.firebase.Timestamp firestoreTimestamp = (com.google.firebase.Timestamp) timestampObject;
-        Date lastSignInDate = firestoreTimestamp.toDate();
+        Timestamp timestamp = (Timestamp) timestampObject;
+        long seconds = timestamp.getSeconds();
+        int nanos = timestamp.getNanoseconds();
+
+        long milliseconds = seconds * 1000 + nanos / 1000000;
+        Date lastSignInDate = new Date(milliseconds);
         if(!DateUtils.isToday(lastSignInDate.getTime())){
             updateUserInfo(new HashMap<String, Object>() {{
                 put("last_sign_in", new Date());
@@ -799,14 +803,23 @@ public class FirebaseDatabase {
                     for (DocumentSnapshot documentFields : querySnapshot.getDocuments()) {
                         String title = getValue(documentFields.getData(), "title", "");
                         String message = getValue(documentFields.getData(), "message", "");
+
                         Timestamp firestoreTimestamp = documentFields.getTimestamp("timestamp");
-                        SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yy", Locale.ENGLISH);
+                        SimpleDateFormat sdf = new SimpleDateFormat("MMMM dd, yyyy h:mm a", Locale.getDefault());
                         Date lastSignInDate = firestoreTimestamp.toDate();
-                        String detectionDate = sdf.format(lastSignInDate);
+                        String notifDate = sdf.format(lastSignInDate);
+
+                        Timestamp detectionTimestamp = documentFields.getTimestamp("detection_date");
+
+                        Date detectionDate = firestoreTimestamp.toDate();
+                        SimpleDateFormat sdfNotif = new SimpleDateFormat("MM/dd/yy", Locale.getDefault());
+                        String notifDateShort = sdfNotif.format(detectionDate);
+
                         ArrayList<Integer> drowsyList= (ArrayList<Integer>)documentFields.get("drowsy_list");
                         ArrayList<Integer> yawnList= (ArrayList<Integer>)documentFields.get("yawn_list");
                         ArrayList<Integer> timeValues= (ArrayList<Integer>)documentFields.get("time_values");
                         boolean wasRead= documentFields.getBoolean("wasRead");
+                        String documentName = documentFields.getId();
 
                         Bitmap icon= BitmapFactory.decodeResource(CameraActivity.context.getResources(),
                                 R.drawable.ic_read_message);
@@ -814,7 +827,7 @@ public class FirebaseDatabase {
                             icon = BitmapFactory.decodeResource(CameraActivity.context.getResources(),
                                     R.drawable.ic_unread_message);
                         }
-                        infos.add( new NotificationInfo(title,detectionDate,message,detectionDate,drowsyList,yawnList,timeValues,wasRead,icon)); //must be in correct order
+                        infos.add( new NotificationInfo(title,notifDate,message,notifDateShort,drowsyList,yawnList,timeValues,wasRead,documentName,icon)); //must be in correct order
                     }
                     callback.onSuccess(infos);
                 }

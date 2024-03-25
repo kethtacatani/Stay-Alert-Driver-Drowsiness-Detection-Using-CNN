@@ -9,6 +9,7 @@ import androidx.annotation.NonNull;
 
 import com.example.stayalert.CameraActivity;
 import com.example.stayalert.HomeFrag;
+import com.example.stayalert.NotificationFragment;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.Description;
 import com.github.mikephil.charting.components.XAxis;
@@ -57,7 +58,7 @@ public class ChartGenerator {
     private List<String> xValues= new ArrayList<>();
     ArrayList<Integer> drowsyList = new ArrayList<>();
     ArrayList<Integer> yawnList = new ArrayList<>();
-    ArrayList<Integer> averageDrowsyResponseList = new ArrayList<>();
+    ArrayList<Double> averageDrowsyResponseList = new ArrayList<>();
     String timeRange="";
     String range="today";
     FirebaseFirestore db;
@@ -121,6 +122,7 @@ public class ChartGenerator {
             public void onSuccess(DocumentSnapshot documentSnapshot) {
                 if(documentSnapshot.exists()){
                     CameraActivity.yawnCountDocument=documentSnapshot;
+
                     processYawnCount(documentSnapshot,range);
                 }
             }
@@ -143,7 +145,7 @@ public class ChartGenerator {
                     for (int i = 1; i < 80; i++) {
                         String field=range+String.format("%02d",i);
                         if(documentSnapshot.contains(field) && i<= daysRange){
-                            int value= Integer.parseInt(documentSnapshot.getData().get(field).toString()) ;
+                            double value= Double.parseDouble(documentSnapshot.getData().get(field).toString()) ;
                             averageDrowsyResponseList.add(value);
                         }else{
                             break;
@@ -170,7 +172,7 @@ public class ChartGenerator {
         for (int i = 1; i < 80; i++) {
             String field=((range.equals("day7") || range.equals("day3"))?"day":range)+String.format("%02d",i);
             if(documentSnapshot.contains(field) && i<= daysRange){
-                int value= Integer.parseInt(documentSnapshot.getData().get(field).toString()) ;
+                int value= (int) Double.parseDouble(documentSnapshot.getData().get(field).toString()) ;
                 drowsyStartTime= drowsyStartTime==0?i:drowsyStartTime;
                 highestYLength= Math.max(value, highestYLength);
                 drowsyList.add(value);
@@ -197,7 +199,8 @@ public class ChartGenerator {
         for (int i = 1; i < 80; i++) {
             String field=((range.equals("day7") || range.equals("day3"))?"day":range)+String.format("%02d",i);
             if(documentSnapshot.contains(field) && i<= daysRange){
-                int value= Integer.parseInt(documentSnapshot.getData().get(field).toString()) ;
+                System.out.println("strings "+documentSnapshot.getData().get(field).toString());
+                int value=(int) Double.parseDouble(documentSnapshot.getData().get(field).toString()) ;
                 yawnStartTime = yawnStartTime == 0 ? i : yawnStartTime;
                 highestYLength = value > highestYLength ? value : highestYLength;
                 yawnList.add(value);
@@ -347,7 +350,7 @@ public class ChartGenerator {
             }
 
             //check if no detection for day1 in day30 chart
-            if(Integer.parseInt(CameraActivity.drowsyCountDocument.getData().get("day01").toString())==0 && Integer.parseInt(CameraActivity.yawnCountDocument.getData().get("day01").toString())==0 && range.equals("day")){
+            if((int) Double.parseDouble(CameraActivity.drowsyCountDocument.getData().get("day01").toString())==0 && (int) Double.parseDouble(CameraActivity.yawnCountDocument.getData().get("day01").toString())==0 && range.equals("day")){
                 drowsyCountList.add(new Entry(drowsyCountList.size(), 0));
                 yawnCountList.add(new Entry(yawnCountList.size(), 0));
             }
@@ -377,6 +380,7 @@ public class ChartGenerator {
 
         lineChart.setData(lineData);
         lineChart.invalidate();
+
     }
 
     public void setLineChart(LineChart lineChart){
@@ -389,7 +393,7 @@ public class ChartGenerator {
 
     public double getAverageDrowsyResponseSum(){
         double averageDrowsyResponseSum=0;
-        for (int number : averageDrowsyResponseList) {
+        for (double number : averageDrowsyResponseList) {
             if(number>0){
                 averageDrowsyResponseSum += number;
             }
@@ -419,6 +423,30 @@ public class ChartGenerator {
             }
         }
         return sum;
+    }
+
+    public void setDrowsyList(ArrayList<Integer> drowsyList) {
+        this.drowsyList = drowsyList;
+    }
+
+    public void setYawnList(ArrayList<Integer> yawnList) {
+        this.yawnList = yawnList;
+    }
+
+    public void setLowestTime(int lowestTime) {
+        this.lowestTime = lowestTime;
+    }
+
+    public void setHighestTime(int highestTime) {
+        this.highestTime = highestTime;
+    }
+
+    public void setHighestYLength(int highestYLength) {
+        this.highestYLength = highestYLength;
+    }
+
+    public void setCheckCount(int count){
+        this.checkCount=2;
     }
 
     public  ArrayList<Integer> getDrowsyList(){
@@ -483,8 +511,16 @@ public class ChartGenerator {
             return;
         }
 
-        if ((Integer.parseInt(CameraActivity.drowsyCountDocument.get("day01").toString()) == 0 &&
-                        Integer.parseInt(CameraActivity.yawnCountDocument.get("day01").toString()) == 0)){
+        Object timestampObject = CameraActivity.userInfo.get("last_sign_in");
+        Timestamp timestamp = (Timestamp) timestampObject;
+        long seconds = timestamp.getSeconds();
+        int nanos = timestamp.getNanoseconds();
+
+        long milliseconds = seconds * 1000 + nanos / 1000000;
+        Date lastSignInDate = new Date(milliseconds);
+
+        if ((((int) Double.parseDouble(CameraActivity.drowsyCountDocument.get("day01").toString()) == 0 &&
+                        (int) Double.parseDouble(CameraActivity.yawnCountDocument.get("day01").toString()) == 0)) || DateUtils.isToday(lastSignInDate.getTime()) ){
             Log.d("ChartGenerator",  " no notif");
             firebaseDB.getNotificationsList();
             firebaseDB.updateCheckin();
@@ -531,6 +567,7 @@ public class ChartGenerator {
                                     "actions to stay safe on the road.\\n\\t\\t\\u2022 Total Sleep Detected: "+drowsyCount+"\\n\\t\\t\\u2022 Total Yawn Detected: "+yawnCount+
                                     "\\n\\t\\t\\u2022 Average Drowsy Response Time: "+(Double.isNaN(averageResponse)?0:averageResponse)+"s");
                             notifInfo.put("timestamp",calendar.getTime());
+                            notifInfo.put("detection_date",lastSignInDate);
                             notifInfo.put("drowsy_list",getDrowsyList());
                             notifInfo.put("yawn_list",getYawnList());
                             notifInfo.put("time_values",new ArrayList<Integer>(){

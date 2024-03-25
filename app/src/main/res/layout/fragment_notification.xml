@@ -65,8 +65,8 @@
                 android:id="@+id/notificationsRV"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_marginRight="15dp"
                 android:layout_marginLeft="15dp"
+                android:layout_marginRight="15dp"
                 app:layout_constraintTop_toTopOf="parent" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
@@ -93,6 +93,8 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="10dp"
                 android:orientation="horizontal">
 
                 <TextView
@@ -100,7 +102,6 @@
                     android:layout_width="65dp"
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="15dp"
-                    android:layout_marginTop="15dp"
                     android:background="@drawable/bg_cancel_btn"
                     android:backgroundTint="@color/bg_white"
                     android:clickable="true"
@@ -118,7 +119,6 @@
                     android:id="@+id/notifMessageDateTime"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="15dp"
                     android:layout_marginRight="15dp"
                     android:layout_weight="1"
                     android:fontFamily="@font/nunito_sans"

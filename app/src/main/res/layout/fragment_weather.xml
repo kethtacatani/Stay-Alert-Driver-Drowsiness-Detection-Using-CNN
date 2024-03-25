@@ -41,7 +41,7 @@
         <ImageView
             android:id="@+id/weatherTypeFullIV"
             android:layout_width="match_parent"
-            android:layout_height="300dp"
+            android:layout_height="280dp"
             android:layout_marginTop="-35dp"
             android:gravity="center"
             android:src="@drawable/weather_partly_sunny"
@@ -56,7 +56,7 @@
             android:gravity="center"
             android:text="28° | Cloudy"
             android:textColor="@color/bg_white"
-            android:textSize="32sp" />
+            android:textSize="28sp" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -112,7 +112,7 @@
                         android:paddingRight="15dp"
                         android:text="9.7 km/h"
                         android:textColor="@color/bg_white"
-                        android:textSize="32sp"
+                        android:textSize="24sp"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toBottomOf="@+id/textView10" />
 
@@ -157,7 +157,7 @@
                         android:paddingRight="15dp"
                         android:text="23%"
                         android:textColor="@color/bg_white"
-                        android:textSize="32sp"
+                        android:textSize="24sp"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toBottomOf="@+id/textView1s0s" />
 
@@ -213,24 +213,9 @@
                         android:paddingRight="15dp"
                         android:text="26°"
                         android:textColor="@color/bg_white"
-                        android:textSize="32sp"
+                        android:textSize="24sp"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toBottomOf="@+id/textVisew10" />
-
-                    <TextView
-                        android:id="@+id/adasda"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="15dp"
-                        android:layout_marginEnd="15dp"
-                        android:layout_marginBottom="15dp"
-                        android:fontFamily="@font/nunitosans_semibold"
-                        android:text="Similar to the actual temperature."
-                        android:textColor="@color/bg_white"
-                        android:textSize="14sp"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent" />
 
 
                 </androidx.constraintlayout.widget.ConstraintLayout>
@@ -269,11 +254,10 @@
                         android:layout_height="wrap_content"
                         android:layout_marginLeft="15dp"
                         android:layout_marginTop="5dp"
-                        android:layout_marginRight="15dp"
                         android:fontFamily="@font/nunitosans_semibold"
                         android:text="70%"
                         android:textColor="@color/bg_white"
-                        android:textSize="32sp"
+                        android:textSize="24sp"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toBottomOf="@+id/textView10s" />
 

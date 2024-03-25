@@ -50,6 +50,7 @@
             android:exported="false" />
         <activity
             android:name=".DetectorActivity"
+            android:configChanges="orientation"
             android:exported="false" />
         <activity
             android:name=".Home"

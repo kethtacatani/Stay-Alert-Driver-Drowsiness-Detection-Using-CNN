@@ -167,7 +167,7 @@ public class HomeFrag extends Fragment {
     public static ImageButton notifIcon;
     TextView timeofDay;
     public static TextView tempTV, humidTV, weatherType;
-    public static TextView statusDriverTV, nameDriverTV;
+    public static TextView statusDriverTV, nameDriverTV, viewAlertHistory;
     TextView tempCloud, humid, wind, rain, feelsLike, cityCountry;
     public static ConstraintLayout driverInfoLayout, weatherInfoLayout;
     public static LinearLayout driverStatusLayout;
@@ -374,6 +374,7 @@ public class HomeFrag extends Fragment {
         driverStatusLayout= view.findViewById(R.id.driverStatusLayout);
         weatherInfoLayout = view.findViewById(R.id.weatherInfoLayout);
         closeMap = view.findViewById(R.id.closeMap);
+        viewAlertHistory = view.findViewById(R.id.viewAlertHistory);
 
         notifIcon = view.findViewById(R.id.notifIcon);
         viewDetectionBtn = view.findViewById(R.id.viewDetectionBtn);
@@ -406,6 +407,15 @@ public class HomeFrag extends Fragment {
             public void onClick(View v) {
                 CameraActivity.elevation= 30;
                 cameraActivity.changeFrameLayoutElevation();
+            }
+        });
+
+        viewAlertHistory.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                cameraActivity.bottomNavIndex=4;
+                cameraActivity.bottomNavigation.show(4,true);
+                cameraActivity.addFragment(new StatsFrag());
             }
         });
 
@@ -458,7 +468,11 @@ public class HomeFrag extends Fragment {
         NavigationOptions navigationOptions = new NavigationOptions.Builder(CameraActivity.context).accessToken(getString(R.string.mapbox_access_token)).build();
 
         MapboxNavigationApp.setup(navigationOptions);
-        mapboxNavigation = new MapboxNavigation(navigationOptions);
+        if(mapboxNavigation==null){
+            mapboxNavigation = new MapboxNavigation(navigationOptions);
+        }else{
+            System.out.println("already has");
+        }
 
         mapboxNavigation.registerRouteProgressObserver(routeProgressObserver);
         mapboxNavigation.registerRoutesObserver(routesObserver);

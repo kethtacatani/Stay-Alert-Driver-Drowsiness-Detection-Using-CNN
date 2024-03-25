@@ -224,7 +224,10 @@ public abstract class CameraActivity extends AppCompatActivity
     firebaseDB= new FirebaseDatabase();
     db = FirebaseFirestore.getInstance();
     user = FirebaseAuth.getInstance().getCurrentUser();
+
     getUserInfo();
+
+
 
 
     CameraManager cameraManager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
@@ -365,6 +368,7 @@ public abstract class CameraActivity extends AppCompatActivity
           case 1:
             bottomNavIndex=1;
             addFragment(new MenuFrag());
+            HomeFrag.notifIcon.setEnabled(false);
             Toast.makeText(CameraActivity.this, "Menu", Toast.LENGTH_SHORT).show();
 
             break;
@@ -377,6 +381,7 @@ public abstract class CameraActivity extends AppCompatActivity
           case 3:
             bottomNavIndex=3;
             addFragment(new HomeFrag());
+            HomeFrag.notifIcon.setEnabled(true);
             Toast.makeText(CameraActivity.this, "Home", Toast.LENGTH_SHORT).show();
 
 
@@ -543,10 +548,6 @@ public abstract class CameraActivity extends AppCompatActivity
 
     HomeFrag.getWeatherDetails("Calape","Philippines");
 
-    chartGenerator = new ChartGenerator();
-    chartGenerator.setRange("today");
-    chartGenerator.fetchDetectionCounts();
-
     //moves count if past n days
     firebaseDB.checkStatCount("drowsy");
     firebaseDB.checkStatCount("yawn");
@@ -593,6 +594,10 @@ public abstract class CameraActivity extends AppCompatActivity
         bottomNavigation.show(3,true);
         addFragment(new HomeFrag());
         bottomNavigation.clearCount(1);
+
+        chartGenerator = new ChartGenerator();
+        chartGenerator.setRange("today");
+        chartGenerator.fetchDetectionCounts();
       }
 
       @Override
