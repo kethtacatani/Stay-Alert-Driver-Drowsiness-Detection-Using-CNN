@@ -723,6 +723,9 @@ public class FirebaseDatabase {
                 @Override
                 public void onSuccess(Void result) {
                     Log.d(TAG+ "updateStatCount","Success");
+                    if(type.equals("yawn")){
+                        CameraActivity.chartGenerator.fetchDetectionCounts();
+                    }
                 }
 
                 @Override
@@ -731,7 +734,10 @@ public class FirebaseDatabase {
                 }
             });
 
+        } else if(type.equals("yawn")){
+            CameraActivity.chartGenerator.fetchDetectionCounts();
         }
+
 
 
 

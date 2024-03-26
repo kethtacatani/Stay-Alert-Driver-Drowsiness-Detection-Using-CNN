@@ -199,7 +199,6 @@ public class ChartGenerator {
         for (int i = 1; i < 80; i++) {
             String field=((range.equals("day7") || range.equals("day3"))?"day":range)+String.format("%02d",i);
             if(documentSnapshot.contains(field) && i<= daysRange){
-                System.out.println("strings "+documentSnapshot.getData().get(field).toString());
                 int value=(int) Double.parseDouble(documentSnapshot.getData().get(field).toString()) ;
                 yawnStartTime = yawnStartTime == 0 ? i : yawnStartTime;
                 highestYLength = value > highestYLength ? value : highestYLength;
@@ -518,9 +517,11 @@ public class ChartGenerator {
 
         long milliseconds = seconds * 1000 + nanos / 1000000;
         Date lastSignInDate = new Date(milliseconds);
+        System.out.println("drows "+(int) Double.parseDouble(CameraActivity.drowsyCountDocument.getData().get("day02").toString()));
+        System.out.println("yawnss "+(int) Double.parseDouble(CameraActivity.yawnCountDocument.getData().get("day02").toString()));
 
-        if ((((int) Double.parseDouble(CameraActivity.drowsyCountDocument.get("day01").toString()) == 0 &&
-                        (int) Double.parseDouble(CameraActivity.yawnCountDocument.get("day01").toString()) == 0)) || DateUtils.isToday(lastSignInDate.getTime()) ){
+        if ((((int) Double.parseDouble(CameraActivity.drowsyCountDocument.getData().get("day02").toString()) == 0 &&
+                        (int) Double.parseDouble(CameraActivity.yawnCountDocument.getData().get("day02").toString()) == 0)) || DateUtils.isToday(lastSignInDate.getTime()) ){
             Log.d("ChartGenerator",  " no notif");
             firebaseDB.getNotificationsList();
             firebaseDB.updateCheckin();
@@ -562,10 +563,10 @@ public class ChartGenerator {
                             Map<String, Object> notifInfo = new HashMap<>();
                             notifInfo.put("wasRead",false);
                             notifInfo.put("title","Detection Report Summary");
-                            notifInfo.put("message","\\t\\tGood day, Lorem Ipsum. Here is the summary report for "+detectionDate+". You started using the app at "+formattedTime+"." +
+                            notifInfo.put("message","\\t\\tGood day, "+CameraActivity.userInfo.get("first_name")+ " " + CameraActivity.userInfo.get("middle_name") + ". " + CameraActivity.userInfo.get("last_name") + " " + CameraActivity.userInfo.get("suffix")+". Here is the summary report for "+detectionDate+". You started using the app at "+formattedTime+"." +
                                     " \\n\\t\\tThis information, combined with the detection summary, can help you understand your drowsiness patterns and take necessary " +
                                     "actions to stay safe on the road.\\n\\t\\t\\u2022 Total Sleep Detected: "+drowsyCount+"\\n\\t\\t\\u2022 Total Yawn Detected: "+yawnCount+
-                                    "\\n\\t\\t\\u2022 Average Drowsy Response Time: "+(Double.isNaN(averageResponse)?0:averageResponse)+"s");
+                                    "\\n\\t\\t\\u2022 Average Drowsy Response Time: "+String.format("%.2f",(Double.isNaN(averageResponse)?0:averageResponse))+"s");
                             notifInfo.put("timestamp",calendar.getTime());
                             notifInfo.put("detection_date",lastSignInDate);
                             notifInfo.put("drowsy_list",getDrowsyList());

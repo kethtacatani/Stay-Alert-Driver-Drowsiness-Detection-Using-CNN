@@ -14,6 +14,8 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
@@ -140,6 +142,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -182,6 +185,11 @@ public class HomeFrag extends Fragment {
     public  static boolean maneuverOn=false;
     public  static boolean muteSpeech=true;
 
+
+    CameraActivity cameraActivity;
+
+
+
     MapView mapView;
     FloatingActionButton focusLocationBtn;
     ImageButton setRoute;
@@ -198,6 +206,8 @@ public class HomeFrag extends Fragment {
         @Override
         public void onNewLocationMatcherResult(@NonNull LocationMatcherResult locationMatcherResult) {
             Location location = locationMatcherResult.getEnhancedLocation();
+            cameraActivity.location= location;
+            cameraActivity.getCurrentAddress();
             navigationLocationProvider.changePosition(location, locationMatcherResult.getKeyPoints(), null, null);
             if (focusLocation) {
                 updateCamera(Point.fromLngLat(location.getLongitude(), location.getLatitude()), (double) location.getBearing());
@@ -394,7 +404,9 @@ public class HomeFrag extends Fragment {
 
 
 
-        CameraActivity cameraActivity = (CameraActivity) getActivity();
+
+
+         cameraActivity = (CameraActivity) getActivity();
         userData= cameraActivity.userInfo;
 
         if(!userData.isEmpty()){
@@ -744,6 +756,7 @@ public class HomeFrag extends Fragment {
     public static void getWeatherDetails(String city, String country) {
         String tempUrl = "";
 
+
         if(!country.equals("")){
             tempUrl = url + "?q=" + city + "," + country + "&appid=" + appid;
         }else{
@@ -818,6 +831,8 @@ public class HomeFrag extends Fragment {
 
         }
     }
+
+
 
 
     @SuppressLint("MissingPermission")

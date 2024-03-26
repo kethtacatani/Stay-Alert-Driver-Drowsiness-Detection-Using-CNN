@@ -29,6 +29,9 @@ import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.params.StreamConfigurationMap;
+import android.location.Address;
+import android.location.Geocoder;
+import android.location.Location;
 import android.media.Image;
 import android.media.Image.Plane;
 import android.media.ImageReader;
@@ -95,6 +98,8 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import firebase.classes.FirebaseDatabase;
@@ -208,6 +213,10 @@ public abstract class CameraActivity extends AppCompatActivity
   public static ArrayList<ContactsInfo> contactInfoList = new ArrayList<>();
   public static ArrayList<ContactsInfo> favoritesInfoList = new ArrayList<>();
   public static ChartGenerator chartGenerator;
+  public Location location;
+  public  Geocoder geocoder;
+  public  List<Address> addresses;
+
 
 
 
@@ -247,6 +256,7 @@ public abstract class CameraActivity extends AppCompatActivity
 
     bottomNavigation= findViewById(R.id.bottomNavigation);
     backBtn= findViewById(R.id.backBtn);
+    geocoder = new Geocoder(this, Locale.getDefault());
 
 
     bottomNavigation.add(new MeowBottomNavigation.Model(1, R.drawable.ic_menu));
@@ -546,7 +556,9 @@ public abstract class CameraActivity extends AppCompatActivity
       }
     });
 
-    HomeFrag.getWeatherDetails("Calape","Philippines");
+    String currentAddress[]=getCurrentAddress();
+
+    HomeFrag.getWeatherDetails(currentAddress[0],currentAddress[1]);
 
     //moves count if past n days
     firebaseDB.checkStatCount("drowsy");
@@ -596,8 +608,8 @@ public abstract class CameraActivity extends AppCompatActivity
         bottomNavigation.clearCount(1);
 
         chartGenerator = new ChartGenerator();
-        chartGenerator.setRange("today");
-        chartGenerator.fetchDetectionCounts();
+        chartGenerator.setRange("yesterday");
+
       }
 
       @Override
@@ -617,6 +629,38 @@ public abstract class CameraActivity extends AppCompatActivity
 
   }
 
+  @SuppressLint("MissingPermission")
+  public String[] getCurrentAddress(){
+
+    //sige na siya e call nga function to check if address kay na chage
+    try {
+      addresses = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1); // Here 1 represent max location result to returned, by documents it recommended 1 to 5
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    String address,city="NA" ,state,country="NA",postalCode, knownName;
+
+    if(addresses!=null){
+       address = addresses.get(0).getAddressLine(0); // If any additional address line present than only, check with max available address lines by getMaxAddressLineIndex()
+       city = addresses.get(0).getLocality();
+       state = addresses.get(0).getAdminArea();
+       country = addresses.get(0).getCountryName();
+       postalCode = addresses.get(0).getPostalCode();
+       knownName = addresses.get(0).getFeatureName();
+
+      System.out.printf("city "+city);
+      System.out.printf("country "+country);
+    }
+
+    if(city!=weatherMap.get("city")){
+      HomeFrag.getWeatherDetails(city,country);
+    }else{
+      return null;
+    }
+
+    return new String[]{city,country};
+  }
+
 
 
   public void saveDetectedImage(Bitmap bitmap,String detectionType, String ms, double responseTime){
@@ -625,10 +669,12 @@ public abstract class CameraActivity extends AppCompatActivity
     }
 
     String result[] =firebaseDB.saveImageToLocal(""+timestamp,bitmap,"detections");
+    String address[] = getCurrentAddress();
     if(result!=null){
       Map<String, Object> imageInfo = new HashMap<>();
       imageInfo.put("detection_name", (detectionType.equals("yawn")?"Yawn":"Drowsy"));
       imageInfo.put("timestamp", date);
+      imageInfo.put("location", address[0]+", "+address[1]);
       imageInfo.put("file_name",result[1]);
       imageInfo.put("local_path",result[0]);
       imageInfo.put("firestore_path","users/"+user.getUid()+"/image_detection/"+result[1]);
