@@ -169,7 +169,7 @@ public class HomeFrag extends Fragment {
     public static ImageButton viewDetectionBtn, closeMap;
     public static ImageButton notifIcon;
     TextView timeofDay;
-    public static TextView tempTV, humidTV, weatherType;
+    public static TextView tempTV, humidTV, weatherType, weatherAddress;
     public static TextView statusDriverTV, nameDriverTV, viewAlertHistory;
     TextView tempCloud, humid, wind, rain, feelsLike, cityCountry;
     public static ConstraintLayout driverInfoLayout, weatherInfoLayout;
@@ -394,6 +394,7 @@ public class HomeFrag extends Fragment {
         tempTV= view.findViewById(R.id.temperatureTV);
         humidTV= view.findViewById(R.id.hAndLTV);
         weatherType= view.findViewById(R.id.weatherTypeTV);
+        weatherAddress = view.findViewById(R.id.weatherAddressTV);
 
         tempCloud = view.findViewById(R.id.weatherTempAndDesc);
         humid = view.findViewById(R.id.weatherTempAndDesc);
@@ -436,11 +437,6 @@ public class HomeFrag extends Fragment {
 
         timeofDay.setText("Good "+getTimeOfDay());
 
-        if(!CameraActivity.weatherMap.isEmpty()){
-            displayWeatherInfo(CameraActivity.weatherMap);
-        }else{
-            getWeatherDetails("Calape", "Philippines");
-        }
 
         closeMap.setOnClickListener(v -> {
             if(CameraActivity.bottomNavIndex==1){
@@ -583,11 +579,8 @@ public class HomeFrag extends Fragment {
         setRoute.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(setRoute.getContentDescription().toString().contains("Cancel")){
-                    setRoute.setContentDescription("Set Route");
-                    trueNorth=true;
-                    mapboxManeuverView.setVisibility(View.GONE);
-                }
+                Toast.makeText(cameraActivity, "Please select a location first", Toast.LENGTH_SHORT).show();
+
             }
         });
 
@@ -616,6 +609,7 @@ public class HomeFrag extends Fragment {
                         PointAnnotationOptions pointAnnotationOptions = new PointAnnotationOptions().withTextAnchor(TextAnchor.CENTER).withIconImage(bitmap)
                                 .withPoint(point);
                         pointAnnotationManager.create(pointAnnotationOptions);
+
                         trueNorth=false;
                         muteSpeech=true;
                         fetchRoute(point);
@@ -796,7 +790,7 @@ public class HomeFrag extends Fragment {
                     weatherMap.put("humidity", humidity);
                      weatherMap.put("wind", wind);
                      weatherMap.put("clouds", clouds);
-                      weatherMap.put("country", countryName);
+                      weatherMap.put("country", country);
                      weatherMap.put("city", cityName);
 
                      CameraActivity.weatherMap = new HashMap<>(weatherMap);
@@ -828,6 +822,7 @@ public class HomeFrag extends Fragment {
             tempTV.setText(String.format("%.0f", weatherMap.get("temp"))+"°" );
             humidTV.setText("H:" + weatherMap.get("humidity") + "");
             weatherType.setText((String) weatherMap.get("description"));
+            weatherAddress.setText((String) weatherMap.get("city")+", "+(String) weatherMap.get("country"));
 
         }
     }
@@ -844,6 +839,7 @@ public class HomeFrag extends Fragment {
                 Location location = result.getLastLocation();
                 setRoute.setEnabled(false);
                 setRoute.setContentDescription("Fetching route...");
+
 
                 RouteOptions.Builder builder = RouteOptions.builder();
                 Point origin = Point.fromLngLat(Objects.requireNonNull(location).getLongitude(), location.getLatitude());

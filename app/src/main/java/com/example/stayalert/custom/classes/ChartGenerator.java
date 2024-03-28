@@ -54,6 +54,7 @@ public class ChartGenerator {
     int drowsyStartTime=0;
     int highestYLength=0;
     int checkCount=0;
+    int checkGetDetectionCount=0;
     int daysRange=80;
     private List<String> xValues= new ArrayList<>();
     ArrayList<Integer> drowsyList = new ArrayList<>();
@@ -147,6 +148,12 @@ public class ChartGenerator {
                         if(documentSnapshot.contains(field) && i<= daysRange){
                             double value= Double.parseDouble(documentSnapshot.getData().get(field).toString()) ;
                             averageDrowsyResponseList.add(value);
+                            CameraActivity.averageDrowsyCountDocument= documentSnapshot;
+                            checkCount++;
+                            if(lineChart==null){
+                                checkGetDetectionCount++;
+                                getDetecionCount();
+                            }
                         }else{
                             break;
                         }
@@ -187,9 +194,12 @@ public class ChartGenerator {
 
 
         checkCount++;
+
         if(lineChart!=null){
             processChart();
         }else{
+            checkGetDetectionCount++;
+            getDetecionCount();
             checkNewNotif();
         }
     }
@@ -197,26 +207,28 @@ public class ChartGenerator {
     public void processYawnCount(DocumentSnapshot documentSnapshot, String range) {
         yawnList.clear();
         for (int i = 1; i < 80; i++) {
-            String field=((range.equals("day7") || range.equals("day3"))?"day":range)+String.format("%02d",i);
-            if(documentSnapshot.contains(field) && i<= daysRange){
-                int value=(int) Double.parseDouble(documentSnapshot.getData().get(field).toString()) ;
+            String field = ((range.equals("day7") || range.equals("day3")) ? "day" : range) + String.format("%02d", i);
+            if (documentSnapshot.contains(field) && i <= daysRange) {
+                int value = (int) Double.parseDouble(documentSnapshot.getData().get(field).toString());
                 yawnStartTime = yawnStartTime == 0 ? i : yawnStartTime;
                 highestYLength = value > highestYLength ? value : highestYLength;
                 yawnList.add(value);
-                if(value>0){
+                if (value > 0) {
                     lowestTime = (i < lowestTime) ? i : lowestTime;
                     highestTime = (i > highestTime) ? i : highestTime;
                 }
-            }else{
+            } else {
                 break;
             }
         }
-        //remove trailing zeros at the end
 
         checkCount++;
+
         if(lineChart!=null){
             processChart();
         }else{
+            checkGetDetectionCount++;
+            getDetecionCount();
             checkNewNotif();
         }
     }
@@ -382,6 +394,10 @@ public class ChartGenerator {
 
     }
 
+    public void setChartTextData(){
+        lineChart.setNoDataText("Chart is loading...");
+    }
+
     public void setLineChart(LineChart lineChart){
         this.lineChart=lineChart;
     }
@@ -505,6 +521,23 @@ public class ChartGenerator {
         return newList;
     }
 
+    public void getDetecionCount(){
+        if(checkGetDetectionCount!=3){
+            return;
+        }
+        CameraActivity.getDetectionRecordsCount("today", new CameraActivity.TaskCallback() {
+            @Override
+            public void onSuccess(Object result) {
+                Log.d("CamAct", "Get count success");
+            }
+
+            @Override
+            public void onFailure(String errorMessage) {
+                Log.d("CamAct", "Get count failed");
+            }
+        });
+    }
+
     public void checkNewNotif(){
         if(checkCount!=2){
             return;
@@ -519,6 +552,7 @@ public class ChartGenerator {
         Date lastSignInDate = new Date(milliseconds);
         System.out.println("drows "+(int) Double.parseDouble(CameraActivity.drowsyCountDocument.getData().get("day02").toString()));
         System.out.println("yawnss "+(int) Double.parseDouble(CameraActivity.yawnCountDocument.getData().get("day02").toString()));
+
 
         if ((((int) Double.parseDouble(CameraActivity.drowsyCountDocument.getData().get("day02").toString()) == 0 &&
                         (int) Double.parseDouble(CameraActivity.yawnCountDocument.getData().get("day02").toString()) == 0)) || DateUtils.isToday(lastSignInDate.getTime()) ){
@@ -542,6 +576,7 @@ public class ChartGenerator {
                         if(!querySnapshot.isEmpty()){
                             DocumentSnapshot documentSnapshot = querySnapshot.getDocuments().get(0);
                             timestamp = documentSnapshot.getTimestamp("timestamp");
+                            Date date = timestamp.toDate();
                         }
                         if(querySnapshot.isEmpty() || !DateUtils.isToday(timestamp.toDate().getTime()) ){
                             Calendar calendar = Calendar.getInstance();
@@ -567,7 +602,7 @@ public class ChartGenerator {
                                     " \\n\\t\\tThis information, combined with the detection summary, can help you understand your drowsiness patterns and take necessary " +
                                     "actions to stay safe on the road.\\n\\t\\t\\u2022 Total Sleep Detected: "+drowsyCount+"\\n\\t\\t\\u2022 Total Yawn Detected: "+yawnCount+
                                     "\\n\\t\\t\\u2022 Average Drowsy Response Time: "+String.format("%.2f",(Double.isNaN(averageResponse)?0:averageResponse))+"s");
-                            notifInfo.put("timestamp",calendar.getTime());
+                            notifInfo.put("timestamp",new Date());
                             notifInfo.put("detection_date",lastSignInDate);
                             notifInfo.put("drowsy_list",getDrowsyList());
                             notifInfo.put("yawn_list",getYawnList());

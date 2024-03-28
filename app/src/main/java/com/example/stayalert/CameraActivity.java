@@ -208,6 +208,7 @@ public abstract class CameraActivity extends AppCompatActivity
 
   public static DocumentSnapshot drowsyCountDocument;
   public static DocumentSnapshot yawnCountDocument;
+  public static DocumentSnapshot averageDrowsyCountDocument;
 
   public static androidx.fragment.app.Fragment lastFragment;
   public static ArrayList<ContactsInfo> contactInfoList = new ArrayList<>();
@@ -216,6 +217,8 @@ public abstract class CameraActivity extends AppCompatActivity
   public Location location;
   public  Geocoder geocoder;
   public  List<Address> addresses;
+  public String[] address = new String[]{"NA","NA"};
+  public String[] lastCoordinate =new String[]{"0","0"};
 
 
 
@@ -538,32 +541,18 @@ public abstract class CameraActivity extends AppCompatActivity
 
 
 
+
       }
     }, 6000);
 
     refreshDefaultQuery();
 
     updateDetectionLogs(null,"");
-    getDetectionRecordsCount(null, null, new TaskCallback() {
-      @Override
-      public void onSuccess(Object result) {
-        Log.d(TAG, "Get count success");
-      }
 
-      @Override
-      public void onFailure(String errorMessage) {
-        Log.d(TAG, "Get count failed");
-      }
-    });
 
-    String currentAddress[]=getCurrentAddress();
 
-    HomeFrag.getWeatherDetails(currentAddress[0],currentAddress[1]);
 
-    //moves count if past n days
-    firebaseDB.checkStatCount("drowsy");
-    firebaseDB.checkStatCount("yawn");
-    firebaseDB.checkStatCount("average_response");
+
 
 
 
@@ -591,6 +580,8 @@ public abstract class CameraActivity extends AppCompatActivity
             .orderBy("timestamp", Query.Direction.DESCENDING)
             .limit(10);
 
+
+
   }
 
   ////////////////////////////////////////////
@@ -609,6 +600,14 @@ public abstract class CameraActivity extends AppCompatActivity
 
         chartGenerator = new ChartGenerator();
         chartGenerator.setRange("yesterday");
+
+
+        //moves count if past n days
+        firebaseDB.checkStatCount("drowsy");
+        firebaseDB.checkStatCount("yawn");
+        firebaseDB.checkStatCount("average_response");
+
+
 
       }
 
@@ -634,11 +633,16 @@ public abstract class CameraActivity extends AppCompatActivity
 
     //sige na siya e call nga function to check if address kay na chage
     try {
-      addresses = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1); // Here 1 represent max location result to returned, by documents it recommended 1 to 5
+      if (location != null && (!lastCoordinate[0].equals(String.valueOf(location.getLatitude())) || !lastCoordinate[1].equals(String.valueOf(location.getLongitude())))) {
+        addresses = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1); // Here 1 represent max location result to returned, by documents it recommended 1 to 5
+        lastCoordinate = new String[]{String.valueOf(location.getLatitude()), String.valueOf(location.getLongitude())};
+      }else{
+        return null;
+      }
     } catch (IOException e) {
       e.printStackTrace();
     }
-    String address,city="NA" ,state,country="NA",postalCode, knownName;
+    String address="NA",city="NA" ,country="NA",state="NA",postalCode, knownName;
 
     if(addresses!=null){
        address = addresses.get(0).getAddressLine(0); // If any additional address line present than only, check with max available address lines by getMaxAddressLineIndex()
@@ -648,17 +652,21 @@ public abstract class CameraActivity extends AppCompatActivity
        postalCode = addresses.get(0).getPostalCode();
        knownName = addresses.get(0).getFeatureName();
 
-      System.out.printf("city "+city);
-      System.out.printf("country "+country);
+      this.address = new String[]{city,state,address};
+
+      System.out.printf("address "+postalCode);
+      System.out.printf("country "+String.valueOf(location.getLatitude())+","+String.valueOf(location.getLongitude())+" sdf");
+    }else{
+      if(location!=null){
+        this.address = new String[]{String.valueOf(location.getLatitude()),String.valueOf(location.getLongitude())};
+      }
     }
 
     if(city!=weatherMap.get("city")){
       HomeFrag.getWeatherDetails(city,country);
-    }else{
-      return null;
     }
 
-    return new String[]{city,country};
+    return new String[]{city,state, address};
   }
 
 
@@ -669,12 +677,12 @@ public abstract class CameraActivity extends AppCompatActivity
     }
 
     String result[] =firebaseDB.saveImageToLocal(""+timestamp,bitmap,"detections");
-    String address[] = getCurrentAddress();
+
     if(result!=null){
       Map<String, Object> imageInfo = new HashMap<>();
       imageInfo.put("detection_name", (detectionType.equals("yawn")?"Yawn":"Drowsy"));
       imageInfo.put("timestamp", date);
-      imageInfo.put("location", address[0]+", "+address[1]);
+      imageInfo.put("location",(address[2]!=null)?address[2]: address[0]+", "+address[1]);
       imageInfo.put("file_name",result[1]);
       imageInfo.put("local_path",result[0]);
       imageInfo.put("firestore_path","users/"+user.getUid()+"/image_detection/"+result[1]);
@@ -695,25 +703,7 @@ public abstract class CameraActivity extends AppCompatActivity
     }
   }
 
-  public void getDetectionCountOnLocal(){
-    DocumentReference docRef = db.collection("users/"+user.getUid()+"/user_res/").document("detection_records");
 
-    docRef.get(Source.CACHE).addOnCompleteListener(task -> {
-      if (task.isSuccessful()) {
-        DocumentSnapshot document = task.getResult();
-        if (document.exists()) {
-          drowsyCount= Integer.parseInt(document.get("today_count").toString());
-//          syncToServer();
-        } else {
-          Log.d(TAG+" getCount","No connection to database");
-        }
-      } else {
-        // Handle failures
-        Exception exception = task.getException();
-        Log.w(TAG, "+ getCount: Error getting document", exception);
-      }
-    });
-  }
 
   public void setDetectionCountOnLocal(int count){
     Map<String, Object> countInfo = new HashMap<>();
@@ -779,86 +769,66 @@ public abstract class CameraActivity extends AppCompatActivity
     return calendar;
   }
 
-  public void getDetectionRecordsCount(Date startDate, Date endDate, TaskCallback callback){
+  public static void getDetectionRecordsCount(String range, TaskCallback callback){
 
-    if(startDate==null){
-      getDetectionCountOnLocal();
+    int limit=24;
+    if(range.equals("day3")){
+      limit=3;
+    }else if(range.equals("day7")) {
+      limit = 7;
+    }else if(range.equals("day")) {
+      limit = 30;
     }
 
-    Date newStartDate = getCurrentDate().getTime();
+    if(drowsyCountDocument==null){
+      return;
+    }
 
-    Query yawnCountQuery = db.collection("users/"+user.getUid()+"/image_detection").whereEqualTo("detection_name", "Yawn");
-    Query drowsyCountQuery = db.collection("users/"+user.getUid()+"/image_detection").whereEqualTo("detection_name", "Drowsy");
-    AggregateQuery countQueryYawn = yawnCountQuery
-            .whereGreaterThanOrEqualTo("timestamp", (startDate!=null)?startDate:newStartDate)
-            .whereLessThanOrEqualTo("timestamp", (endDate!=null)?endDate:new Date())
-            .count();
-    AggregateQuery countQueryDrowsy = drowsyCountQuery
-            .whereGreaterThanOrEqualTo("timestamp", (startDate!=null)?startDate:newStartDate)
-            .whereLessThanOrEqualTo("timestamp", (endDate!=null)?endDate:new Date())
-            .count();
 
-    countQueryYawn.get(AggregateSource.SERVER).addOnCompleteListener(new OnCompleteListener<AggregateQuerySnapshot>() {
-      @Override
-      public void onComplete(@NonNull Task<AggregateQuerySnapshot> task) {
-        if (task.isSuccessful()) {
-          // Count fetched successfully
-          AggregateQuerySnapshot snapshot = task.getResult();
-          yawnCountRes=(int)snapshot.getCount();
-          callback.onSuccess(true);
-        } else {
-          Log.d(TAG, "Count failed: ", task.getException());
+    double drowsySum=0;
+    for (int i = 1; i < 80; i++) {
+      String field=((range.equals("day7") || range.equals("day3"))?"day":range)+String.format("%02d",i);
+      if(drowsyCountDocument.contains(field) && i<= limit){
+        int value= (int) Double.parseDouble(drowsyCountDocument.getData().get(field).toString()) ;
+        if(value>0){
+          drowsySum += value;
         }
+      }else{
+        break;
       }
-    });
+    }
+    drowsyCount=(int)drowsySum;
 
-    countQueryDrowsy.get(AggregateSource.SERVER).addOnCompleteListener(new OnCompleteListener<AggregateQuerySnapshot>() {
-      @Override
-      public void onComplete(@NonNull Task<AggregateQuerySnapshot> task) {
-        if (task.isSuccessful()) {
-          // Count fetched successfully
-          AggregateQuerySnapshot snapshot = task.getResult();
-          drowsyCount=(int)snapshot.getCount();
-          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            Date date = new Date();
-            if(startDate!=null){
-              date= startDate;
-            }
-            if(date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate().equals(LocalDate.now())){
-              setDetectionCountOnLocal(drowsyCount);
-              System.out.println("is today");
-            }
-          }
-          callback.onSuccess(true);
-        } else {
-          Log.d(TAG, "Count failed: ", task.getException());
+    double yawnSum=0;
+    for (int i = 1; i < 80; i++) {
+      String field=((range.equals("day7") || range.equals("day3"))?"day":range)+String.format("%02d",i);
+      if(yawnCountDocument.contains(field) && i<= limit){
+        int value= (int) Double.parseDouble(yawnCountDocument.getData().get(field).toString()) ;
+        if(value>0){
+          yawnSum += value;
         }
+      }else{
+        break;
       }
-    });
+    }
+    yawnCountRes=(int)yawnSum;
 
-    Query query= db.collection("users/"+user.getUid()+"/image_detection").whereEqualTo("detection_name", "Drowsy").whereGreaterThanOrEqualTo("timestamp", (startDate!=null)?startDate:newStartDate)
-            .whereLessThanOrEqualTo("timestamp", (endDate!=null)?endDate:new Date());
-    AggregateQuery aggregateQuery = query.aggregate(AggregateField.average("response_time"));
-    aggregateQuery.get(AggregateSource.SERVER).addOnCompleteListener(new OnCompleteListener<AggregateQuerySnapshot>() {
-      @Override
-      public void onComplete(@NonNull Task<AggregateQuerySnapshot> task) {
-        if (task.isSuccessful()) {
-          // Aggregate fetched successfully
-          AggregateQuerySnapshot snapshot = task.getResult();
-          Double average = snapshot.get(AggregateField.average("response_time"));
-          if (average != null) {
-            callback.onSuccess(true);
-            averageResponse= average;
-          }
-          else{
-            Log.d(TAG, "Aggregation failed: Null");
-          }
-
-        } else {
-          Log.d(TAG, "Aggregation failed: "+ task.getException().getLocalizedMessage());
+    double averageSum=0;
+    for (int i = 1; i < 80; i++) {
+      String field=((range.equals("day7") || range.equals("day3"))?"day":range)+String.format("%02d",i);
+      if(averageDrowsyCountDocument.contains(field) && i<= limit){
+        double value= Double.parseDouble(averageDrowsyCountDocument.getData().get(field).toString()) ;
+        if(value>0){
+          averageSum += value;
         }
+      }else{
+        break;
       }
-    });
+    }
+    averageResponse=Double.isNaN(averageSum/drowsyCount)?0:averageSum/drowsyCount;
+
+
+    callback.onSuccess(true);
   }
 
 

@@ -255,7 +255,7 @@ public class StatsFrag extends Fragment implements AdapterView.OnItemSelectedLis
         switch (stat){
             case "results":
                 cameraActivity.averageResponse=0;
-                cameraActivity.getDetectionRecordsCount(startDate, endDate, new CameraActivity.TaskCallback() {
+                cameraActivity.getDetectionRecordsCount(rangeString, new CameraActivity.TaskCallback() {
                     @Override
                     public void onSuccess(Object result) {
                         updateDetectionRecords();
