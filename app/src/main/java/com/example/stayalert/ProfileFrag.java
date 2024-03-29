@@ -49,7 +49,7 @@ import helper.classes.DialogHelper;
 
 public class ProfileFrag extends Fragment implements View.OnTouchListener{
     private static final String TAG = "ProfileFrag";
-    ConstraintLayout profileLogout,edit, changePass,cancelSave,showInfoLayout, changPassLayout;
+    ConstraintLayout profileLogout,edit, changePass,cancelSave,showInfoLayout, changPassLayout, profileAppDev, profileAppAbout;
     LinearLayout toBeGone;
     TextInputEditText fName,mName,lName,suffix,contact,age,address,newPassword,conPassword, oldPassword;
     TextInputLayout fNameIL,mNameIL,lNameIL,suffixIL,contactIL,ageIL,addressIL,newPasswordIL,conPasswordIL, oldPasswordIL;
@@ -109,6 +109,8 @@ public class ProfileFrag extends Fragment implements View.OnTouchListener{
         changePassArrow=view.findViewById(R.id.changPassArrow);
         changPassLayout=view.findViewById(R.id.ChangePassLayout);
         contact=view.findViewById(R.id.PE_Contact);
+        profileAppDev = view.findViewById(R.id.profileAppDevs);
+        profileAppAbout = view.findViewById(R.id.profileAbout);
 
         fName.setOnTouchListener(this);
         mName.setOnTouchListener(this);
@@ -200,6 +202,22 @@ public class ProfileFrag extends Fragment implements View.OnTouchListener{
 
             }
         });
+
+        profileAppDev.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                CameraActivity.lastFragment= new ProfileFrag();
+                cameraActivity.addFragment(new AppDevFragment());
+            }
+        });
+        profileAppAbout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                CameraActivity.lastFragment= new ProfileFrag();
+                cameraActivity.addFragment(new AppAboutFrag());
+            }
+        });
+
 
         profileCam.setOnClickListener(new View.OnClickListener() {
             @Override

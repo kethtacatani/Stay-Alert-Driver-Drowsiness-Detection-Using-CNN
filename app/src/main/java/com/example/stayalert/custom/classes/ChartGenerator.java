@@ -10,6 +10,7 @@ import androidx.annotation.NonNull;
 import com.example.stayalert.CameraActivity;
 import com.example.stayalert.HomeFrag;
 import com.example.stayalert.NotificationFragment;
+import com.example.stayalert.StatsFrag;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.Description;
 import com.github.mikephil.charting.components.XAxis;
@@ -149,14 +150,14 @@ public class ChartGenerator {
                             double value= Double.parseDouble(documentSnapshot.getData().get(field).toString()) ;
                             averageDrowsyResponseList.add(value);
                             CameraActivity.averageDrowsyCountDocument= documentSnapshot;
-                            checkCount++;
-                            if(lineChart==null){
-                                checkGetDetectionCount++;
-                                getDetecionCount();
-                            }
+
                         }else{
                             break;
                         }
+                    }
+                    if(lineChart==null){
+                        checkGetDetectionCount++;
+                        getDetecionCount();
                     }
                 }
             }
@@ -239,6 +240,7 @@ public class ChartGenerator {
         if(checkCount!=2){
             return;
         }
+        checkCount=0;
         List<String> xValues= new ArrayList<>();
         int daysRange=0;
         timeRange="";
@@ -525,6 +527,9 @@ public class ChartGenerator {
         if(checkGetDetectionCount!=3){
             return;
         }
+        checkGetDetectionCount=0;
+
+        StatsFrag.viewDetectionChart(null);
         CameraActivity.getDetectionRecordsCount("today", new CameraActivity.TaskCallback() {
             @Override
             public void onSuccess(Object result) {
@@ -550,14 +555,12 @@ public class ChartGenerator {
 
         long milliseconds = seconds * 1000 + nanos / 1000000;
         Date lastSignInDate = new Date(milliseconds);
-        System.out.println("drows "+(int) Double.parseDouble(CameraActivity.drowsyCountDocument.getData().get("day02").toString()));
-        System.out.println("yawnss "+(int) Double.parseDouble(CameraActivity.yawnCountDocument.getData().get("day02").toString()));
+        firebaseDB.getNotificationsList();
 
 
         if ((((int) Double.parseDouble(CameraActivity.drowsyCountDocument.getData().get("day02").toString()) == 0 &&
                         (int) Double.parseDouble(CameraActivity.yawnCountDocument.getData().get("day02").toString()) == 0)) || DateUtils.isToday(lastSignInDate.getTime()) ){
             Log.d("ChartGenerator",  " no notif");
-            firebaseDB.getNotificationsList();
             firebaseDB.updateCheckin();
             return;
         }

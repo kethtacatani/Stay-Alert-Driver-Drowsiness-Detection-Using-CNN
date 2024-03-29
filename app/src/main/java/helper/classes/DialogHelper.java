@@ -93,6 +93,7 @@ public class DialogHelper {
         dialogInfo.setText(info);
         dialogOkay.setVisibility(View.GONE);
         dialogLoading.playAnimation();
+        dialog.setCanceledOnTouchOutside(false);
         dialog.show();
     }
 
@@ -100,6 +101,7 @@ public class DialogHelper {
     public void dismissDialog() {
         if (dialog != null && dialog.isShowing()) {
             dialog.dismiss();
+            dialog.setCanceledOnTouchOutside(true);
         }
     }
 

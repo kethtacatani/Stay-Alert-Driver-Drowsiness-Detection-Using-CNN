@@ -55,12 +55,15 @@
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/drawable/ic_close_round_fill.xml" value="0.2595" />
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/drawable/ic_cloud.xml" value="0.248" />
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/drawable/ic_directions.xml" value="0.2595" />
+        <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/drawable/ic_email_dev.xml" value="0.2595" />
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/drawable/ic_expand_down.xml" value="0.2595" />
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/drawable/ic_expand_round_duotone_line.xml" value="0.2595" />
+        <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/drawable/ic_github_mark.xml" value="0.2595" />
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/drawable/ic_google.xml" value="0.2555" />
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/drawable/ic_google_icon_logo_svgrepo_com.xml" value="0.2145" />
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/drawable/ic_home.xml" value="0.2145" />
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/drawable/ic_humidity_ic.xml" value="0.181" />
+        <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/drawable/ic_icons8_linkedin_96.xml" value="0.2595" />
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/drawable/ic_rain_drop.xml" value="0.181" />
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/drawable/ic_scanbtn.xml" value="0.248" />
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/drawable/ic_u_expand_alt.xml" value="0.2595" />
@@ -88,6 +91,8 @@
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/layout/activity_main.xml" value="0.20863616930312098" />
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/layout/activity_sign_in.xml" value="0.536" />
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/layout/activity_sign_up.xml" value="0.4541015625" />
+        <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/layout/fragment_app_about.xml" value="0.20854700854700856" />
+        <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/layout/fragment_app_dev.xml" value="0.264" />
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/layout/fragment_home.xml" value="0.72" />
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/layout/fragment_menu.xml" value="0.264" />
         <entry key="..\:/Stay-Alert-Driver-Drowsiness-Detection-Using-CNN-v2/app/src/main/res/layout/fragment_notification.xml" value="0.4" />

@@ -20,8 +20,10 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Fragment;
 import android.content.Context;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
+import android.content.res.Configuration;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.hardware.Camera;
@@ -200,6 +202,9 @@ public abstract class CameraActivity extends AppCompatActivity
   public static double averageResponse=0.0;
   double currentResponseTime =0;
 
+  long lastYawnReportTime = System.currentTimeMillis();
+  long lastDrowsyReportTime = System.currentTimeMillis();
+
   public static Map<String, Object> weatherMap = new HashMap<>();
 
   Bitmap detectedBitmap;
@@ -250,6 +255,9 @@ public abstract class CameraActivity extends AppCompatActivity
 
     dialogHelper= new DialogHelper(this);
     setContentView(R.layout.tfe_od_activity_camera);
+    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LOCKED);
+    dialogHelper.showLoadingDialog("Fetching Content","Getting things ready...");
+
     frameLayout = findViewById(R.id.container);
     scanHandler = new Handler();
     Uri defaultRingtoneUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
@@ -310,7 +318,10 @@ public abstract class CameraActivity extends AppCompatActivity
             }
             startResponseTime = 0L;
 
-            saveDetectedImage(detectedBitmap,detectedEye, detectMS+"",currentResponseTime);
+            if(lastDrowsyReportTime>3000){
+              saveDetectedImage(detectedBitmap,detectedEye, detectMS+"",currentResponseTime);
+              lastDrowsyReportTime=System.currentTimeMillis();
+            }
             detectedEye=null;
             ringtone.stop();
             statusDriver=" ACTIVE ";
@@ -330,6 +341,7 @@ public abstract class CameraActivity extends AppCompatActivity
     //FOR MOUTH
 
     String[] valuesYawn = new String[30];
+
 
     Runnable mouthRunnable;
     mouthRunnable = new Runnable() {
@@ -353,13 +365,14 @@ public abstract class CameraActivity extends AppCompatActivity
 //          if(statusDriverMouth.contains("ACTIVE")){
 //            firebaseDB.saveImageToLocal(getApplicationContext(),""+timestamp,cropCopyBitmap,"detections");
 //          }
-          if(statusDriverMouth.contains("ACTIVE") && valuesYawn[valuesYawn.length-1]!=null){
+          if(statusDriverMouth.contains("ACTIVE") && valuesYawn[valuesYawn.length-1]!=null && lastYawnReportTime>3000){
             saveDetectedImage(copyBitmap,mouthStatus,lastProcessingTimeMs+"",0);
+            lastYawnReportTime=System.currentTimeMillis();
           }
           statusDriverMouth=" YAWNING ";
 
         }
-        else if(yawnPercentage<90){
+        else if(yawnPercentage<=70){
           statusDriverMouth=" ACTIVE ";
 
         }
@@ -540,10 +553,18 @@ public abstract class CameraActivity extends AppCompatActivity
         firebaseDB.checkSync();
 
 
-
-
       }
     }, 6000);
+
+    Handler loadingHandler = new Handler();
+    loadingHandler.postDelayed(new Runnable() {
+      @Override
+      public void run() {
+        dialogHelper.dismissDialog();
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+
+      }
+    }, 8000);
 
     refreshDefaultQuery();
 
@@ -662,7 +683,7 @@ public abstract class CameraActivity extends AppCompatActivity
       }
     }
 
-    if(city!=weatherMap.get("city")){
+    if(!city.equals("NA") && city!=weatherMap.get("city")){
       HomeFrag.getWeatherDetails(city,country);
     }
 
@@ -682,7 +703,7 @@ public abstract class CameraActivity extends AppCompatActivity
       Map<String, Object> imageInfo = new HashMap<>();
       imageInfo.put("detection_name", (detectionType.equals("yawn")?"Yawn":"Drowsy"));
       imageInfo.put("timestamp", date);
-      imageInfo.put("location",(address[2]!=null)?address[2]: address[0]+", "+address[1]);
+      imageInfo.put("location",(address.length==3)?address[2]: address[0]+", "+address[1]);
       imageInfo.put("file_name",result[1]);
       imageInfo.put("local_path",result[0]);
       imageInfo.put("firestore_path","users/"+user.getUid()+"/image_detection/"+result[1]);
@@ -726,16 +747,17 @@ public abstract class CameraActivity extends AppCompatActivity
       this.query=query;
     }
     refreshDefaultQuery();
+    if(chartGenerator!=null){
+      chartGenerator.fetchDetectionCounts();
+    }
     detectionLogsInfo = firebaseDB.getDetectionLogsInfo(this.query, new FirebaseDatabase.ArrayListTaskCallback<Void>() {
       @Override
       public void onSuccess(ArrayList<DetectionLogsInfo> arrayList) {
         detectionLogsInfo =arrayList;
-        if(detectionType.equals("Yawn")){
-          yawnCountRes++;
-        }else if(detectionType.equals("Drowsy")){
-          averageResponse= ((averageResponse*drowsyCount)+currentResponseTime)/(drowsyCount+1);
-          drowsyCount++;
-        }
+//        if(detectionType.equals("Yawn")){
+//        }else if(detectionType.equals("Drowsy")){
+//          averageResponse= ((averageResponse*drowsyCount)+currentResponseTime)/(drowsyCount+1);
+//        }
         StatsFrag statsFrag = (StatsFrag)getSupportFragmentManager().findFragmentByTag("StatsFrag");
         if(statsFrag!=null&& statsFrag.isVisible()){
           StatsFrag fragment = (StatsFrag) getSupportFragmentManager().findFragmentById(R.id.frame_layout);
@@ -780,7 +802,7 @@ public abstract class CameraActivity extends AppCompatActivity
       limit = 30;
     }
 
-    if(drowsyCountDocument==null){
+    if(drowsyCountDocument==null || yawnCountDocument==null || averageDrowsyCountDocument==null){
       return;
     }
 
@@ -911,30 +933,32 @@ public abstract class CameraActivity extends AppCompatActivity
 
   public void addFragment(androidx.fragment.app.Fragment fragment) {
     FragmentManager fragmentManager = getSupportFragmentManager();
-    int backStackEntryCount = fragmentManager.getBackStackEntryCount();
+    if (!fragmentManager.isDestroyed()) {
+      int backStackEntryCount = fragmentManager.getBackStackEntryCount();
 
 
-    if((fragment instanceof HomeFrag && backStackEntryCount>1)){
-      removeFragment();
-      HomeFrag.minimizeMap();
-    }else{
-
-      if(bottomNavIndex==3 && backStackEntryCount > 0 && !(lastFragment instanceof HomeFrag)){
+      if((fragment instanceof HomeFrag && backStackEntryCount>1)){
+        removeFragment();
         HomeFrag.minimizeMap();
-        return;
+      }else{
+
+        if(bottomNavIndex==3 && backStackEntryCount > 0 && !(lastFragment instanceof HomeFrag)){
+          HomeFrag.minimizeMap();
+          return;
+        }
+
+        for (int i = 0; i < backStackEntryCount - 1; i++) {
+          fragmentManager.popBackStack();
+        }
+
+
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        transaction.add(R.id.frame_layout, fragment, fragment.getClass().getSimpleName());
+        transaction.addToBackStack(null); // This allows the user to press the back button to return to the previous fragment
+        transaction.commit();
       }
 
-      for (int i = 0; i < backStackEntryCount - 1; i++) {
-        fragmentManager.popBackStack();
-      }
-
-
-      FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-      transaction.add(R.id.frame_layout, fragment, fragment.getClass().getSimpleName());
-      transaction.addToBackStack(null); // This allows the user to press the back button to return to the previous fragment
-      transaction.commit();
     }
-
   }
 
 

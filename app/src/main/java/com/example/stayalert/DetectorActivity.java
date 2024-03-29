@@ -168,6 +168,10 @@ public class DetectorActivity extends com.example.stayalert.CameraActivity imple
         String threads = threadsTextView.getText().toString().trim();
         final int numThreads = Integer.parseInt(threads);
 
+        if (handler == null) {
+            return;
+        }
+
         handler.post(() -> {
             if (modelIndex == currentModel && deviceIndex == currentDevice
                     && numThreads == currentNumThreads) {

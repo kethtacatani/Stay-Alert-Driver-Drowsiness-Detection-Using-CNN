@@ -13,6 +13,7 @@ package helper.classes;
         import android.widget.TextView;
         import android.widget.Toast;
 
+        import com.example.stayalert.CameraActivity;
         import com.example.stayalert.custom.classes.DetectionLogsInfo;
         import com.example.stayalert.R;
 
@@ -29,8 +30,8 @@ public class ViewDetectedImageHelper {
     Context context;
 
     public ViewDetectedImageHelper(Context context) {
-        this.context=context;
-        instantiate(this.context);
+        this.context=CameraActivity.context;
+        instantiate(CameraActivity.context);
     }
 
 
@@ -92,6 +93,8 @@ public class ViewDetectedImageHelper {
         if(info.getDetectionType().equals("Drowsy")){
             responseTimeLL.setVisibility(View.VISIBLE);
             responseTime.setText(String.format("%.2f",Double.parseDouble(info.getResponseTime())) +"s");
+        }else{
+            responseTimeLL.setVisibility(View.GONE);
         }
 
         Bitmap bitmap = firebaseDB.getImageFromLocal(context, info.getLocalPath(),info.getTitle());

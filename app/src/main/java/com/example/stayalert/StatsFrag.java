@@ -44,16 +44,17 @@ public class StatsFrag extends Fragment implements AdapterView.OnItemSelectedLis
     FirebaseFirestore db;
     CameraActivity cameraActivity;
     ProgressBar progressBar;
-    Spinner detectionResultsSpinner, detectionChartSpinner, detectionLogsSpinner;
+    public static Spinner detectionResultsSpinner, detectionChartSpinner, detectionLogsSpinner;
+     ImageButton detectionResultsImageButtonDD, detectionChartImageButtonDD, detectionLogsImageButtonDD;
     int count=0;
-    TextView drowsyCountTV, yawnCountTV, averageResponseTV;
-    TextView timeRangeTV;
-    private LineChart lineChart;
+    public static TextView drowsyCountTV, yawnCountTV, averageResponseTV;
+    public static TextView timeRangeTV;
+    public static  LineChart lineChart;
 
     private List<String> xValues= new ArrayList<>();
     ArrayList<Integer> drowsyList = new ArrayList<>();
     ArrayList<Integer> yawnList = new ArrayList<>();
-    ChartGenerator chartGenerator;
+    public static ChartGenerator chartGenerator;
 
 
 
@@ -83,7 +84,7 @@ public class StatsFrag extends Fragment implements AdapterView.OnItemSelectedLis
         instantiateAdapter(detectionChartSpinner);
         instantiateAdapter(detectionLogsSpinner);
 
-        ImageButton detectionResultsImageButtonDD, detectionChartImageButtonDD, detectionLogsImageButtonDD;
+
         detectionResultsImageButtonDD = view.findViewById(R.id.detectionResultsButton);
         detectionChartImageButtonDD = view.findViewById(R.id.detectionChartButton);
         detectionLogsImageButtonDD= view.findViewById(R.id.detectionLogsButton);
@@ -283,16 +284,35 @@ public class StatsFrag extends Fragment implements AdapterView.OnItemSelectedLis
 
     }
 
-    public void updateDetectionRecords(){
-        averageResponseTV.setText(String.format("%.2f", cameraActivity.averageResponse)+"s");
-        drowsyCountTV.setText(cameraActivity.drowsyCount+"");
-        yawnCountTV.setText(cameraActivity.yawnCountRes+"");
+    public static void updateDetectionRecords(){
+        averageResponseTV.setText(String.format("%.2f", CameraActivity.averageResponse)+"s");
+        drowsyCountTV.setText(CameraActivity.drowsyCount+"");
+        yawnCountTV.setText(CameraActivity.yawnCountRes+"");
     }
 
-    public void viewDetectionChart(String range){
+    public static void viewDetectionChart(String range){
+
+        if(detectionChartSpinner==null){
+            return;
+        }
+        if(range==null){
+            String text = detectionChartSpinner.getSelectedItem().toString();
+            if(text.contains("Today")){
+                range="today";
+            }else if(text.contains("Yesterday")){
+                range="yesterday";
+            }else if(text.contains("3")){
+                range="day3";
+            }else if(text.contains("7")){
+                range="day7";
+            }if(text.contains("30")){
+                range="day";
+            }
+        }
         chartGenerator.setRange(range);
         chartGenerator.setLineChart(lineChart);
-        chartGenerator.fetchDetectionCounts();
+        chartGenerator.processYawnCount(CameraActivity.yawnCountDocument,range);
+        chartGenerator.processDrowsyCount(CameraActivity.drowsyCountDocument,range);
         timeRangeTV.setText(chartGenerator.getTimeRange()+"");
 
     }
