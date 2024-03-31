@@ -149,15 +149,25 @@ public class FirebaseDatabase {
 
     }
 
-    public String failureDialog(Task task){
-        String errorCode = ((FirebaseAuthException) task.getException()).getErrorCode();
-        String error= new FirebaseDatabase().getAuthMessage(errorCode);
-        if (!error.contains("Fatal")){
-            return error;
-        }else{
-            System.err.println(error);
-            return "There is an error with the database";
+    public String failureDialog(Task task) {
+        Exception exception = task.getException();
+        if (exception instanceof FirebaseAuthException) {
+            // Handle FirebaseAuthException specifically
+            String errorCode = ((FirebaseAuthException) exception).getErrorCode();
+            String error = new FirebaseDatabase().getAuthMessage(errorCode);
+            if (!error.contains("Fatal")){
+                return error;
+            }else{
+                System.err.println(error);
+                return "There is an error with the database";
 
+            }
+        } else {
+            // Handle generic FirebaseException or other exceptions
+            String error = "An unexpected error occurred. Please try again.";
+            // Optionally log the exception for debugging
+            System.err.println("Unexpected exception: " + exception.getMessage());
+            return error;
         }
     }
 

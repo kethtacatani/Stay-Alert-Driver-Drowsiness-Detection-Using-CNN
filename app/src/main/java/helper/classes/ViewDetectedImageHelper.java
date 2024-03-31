@@ -102,7 +102,7 @@ public class ViewDetectedImageHelper {
             detectionImage.setImageBitmap(bitmap);
 
         }else{
-            Toast.makeText(context, "no image for", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, "Loading Image", Toast.LENGTH_SHORT).show();
             firebaseDB.getImageFromServer(info.getTitle(),"detection_images", new FirebaseDatabase.BitmapTaskCallback() {
                 @Override
                 public void onSuccess(Bitmap bitmap) {

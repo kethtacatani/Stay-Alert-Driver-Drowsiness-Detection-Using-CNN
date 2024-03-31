@@ -81,6 +81,19 @@ public class DialogHelper {
         dialogLoading= dialog.findViewById(R.id.Dialogloading);
     }
 
+    public void showEntrance(){
+        dialog.setContentView(R.layout.fullscreen_dialog);
+        dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        dialog.setCanceledOnTouchOutside(false);
+        dialog.show();
+    }
+
+    public void resetLayout(){
+        dialog.setContentView(R.layout.pop_up_dialog);
+        dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        dialog.dismiss();
+    }
+
     public void showDialog(String title, String info) {
         dialogTitle.setText(title);
         dialogInfo.setText(info);
