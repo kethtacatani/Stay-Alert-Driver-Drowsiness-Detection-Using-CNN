@@ -6,6 +6,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.os.Handler;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -309,11 +310,32 @@ public class StatsFrag extends Fragment implements AdapterView.OnItemSelectedLis
                 range="day";
             }
         }
-        chartGenerator.setRange(range);
-        chartGenerator.setLineChart(lineChart);
-        chartGenerator.processYawnCount(CameraActivity.yawnCountDocument,range);
-        chartGenerator.processDrowsyCount(CameraActivity.drowsyCountDocument,range);
-        timeRangeTV.setText(chartGenerator.getTimeRange()+"");
 
+        displayChart(range, 3);
+
+
+    }
+
+    public static void displayChart(String range, int retryLimit){
+        if(retryLimit <= 0){
+            Log.e("displayChart", "Reached retry limit");
+            return; // Stop recursion if retry limit is reached
+        }
+
+        if(CameraActivity.yawnCountDocument!=null && CameraActivity.drowsyCountDocument!= null){
+            chartGenerator.setRange(range);
+            chartGenerator.setLineChart(lineChart);
+            chartGenerator.processYawnCount(CameraActivity.yawnCountDocument,range);
+            chartGenerator.processDrowsyCount(CameraActivity.drowsyCountDocument,range);
+            timeRangeTV.setText(chartGenerator.getTimeRange()+"");
+        }else{
+            final Handler handler = new Handler();
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    displayChart(range, retryLimit - 1); // Decrement the retry limit
+                }
+            }, 2000);
+        }
     }
 }

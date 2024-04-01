@@ -526,6 +526,8 @@ public class FirebaseDatabase {
         });
     }
 
+
+
     public interface ArrayListTaskCallback<T> {
         void onSuccess(ArrayList<DetectionLogsInfo> arrayList);
         void onFailure(String errorMessage);

@@ -904,7 +904,6 @@
                     android:id="@+id/profileAppDevs"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:layout_marginBottom="10dp"
                     android:background="@drawable/grey_btn_ripple"
                     android:clickable="true"
                     android:visibility="visible">
@@ -920,6 +919,34 @@
                         android:layout_marginBottom="6dp"
                         android:fontFamily="@font/nunito_regular"
                         android:text="App Developers"
+                        android:textColor="@color/black"
+                        android:textSize="18sp"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/profileAppPrivacy"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginBottom="10dp"
+                    android:background="@drawable/grey_btn_ripple"
+                    android:clickable="true"
+                    android:visibility="visible">
+                    >
+
+
+                    <TextView
+                        android:id="@+id/textVisew3s3w"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="17dp"
+                        android:layout_marginTop="5dp"
+                        android:layout_marginBottom="6dp"
+                        android:fontFamily="@font/nunito_regular"
+                        android:text="Privacy Policy"
                         android:textColor="@color/black"
                         android:textSize="18sp"
                         app:layout_constraintBottom_toBottomOf="parent"
