@@ -5,19 +5,33 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.preference.PreferenceManager;
+import android.text.Spannable;
+import android.text.SpannableStringBuilder;
+import android.text.method.LinkMovementMethod;
+import android.text.style.ClickableSpan;
+import android.text.style.ForegroundColorSpan;
+import android.text.style.StyleSpan;
 import android.util.Log;
 import android.util.Patterns;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.TextView;
 
@@ -78,6 +92,8 @@ public class Sign_up extends AppCompatActivity {
     private DialogHelper dialogHelper;
     CountryCodePicker ccp;
     String dialogAction="";
+    CheckBox privacyCheckedTextView;
+    TextView checkboxErr, checkboxText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -119,6 +135,9 @@ public class Sign_up extends AppCompatActivity {
         emailLayout=findViewById(R.id.ETemailSignupLayout);
         passLayout= findViewById(R.id.ETpassSignupLayout);
         conPassLayout= findViewById(R.id.ETconPassSignupLayout);
+        privacyCheckedTextView=findViewById(R.id.checkedTextView);
+        checkboxErr=findViewById(R.id.checkboxErr);
+        checkboxText=findViewById(R.id.checkboxText);
 
         fNameErr=findViewById(R.id.TVFNameErr);
         mNameErr=findViewById(R.id.TVMNameErr);
@@ -141,6 +160,34 @@ public class Sign_up extends AppCompatActivity {
 
         ccp = findViewById(R.id.ccp);
         ccp.hideNameCode(true);
+
+        final SpannableStringBuilder sb = new SpannableStringBuilder("I have read and agreed to StayAlert's Privacy and Policy");
+
+        @SuppressLint("ResourceAsColor") final ForegroundColorSpan fcs = new ForegroundColorSpan(R.color.primary);
+
+        ClickableSpan clickableSpan = new ClickableSpan() {
+            @Override
+            public void onClick(View view) {
+                FragmentManager fragmentManager = getSupportFragmentManager();
+                FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+                fragmentTransaction.add(R.id.fragment_container, new PrivacyPolicyFrag());
+                fragmentTransaction.commit();
+            }
+        };
+
+        sb.setSpan(fcs, 38, 56, Spannable.SPAN_INCLUSIVE_INCLUSIVE);
+        sb.setSpan(clickableSpan, 38, 56, Spannable.SPAN_INCLUSIVE_INCLUSIVE);
+        checkboxText.setText(sb);
+        checkboxText.setMovementMethod(LinkMovementMethod.getInstance());
+
+        privacyCheckedTextView.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if(privacyCheckedTextView.isChecked()){
+                    checkboxErr.setVisibility(View.GONE);
+                }
+            }
+        });
 
         dialogHelper = new DialogHelper(this, new DialogHelper.DialogClickListener() {
             @Override
@@ -230,52 +277,61 @@ public class Sign_up extends AppCompatActivity {
 
                     }else if(pass.getText().toString().trim().equals(conPass.getText().toString().trim())){
                         playLoadingAnim();
-                        if(signInRetries<3){
-                            firebaseDB.isContactUnique(contact.getText().toString().replace(" ", ""), new FirebaseDatabase.OnInterfaceListener() {
-                                @Override
-                                public void onInterfaceCheckResult(boolean isTrue,String errorMessage){
-                                    if(isTrue){
-                                        switch (signUpMethod){
-                                            case "email":
-                                                auth.createUserWithEmailAndPassword(email.getText().toString().trim(),pass.getText().toString().trim()).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
-                                                    @Override
-                                                    public void onComplete(@NonNull Task<AuthResult> task) {
-                                                        if(task.isSuccessful()){
-                                                            createUserInfo(userData);
-                                                        }
-                                                        else if (task.getException().getLocalizedMessage().contains("email address is already in use")){
-                                                            // If sign in fails, handle different error scenarios
-                                                            dialogAction="signInEmail";
-                                                            dialogHelper.signInDialog();
-                                                            dialogHelper.showDialog("Sign in Failed","Account already exist");
-                                                            hideLoading();
-                                                        }
-                                                        else if (task.getException().getLocalizedMessage().contains("network error")){
-                                                            // If sign in fails, handle different error scenarios
-                                                            dialogHelper.showDialog("Sign in Failed", "No connection to the database");
-                                                            hideLoading();
-                                                        }else{
-                                                            System.out.println("task "+task.getException().getLocalizedMessage());
-                                                            dialogHelper.showDialog("Sign in Failed", firebaseDB.failureDialog(task));
-                                                            hideLoading();
-                                                        }
-                                                    }
-                                                });
-                                                break;
-                                            case "google":
-                                                createUserInfo(userData);
-                                                break;
-                                        }
+                        if(privacyCheckedTextView.isChecked()){
+                            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+                            SharedPreferences.Editor editor = sharedPreferences.edit();
+                            editor.putBoolean("isPrivacyPolicyAccepted", true); // Storing a boolean value with key "isAccepted"
+                            editor.apply();
 
-                                    }else{
-                                        dialogHelper.showDialog("Sign in Failed","Contact number already taken");
-                                        hideLoading();
+                            if(signInRetries<3){
+                                firebaseDB.isContactUnique(contact.getText().toString().replace(" ", ""), new FirebaseDatabase.OnInterfaceListener() {
+                                    @Override
+                                    public void onInterfaceCheckResult(boolean isTrue,String errorMessage){
+                                        if(isTrue){
+                                            switch (signUpMethod){
+                                                case "email":
+                                                    auth.createUserWithEmailAndPassword(email.getText().toString().trim(),pass.getText().toString().trim()).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+                                                        @Override
+                                                        public void onComplete(@NonNull Task<AuthResult> task) {
+                                                            if(task.isSuccessful()){
+                                                                createUserInfo(userData);
+                                                            }
+                                                            else if (task.getException().getLocalizedMessage().contains("email address is already in use")){
+                                                                // If sign in fails, handle different error scenarios
+                                                                dialogAction="signInEmail";
+                                                                dialogHelper.signInDialog();
+                                                                dialogHelper.showDialog("Sign in Failed","Account already exist");
+                                                                hideLoading();
+                                                            }
+                                                            else if (task.getException().getLocalizedMessage().contains("network error")){
+                                                                // If sign in fails, handle different error scenarios
+                                                                dialogHelper.showDialog("Sign in Failed", "No connection to the database");
+                                                                hideLoading();
+                                                            }else{
+                                                                System.out.println("task "+task.getException().getLocalizedMessage());
+                                                                dialogHelper.showDialog("Sign in Failed", firebaseDB.failureDialog(task));
+                                                                hideLoading();
+                                                            }
+                                                        }
+                                                    });
+                                                    break;
+                                                case "google":
+                                                    createUserInfo(userData);
+                                                    break;
+                                            }
+
+                                        }else{
+                                            dialogHelper.showDialog("Sign in Failed","Contact number already taken");
+                                            hideLoading();
+                                        }
                                     }
-                                }
-                            });
-                        }
-                        else{
-                            dialogHelper.showDialog("Sign up Failed","Too much requests, please try again later");
+                                });
+                            }
+                            else{
+                                dialogHelper.showDialog("Sign up Failed","Too much requests, please try again later");
+                            }
+                        }else{
+                            checkboxErr.setVisibility(View.VISIBLE);
                         }
                     }
                     else{

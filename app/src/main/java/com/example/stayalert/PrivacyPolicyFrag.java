@@ -3,6 +3,7 @@ package com.example.stayalert;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,6 +13,7 @@ import android.widget.ImageButton;
 
 public class PrivacyPolicyFrag extends Fragment {
     ImageButton closAppPrivacy;
+    CameraActivity cameraActivity=null;
 
 
     @Override
@@ -22,12 +24,21 @@ public class PrivacyPolicyFrag extends Fragment {
 
 
         closAppPrivacy= view.findViewById(R.id.closeAppPrivacy);
-        CameraActivity cameraActivity =(CameraActivity) getActivity();
+
+
+        if(!(getActivity() instanceof Sign_up)){
+             cameraActivity =(CameraActivity) getActivity();
+        }
+
 
         closAppPrivacy.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                cameraActivity.addFragment(new ProfileFrag());
+                if(cameraActivity!=null){
+                    cameraActivity.addFragment(new ProfileFrag());
+                }else{
+                    getActivity().getSupportFragmentManager().beginTransaction().remove(PrivacyPolicyFrag.this).commit();
+                }
             }
         });
 
