@@ -170,6 +170,7 @@ public class HomeFrag extends Fragment {
     public static ImageButton notifIcon;
     TextView timeofDay;
     public static TextView tempTV, humidTV, weatherType, weatherAddress;
+    public static ImageView weatherDescIV;
     public static TextView statusDriverTV, nameDriverTV, viewAlertHistory;
     TextView tempCloud, humid, wind, rain, feelsLike, cityCountry;
     public static ConstraintLayout driverInfoLayout, weatherInfoLayout;
@@ -190,7 +191,7 @@ public class HomeFrag extends Fragment {
 
 
 
-    MapView mapView;
+    public static MapView mapView;
     FloatingActionButton focusLocationBtn;
     ImageButton setRoute;
     private final NavigationLocationProvider navigationLocationProvider = new NavigationLocationProvider();
@@ -395,6 +396,7 @@ public class HomeFrag extends Fragment {
         humidTV= view.findViewById(R.id.hAndLTV);
         weatherType= view.findViewById(R.id.weatherTypeTV);
         weatherAddress = view.findViewById(R.id.weatherAddressTV);
+        weatherDescIV=view.findViewById(R.id.weatherTypeIV);
 
         tempCloud = view.findViewById(R.id.weatherTempAndDesc);
         humid = view.findViewById(R.id.weatherTempAndDesc);
@@ -605,6 +607,9 @@ public class HomeFrag extends Fragment {
                 addOnMapClickListener(mapView.getMapboxMap(), new OnMapClickListener() {
                     @Override
                     public boolean onMapClick(@NonNull Point point) {
+                        if(CameraActivity.elevation>0){
+                            return false;
+                        }
                         pointAnnotationManager.deleteAll();
                         PointAnnotationOptions pointAnnotationOptions = new PointAnnotationOptions().withTextAnchor(TextAnchor.CENTER).withIconImage(bitmap)
                                 .withPoint(point);
@@ -824,7 +829,34 @@ public class HomeFrag extends Fragment {
             weatherType.setText((String) weatherMap.get("description"));
             weatherAddress.setText((String) weatherMap.get("city")+", "+(String) weatherMap.get("country"));
 
+            weatherDescIV.setImageDrawable(getweatherDrawable(weatherMap.get("description").toString()));
+
         }
+    }
+
+    public static Drawable getweatherDrawable(String description){
+        Drawable drawable =  ContextCompat.getDrawable(CameraActivity.context, R.drawable.weather_sunny);
+
+        if(description.contains("scattered") || description.contains("broken")){
+            if(isNightTime()){
+                drawable =  ContextCompat.getDrawable(CameraActivity.context, R.drawable.weather_partly_moon);
+            }else{
+                drawable =  ContextCompat.getDrawable(CameraActivity.context, R.drawable.weather_partly_sunny);
+            }
+        }else if(description.contains("shower")){
+            drawable =  ContextCompat.getDrawable(CameraActivity.context, R.drawable.weather_raining);
+        }else if(description.contains("rain")){
+            drawable =  ContextCompat.getDrawable(CameraActivity.context, R.drawable.weather_sun_rain);
+        }else if(description.contains("thunderstorm")){
+            drawable =  ContextCompat.getDrawable(CameraActivity.context, R.drawable.weather_thunderstorm);
+        }
+        return drawable;
+    }
+
+    private static boolean isNightTime() {
+        Calendar cal = Calendar.getInstance();
+        int hour = cal.get(Calendar.HOUR_OF_DAY);
+        return hour < 6 || hour > 18; // Assuming night time is from 6 PM to 6 AM
     }
 
 

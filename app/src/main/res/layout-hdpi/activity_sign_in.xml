@@ -261,7 +261,7 @@
                 android:layout_height="44dp"
                 android:drawableLeft="@drawable/ic_google_icon_logo_svgrepo_com"
                 android:gravity="left|center_vertical"
-                android:text="Sign up with Google"
+                android:text="Sign in with Google"
                 android:textColor="@color/black"
                 app:backgroundTint="@color/white"
                 android:textAllCaps="false"

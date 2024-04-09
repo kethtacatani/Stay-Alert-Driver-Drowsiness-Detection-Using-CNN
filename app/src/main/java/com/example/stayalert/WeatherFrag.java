@@ -8,6 +8,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.util.Map;
@@ -16,6 +17,7 @@ import java.util.Map;
 public class WeatherFrag extends Fragment {
      
     TextView tempCloud, humid, wind, cloudCoverage, feelsLike, cityCountry;
+    ImageView weatherDescIV;
     ImageButton closeWeatherIB;
 
 
@@ -32,6 +34,7 @@ public class WeatherFrag extends Fragment {
         feelsLike = view.findViewById(R.id.weatherFeelsLike);
         cityCountry = view.findViewById(R.id.weatherCityCountry);
         closeWeatherIB= view.findViewById(R.id.weatherClose);
+        weatherDescIV= view.findViewById(R.id.weatherTypeFullIV);
 
         CameraActivity cameraActivity = (CameraActivity) getActivity();
 
@@ -55,6 +58,7 @@ public class WeatherFrag extends Fragment {
             feelsLike.setText(String.format("%.0f", CameraActivity.weatherMap.get("feels_like")) + "°");
             wind.setText(String.format("%.1f", CameraActivity.weatherMap.get("wind")) + " km/hr");
             cityCountry.setText(CameraActivity.weatherMap.get("city")+", "+CameraActivity.weatherMap.get("country"));
+            weatherDescIV.setImageDrawable(HomeFrag.getweatherDrawable(cameraActivity.weatherMap.get("description").toString()));
         }
         return view;
     }

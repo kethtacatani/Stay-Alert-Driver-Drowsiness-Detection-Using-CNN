@@ -297,7 +297,7 @@ public abstract class CameraActivity extends AppCompatActivity
 
 
         if(closePercentage>70 && !ringtone.isPlaying() && !appStopped){
-          Toast.makeText(CameraActivity.this, "Please WAKE UP!!!!", Toast.LENGTH_SHORT).show();
+          Toast.makeText(CameraActivity.this, "Drowsiness Alert! Your safety is at risk", Toast.LENGTH_SHORT).show();
           // Play the default ringtone
           if(detectedEye==null && values[values.length-1]!=null){
             ringtone.play();
@@ -359,7 +359,7 @@ public abstract class CameraActivity extends AppCompatActivity
 
 
         if(yawnPercentage>70 && !ringtone.isPlaying() && !appStopped ){
-          Toast.makeText(CameraActivity.this, "YAWNING", Toast.LENGTH_SHORT).show();
+          Toast.makeText(CameraActivity.this, "Heads up! A yawn can be a sign of fatigue. Consider getting some fresh air", Toast.LENGTH_SHORT).show();
 
 
 //          if(statusDriverMouth.contains("ACTIVE")){

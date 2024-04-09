@@ -267,6 +267,7 @@
         <com.mapbox.maps.MapView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:enabled="false"
             android:id="@+id/mapView">
 
 
