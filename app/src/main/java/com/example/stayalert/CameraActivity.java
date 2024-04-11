@@ -46,6 +46,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Trace;
+import android.os.Vibrator;
 import android.provider.ContactsContract;
 import android.text.format.DateUtils;
 import android.util.Log;
@@ -224,8 +225,9 @@ public abstract class CameraActivity extends AppCompatActivity
   public  List<Address> addresses;
   public String[] address = new String[]{"NA","NA"};
   public String[] lastCoordinate =new String[]{"0","0"};
-
-
+  Vibrator v;
+  boolean vibrating=false;
+  private boolean toastVisible =false;
 
 
   @Override
@@ -277,27 +279,28 @@ public abstract class CameraActivity extends AppCompatActivity
     bottomNavigation.add(new MeowBottomNavigation.Model(5, R.drawable.ic_profile));
 
 
-
-
-    String[] values = new String[30];
+    v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+    long[] pattern = {0, 1000, 1000};
+    String[] values = new String[20];
 
     runnableCode = new Runnable() {
       @Override
       public void run() {
         String eyeValue = eyeStatus;
 
-        if ("closed".equals(eyeValue) && closeCount<30) {
+        if ("closed".equals(eyeValue) && closeCount<20) {
           closeCount++;
         }else if (closeCount>0){
           closeCount--;
         }
         values[currentIndex] = eyeValue;
-        currentIndex = (currentIndex + 1) % 30; // Wrap around to the beginning of the array
-        double closePercentage = (closeCount / 30.0) * 100.0;
+        currentIndex = (currentIndex + 1) % 20; // Wrap around to the beginning of the array
+        double closePercentage = (closeCount / 20.0) * 100.0;
 
 
         if(closePercentage>70 && !ringtone.isPlaying() && !appStopped){
-          Toast.makeText(CameraActivity.this, "Drowsiness Alert! Your safety is at risk", Toast.LENGTH_SHORT).show();
+          toastAMessage("Drowsiness Alert! Your safety is at risk");
+
           // Play the default ringtone
           if(detectedEye==null && values[values.length-1]!=null){
             ringtone.play();
@@ -340,7 +343,7 @@ public abstract class CameraActivity extends AppCompatActivity
 
     //FOR MOUTH
 
-    String[] valuesYawn = new String[30];
+    String[] valuesYawn = new String[20];
 
 
     Runnable mouthRunnable;
@@ -348,23 +351,20 @@ public abstract class CameraActivity extends AppCompatActivity
       @Override
       public void run() {
         String mouthValue = mouthStatus;
-        if ("yawn".equals(mouthValue) && yawnCount<30) {
+        if ("yawn".equals(mouthValue) && yawnCount<20) {
           yawnCount++;
         }else if (yawnCount>0){
           yawnCount--;
         }
         valuesYawn[currentIndexYawn] = mouthValue;
-        currentIndexYawn = (currentIndexYawn + 1) % 30; // Wrap around to the beginning of the array
-        double yawnPercentage = (yawnCount / 30.0) * 100.0;
+        currentIndexYawn = (currentIndexYawn + 1) % 20; // Wrap around to the beginning of the array when past 20 it will be back to 1
+        double yawnPercentage = (yawnCount / 20.0) * 100.0;  //convert to perncet base on stringlength
 
 
         if(yawnPercentage>70 && !ringtone.isPlaying() && !appStopped ){
-          Toast.makeText(CameraActivity.this, "Heads up! A yawn can be a sign of fatigue. Consider getting some fresh air", Toast.LENGTH_SHORT).show();
+          toastAMessage("Heads up! A yawn can be a sign of fatigue. Consider getting some fresh air");
 
 
-//          if(statusDriverMouth.contains("ACTIVE")){
-//            firebaseDB.saveImageToLocal(getApplicationContext(),""+timestamp,cropCopyBitmap,"detections");
-//          }
           if(statusDriverMouth.contains("ACTIVE") && valuesYawn[valuesYawn.length-1]!=null && lastYawnReportTime>3000){
             saveDetectedImage(copyBitmap,mouthStatus,lastProcessingTimeMs+"",0);
             lastYawnReportTime=System.currentTimeMillis();
@@ -378,6 +378,20 @@ public abstract class CameraActivity extends AppCompatActivity
         }
         if(HomeFrag.statusDriverTV!=null){
           HomeFrag.statusDriverTV.setText((statusDriver.contains("ACTIVE"))?statusDriverMouth:statusDriver);
+
+
+          if(HomeFrag.statusDriverTV.getText().toString().contains("ACTIVE")){
+            if(vibrating){
+              vibrating=false;
+              toastVisible=true;
+              v.cancel();
+            }
+          }else{
+            if(!vibrating){
+              vibrating=true;
+              v.vibrate(pattern, 0);
+            }
+          }
         }
         scanHandler.postDelayed(this, 100); // Schedule the task to run again after 100 milliseconds
       }
@@ -569,12 +583,6 @@ public abstract class CameraActivity extends AppCompatActivity
     refreshDefaultQuery();
 
     updateDetectionLogs(null,"");
-
-
-
-
-
-
 
 
 
@@ -902,6 +910,13 @@ public abstract class CameraActivity extends AppCompatActivity
     });
   }
 
+  public void toastAMessage(String message){
+    if(!toastVisible){
+      toastVisible=true;
+      Toast.makeText(context, message, Toast.LENGTH_LONG).show();
+    }
+  }
+
 
   @Override
   public void onBackPressed() {
@@ -978,12 +993,10 @@ public abstract class CameraActivity extends AppCompatActivity
         backBtn.setElevation(newElevation);
         backBtn.setVisibility(View.VISIBLE);
         msTV.setElevation(newElevation);
-        HomeFrag.viewDetectionBtn.setVisibility(View.GONE);
       }
       else{
         backBtn.setVisibility(View.GONE);
         msTV.setElevation(newElevation);
-        HomeFrag.viewDetectionBtn.setVisibility(View.VISIBLE);
       }
     }
   }

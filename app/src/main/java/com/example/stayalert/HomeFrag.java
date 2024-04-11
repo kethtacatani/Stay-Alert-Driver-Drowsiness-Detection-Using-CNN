@@ -185,6 +185,7 @@ public class HomeFrag extends Fragment {
     public  static boolean trueNorth=true;
     public  static boolean maneuverOn=false;
     public  static boolean muteSpeech=true;
+    public static TextView wrapper;
 
 
     CameraActivity cameraActivity;
@@ -386,6 +387,7 @@ public class HomeFrag extends Fragment {
         weatherInfoLayout = view.findViewById(R.id.weatherInfoLayout);
         closeMap = view.findViewById(R.id.closeMap);
         viewAlertHistory = view.findViewById(R.id.viewAlertHistory);
+        wrapper = view.findViewById(R.id.wrapperTV);
 
         notifIcon = view.findViewById(R.id.notifIcon);
         viewDetectionBtn = view.findViewById(R.id.viewDetectionBtn);

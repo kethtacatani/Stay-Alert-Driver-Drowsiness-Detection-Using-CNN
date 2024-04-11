@@ -1,9 +1,11 @@
 package helper.classes;
 
+import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -156,5 +158,11 @@ public class DialogHelper {
         }
         dialogAction.setVisibility(View.GONE);
         dialogOkay.setText("Okay");
+        dialogTitle.setTextColor(Color.parseColor("#000000"));
+    }
+
+    @SuppressLint("ResourceAsColor")
+    public void errorTitle(){
+        dialogTitle.setTextColor(Color.parseColor("#FF0000"));
     }
 }

@@ -15,8 +15,7 @@
         <pl.droidsonroids.gif.GifImageView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginTop="-40dp"
-            android:src="@drawable/stayalert_entrance2"
+            android:src="@drawable/stayalert_entrance3"
 
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"

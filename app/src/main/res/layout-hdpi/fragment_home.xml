@@ -12,6 +12,13 @@
 
     <!-- TODO: Update blank fragment layout -->
 
+    <TextView
+        android:id="@+id/wrapperTV"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:text=""
+        android:visibility="gone" />
+
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/driverInfoLayout"
         android:layout_width="match_parent"

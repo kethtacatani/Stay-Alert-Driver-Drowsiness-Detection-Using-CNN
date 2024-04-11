@@ -189,6 +189,7 @@ public class ProfileFrag extends Fragment implements View.OnTouchListener{
                     }else{
                         dialogHelper.signUpDialog();
                         dialogAction="signup";
+                        dialogHelper.errorTitle();
                         dialogHelper.showDialog("Change Password","You need to sing up first");
                     }
                 }else{
@@ -244,11 +245,13 @@ public class ProfileFrag extends Fragment implements View.OnTouchListener{
                         if (!userData.get("sign_in_method").toString().equals("google")) {
                             showChangePass();
                         } else {
+                            dialogHelper.errorTitle();
                             dialogHelper.showDialog("Change Password","You are signed in using a Google");
                         }
                     } else {
                         dialogHelper.signUpDialog();
                         dialogAction="signup";
+                        dialogHelper.errorTitle();
                         dialogHelper.showDialog("Change Password","You need to sing up first");
                     }
                 }else{
@@ -281,11 +284,14 @@ public class ProfileFrag extends Fragment implements View.OnTouchListener{
                                         if(isUnique && errorMessage==null){
                                             updateUserInfo(userData, ProfileFrag.this.userData.get("contact").toString());
                                         }else if(!isUnique && errorMessage==null){
+                                            dialogHelper.errorTitle();
                                             dialogHelper.showDialog("Edit Profile","Contact number was already taken");
 
                                         }else if (errorMessage.contains("offline")){
+                                            dialogHelper.errorTitle();
                                             dialogHelper.showDialog("Edit Profile","Cannot change contact number when offline");
                                         }else{
+                                            dialogHelper.errorTitle();
                                             dialogHelper.showDialog("Edit Profile","There is an error with the database");
                                             Log.e(TAG,errorMessage);
                                         }
@@ -308,6 +314,7 @@ public class ProfileFrag extends Fragment implements View.OnTouchListener{
                             contactIL.setError((contact.getText().toString().trim().isEmpty())?"Required*":null);
                         }
                     }else{
+                        dialogHelper.errorTitle();
                         dialogHelper.showDialog("Edit Profile","No changes have been made");
                     }
 
@@ -341,6 +348,7 @@ public class ProfileFrag extends Fragment implements View.OnTouchListener{
                                                                     }
                                                                     @Override
                                                                     public void onFailure(String errorMessage) {
+                                                                        dialogHelper.errorTitle();
                                                                         dialogHelper.showDialog("Change Password",errorMessage);
                                                                     }
                                                                 });
@@ -352,8 +360,10 @@ public class ProfileFrag extends Fragment implements View.OnTouchListener{
                                                     });
                                                 }else if (task.getException().getLocalizedMessage().contains("network error")){
                                                     // If sign in fails, handle different error scenarios
+                                                    dialogHelper.errorTitle();
                                                     dialogHelper.showDialog("Sign in Failed", "No connection to the database");
                                                 } else {
+                                                    dialogHelper.errorTitle();
                                                     dialogHelper.showDialog("Change Password",firebaseDB.failureDialog(task));
                                                     Log.d(TAG, "Error auth failed "+task.getException().getLocalizedMessage());
                                                 }
