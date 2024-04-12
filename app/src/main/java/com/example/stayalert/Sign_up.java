@@ -189,7 +189,7 @@ public class Sign_up extends AppCompatActivity {
             }
         });
 
-        dialogHelper = new DialogHelper(this, new DialogHelper.DialogClickListener() {
+        dialogHelper = new DialogHelper(Sign_up.this, new DialogHelper.DialogClickListener() {
             @Override
             public void onOkayClicked() {
                 if(cameraPermissionDialog){

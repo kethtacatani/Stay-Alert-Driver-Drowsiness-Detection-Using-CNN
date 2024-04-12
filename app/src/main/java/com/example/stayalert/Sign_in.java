@@ -158,9 +158,9 @@ public class Sign_in extends AppCompatActivity {
         if(email!=null){
             username.setText(email);
         }
-        dialogHelper = new DialogHelper(this);
+        dialogHelper = new DialogHelper(Sign_in.this);
 
-        dialogHelper = new DialogHelper(this, new DialogHelper.DialogClickListener() {
+        dialogHelper = new DialogHelper(Sign_in.this, new DialogHelper.DialogClickListener() {
             @Override
             public void onOkayClicked() {
                 if(cameraPermissionDialog){
