@@ -23,7 +23,6 @@ import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
-import android.content.res.Configuration;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.hardware.Camera;
@@ -48,7 +47,6 @@ import android.os.HandlerThread;
 import android.os.Trace;
 import android.os.Vibrator;
 import android.provider.ContactsContract;
-import android.text.format.DateUtils;
 import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
@@ -77,26 +75,16 @@ import com.example.stayalert.custom.classes.DetectionLogsInfo;
 import com.example.stayalert.custom.classes.NotificationInfo;
 import com.example.stayalert.env.ImageUtils;
 import com.example.stayalert.env.Logger;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.AggregateField;
-import com.google.firebase.firestore.AggregateQuery;
-import com.google.firebase.firestore.AggregateQuerySnapshot;
-import com.google.firebase.firestore.AggregateSource;
-import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
-import com.google.firebase.firestore.Source;
 import com.google.firebase.storage.FirebaseStorage;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -410,13 +398,11 @@ public abstract class CameraActivity extends AppCompatActivity
             addFragment(new MenuFrag());
             HomeFrag.notifIcon.setEnabled(false);
             Toast.makeText(CameraActivity.this, "Menu", Toast.LENGTH_SHORT).show();
-
             break;
           case 2:
             bottomNavIndex=2;
             addFragment(new PhoneFrag());
             Toast.makeText(CameraActivity.this, "Phone", Toast.LENGTH_SHORT).show();
-
             break;
           case 3:
             bottomNavIndex=3;
@@ -436,7 +422,6 @@ public abstract class CameraActivity extends AppCompatActivity
             bottomNavIndex=5;
             addFragment(new ProfileFrag());
             Toast.makeText(CameraActivity.this, "Profile", Toast.LENGTH_SHORT).show();
-
             break;
         }
         return null;
@@ -591,6 +576,8 @@ public abstract class CameraActivity extends AppCompatActivity
 
 
   }
+
+
 
   private void refreshDefaultQuery() {
     Calendar calendar = Calendar.getInstance();
@@ -973,15 +960,34 @@ public abstract class CameraActivity extends AppCompatActivity
         transaction.commit();
       }
 
-    }
-  }
+      setWrapper(fragment);
 
+    }
+
+
+  }
 
 
   public void removeFragment() {
     FragmentManager fragmentManager = getSupportFragmentManager();
     if (fragmentManager.getBackStackEntryCount() > 0) {
       fragmentManager.popBackStack();
+    }
+  }
+
+  public void setWrapper(androidx.fragment.app.Fragment fragment) {
+    if (HomeFrag.wrapper != null) {
+      if(fragment instanceof HomeFrag){
+        HomeFrag.wrapper.setVisibility(View.GONE);
+      }else{
+        new Handler().postDelayed(new Runnable() {
+          @Override
+          public void run() {
+              HomeFrag.wrapper.setVisibility(View.VISIBLE);
+          }
+        }, 1000); // Delay for 1 second (1000 milliseconds)
+      }
+
     }
   }
 
