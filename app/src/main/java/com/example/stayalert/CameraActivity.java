@@ -71,6 +71,7 @@ import androidx.fragment.app.FragmentTransaction;
 import com.etebarian.meowbottomnavigation.MeowBottomNavigation;
 import com.example.stayalert.custom.classes.ChartGenerator;
 import com.example.stayalert.custom.classes.ContactsInfo;
+import com.example.stayalert.custom.classes.CustomizedExceptionHandler;
 import com.example.stayalert.custom.classes.DetectionLogsInfo;
 import com.example.stayalert.custom.classes.NotificationInfo;
 import com.example.stayalert.env.ImageUtils;
@@ -211,11 +212,12 @@ public abstract class CameraActivity extends AppCompatActivity
   public Location location;
   public  Geocoder geocoder;
   public  List<Address> addresses;
-  public String[] address = new String[]{"NA","NA"};
+  public static String[] addressGlobal = new String[]{"NA","NA"};
   public String[] lastCoordinate =new String[]{"0","0"};
   Vibrator v;
   boolean vibrating=false;
   private boolean toastVisible =false;
+  public static boolean canDetect=false;
 
 
   @Override
@@ -242,6 +244,10 @@ public abstract class CameraActivity extends AppCompatActivity
     LOGGER.d("onCreate " + this);
     super.onCreate(null);
     getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+    Thread.setDefaultUncaughtExceptionHandler(new CustomizedExceptionHandler(
+            "/mnt/sdcard/"));
+
 
     dialogHelper= new DialogHelper(this);
     setContentView(R.layout.tfe_od_activity_camera);
@@ -274,6 +280,7 @@ public abstract class CameraActivity extends AppCompatActivity
     runnableCode = new Runnable() {
       @Override
       public void run() {
+
         String eyeValue = eyeStatus;
 
         if ("closed".equals(eyeValue) && closeCount<20) {
@@ -285,43 +292,41 @@ public abstract class CameraActivity extends AppCompatActivity
         currentIndex = (currentIndex + 1) % 20; // Wrap around to the beginning of the array
         double closePercentage = (closeCount / 20.0) * 100.0;
 
+        if(canDetect){
+          if(closePercentage>70 && !ringtone.isPlaying() && !appStopped ){
+            toastAMessage("Drowsiness Alert! Your safety is at risk");
 
-        if(closePercentage>70 && !ringtone.isPlaying() && !appStopped){
-          toastAMessage("Drowsiness Alert! Your safety is at risk");
-
-          // Play the default ringtone
-          if(detectedEye==null && values[values.length-1]!=null){
-            ringtone.play();
-            detectedBitmap= copyBitmap;
-            detectedEye=eyeStatus;
-            detectMS=lastProcessingTimeMs+"";
-            startResponseTime= System.currentTimeMillis();
-            statusDriver=" DROWSY ";
-          }
-
-        }
-        else if(closePercentage<60){
-          if(detectedEye!=null && values[values.length-1]!=null){
-            System.out.println("insert");
-            currentResponseTime = (double) (System.currentTimeMillis() - (double)startResponseTime - 1500.0)/1000.0;
-            if(currentResponseTime<0){
-              currentResponseTime=0.3;
+            // Play the default ringtone
+            if(detectedEye==null && values[values.length-1]!=null){
+              ringtone.play();
+              detectedBitmap= copyBitmap;
+              detectedEye=eyeStatus;
+              detectMS=lastProcessingTimeMs+"";
+              startResponseTime= System.currentTimeMillis();
+              statusDriver=" DROWSY ";
             }
-            startResponseTime = 0L;
-
-            if(lastDrowsyReportTime>3000){
-              saveDetectedImage(detectedBitmap,detectedEye, detectMS+"",currentResponseTime);
-              lastDrowsyReportTime=System.currentTimeMillis();
-            }
-            detectedEye=null;
-            ringtone.stop();
-            statusDriver=" ACTIVE ";
-            //start timer for alert response
           }
+          else if(closePercentage<60){
+            if(detectedEye!=null && values[values.length-1]!=null){
+              System.out.println("insert");
+              currentResponseTime = (double) (System.currentTimeMillis() - (double)startResponseTime - 1500.0)/1000.0;
+              if(currentResponseTime<0){
+                currentResponseTime=0.3;
+              }
+              startResponseTime = 0L;
 
-
-
+              if(lastDrowsyReportTime>3000){
+                saveDetectedImage(detectedBitmap,detectedEye, detectMS+"",currentResponseTime);
+                lastDrowsyReportTime=System.currentTimeMillis();
+              }
+              detectedEye=null;
+              ringtone.stop();
+              statusDriver=" ACTIVE ";
+              //start timer for alert response
+            }
+          }
         }
+
 //        msTV.setText(statusDriver+" "+(int)closePercentage);
 
         scanHandler.postDelayed(this, 100); // Schedule the task to run again after 100 milliseconds
@@ -338,6 +343,8 @@ public abstract class CameraActivity extends AppCompatActivity
     mouthRunnable = new Runnable() {
       @Override
       public void run() {
+
+
         String mouthValue = mouthStatus;
         if ("yawn".equals(mouthValue) && yawnCount<20) {
           yawnCount++;
@@ -348,22 +355,24 @@ public abstract class CameraActivity extends AppCompatActivity
         currentIndexYawn = (currentIndexYawn + 1) % 20; // Wrap around to the beginning of the array when past 20 it will be back to 1
         double yawnPercentage = (yawnCount / 20.0) * 100.0;  //convert to perncet base on stringlength
 
+        if(canDetect){
+          if(yawnPercentage>70 && !ringtone.isPlaying() && !appStopped ){
+            toastAMessage("Heads up! A yawn can be a sign of fatigue. Consider getting some fresh air");
 
-        if(yawnPercentage>70 && !ringtone.isPlaying() && !appStopped ){
-          toastAMessage("Heads up! A yawn can be a sign of fatigue. Consider getting some fresh air");
 
+            if(statusDriverMouth.contains("ACTIVE") && valuesYawn[valuesYawn.length-1]!=null && lastYawnReportTime>3000){
+              saveDetectedImage(copyBitmap,mouthStatus,lastProcessingTimeMs+"",0);
+              lastYawnReportTime=System.currentTimeMillis();
+            }
+            statusDriverMouth=" YAWNING ";
 
-          if(statusDriverMouth.contains("ACTIVE") && valuesYawn[valuesYawn.length-1]!=null && lastYawnReportTime>3000){
-            saveDetectedImage(copyBitmap,mouthStatus,lastProcessingTimeMs+"",0);
-            lastYawnReportTime=System.currentTimeMillis();
           }
-          statusDriverMouth=" YAWNING ";
+          else if(yawnPercentage<=70){
+            statusDriverMouth=" ACTIVE ";
 
+          }
         }
-        else if(yawnPercentage<=70){
-          statusDriverMouth=" ACTIVE ";
 
-        }
         if(HomeFrag.statusDriverTV!=null){
           HomeFrag.statusDriverTV.setText((statusDriver.contains("ACTIVE"))?statusDriverMouth:statusDriver);
 
@@ -550,8 +559,6 @@ public abstract class CameraActivity extends AppCompatActivity
         minusImageView.performClick();
         updateActiveModel();
         firebaseDB.checkSync();
-
-
       }
     }, 6000);
 
@@ -561,7 +568,7 @@ public abstract class CameraActivity extends AppCompatActivity
       public void run() {
         dialogHelper.dismissDialog();
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
-
+        canDetect = true;
       }
     }, 8000);
 
@@ -569,12 +576,8 @@ public abstract class CameraActivity extends AppCompatActivity
 
     updateDetectionLogs(null,"");
 
-
-
     getContactList();
     getContactFavoritesList();
-
-
   }
 
 
@@ -645,44 +648,51 @@ public abstract class CameraActivity extends AppCompatActivity
   }
 
   @SuppressLint("MissingPermission")
-  public String[] getCurrentAddress(){
+  public void getCurrentAddress(){
 
-    //sige na siya e call nga function to check if address kay na chage
-    try {
-      if (location != null && (!lastCoordinate[0].equals(String.valueOf(location.getLatitude())) || !lastCoordinate[1].equals(String.valueOf(location.getLongitude())))) {
-        addresses = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1); // Here 1 represent max location result to returned, by documents it recommended 1 to 5
-        lastCoordinate = new String[]{String.valueOf(location.getLatitude()), String.valueOf(location.getLongitude())};
-      }else{
-        return null;
+    Handler addressHandler= new Handler();
+    addressHandler.post(new Runnable() {
+      @Override
+      public void run() {
+        //sige na siya e call nga function to check if address kay na chage
+        try {
+          if (location != null && (!lastCoordinate[0].equals(String.valueOf(location.getLatitude())) || !lastCoordinate[1].equals(String.valueOf(location.getLongitude())))) {
+            addresses = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1); // Here 1 represent max location result to returned, by documents it recommended 1 to 5
+            lastCoordinate = new String[]{String.valueOf(location.getLatitude()), String.valueOf(location.getLongitude())};
+          }else{
+            return;
+          }
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+        String address="NA",city="NA" ,country="NA",state="NA",postalCode, knownName;
+
+        if(addresses!=null){
+          address = addresses.get(0).getAddressLine(0); // If any additional address line present than only, check with max available address lines by getMaxAddressLineIndex()
+          city = addresses.get(0).getLocality();
+          state = addresses.get(0).getAdminArea();
+          country = addresses.get(0).getCountryName();
+          postalCode = addresses.get(0).getPostalCode();
+          knownName = addresses.get(0).getFeatureName();
+
+          addressGlobal = new String[]{city,state,address};
+
+          System.out.printf("address "+postalCode);
+          System.out.printf("country "+String.valueOf(location.getLatitude())+","+String.valueOf(location.getLongitude())+" sdf");
+        }else{
+          if(location!=null){
+            addressGlobal = new String[]{String.valueOf(location.getLatitude()),String.valueOf(location.getLongitude())};
+          }
+        }
+
+        if(!city.equals("NA") && city!=weatherMap.get("city")){
+          HomeFrag.getWeatherDetails(city,country);
+        }
       }
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-    String address="NA",city="NA" ,country="NA",state="NA",postalCode, knownName;
+    });
 
-    if(addresses!=null){
-       address = addresses.get(0).getAddressLine(0); // If any additional address line present than only, check with max available address lines by getMaxAddressLineIndex()
-       city = addresses.get(0).getLocality();
-       state = addresses.get(0).getAdminArea();
-       country = addresses.get(0).getCountryName();
-       postalCode = addresses.get(0).getPostalCode();
-       knownName = addresses.get(0).getFeatureName();
 
-      this.address = new String[]{city,state,address};
 
-      System.out.printf("address "+postalCode);
-      System.out.printf("country "+String.valueOf(location.getLatitude())+","+String.valueOf(location.getLongitude())+" sdf");
-    }else{
-      if(location!=null){
-        this.address = new String[]{String.valueOf(location.getLatitude()),String.valueOf(location.getLongitude())};
-      }
-    }
-
-    if(!city.equals("NA") && city!=weatherMap.get("city")){
-      HomeFrag.getWeatherDetails(city,country);
-    }
-
-    return new String[]{city,state, address};
   }
 
 
@@ -698,7 +708,7 @@ public abstract class CameraActivity extends AppCompatActivity
       Map<String, Object> imageInfo = new HashMap<>();
       imageInfo.put("detection_name", (detectionType.equals("yawn")?"Yawn":"Drowsy"));
       imageInfo.put("timestamp", date);
-      imageInfo.put("location",(address.length==3)?address[2]: address[0]+", "+address[1]);
+      imageInfo.put("location",(addressGlobal.length==3)? addressGlobal[2]: addressGlobal[0]+", "+ addressGlobal[1]);
       imageInfo.put("file_name",result[1]);
       imageInfo.put("local_path",result[0]);
       imageInfo.put("firestore_path","users/"+user.getUid()+"/image_detection/"+result[1]);
@@ -960,7 +970,7 @@ public abstract class CameraActivity extends AppCompatActivity
         transaction.commit();
       }
 
-      setWrapper(fragment);
+//      setWrapper(fragment);
 
     }
 

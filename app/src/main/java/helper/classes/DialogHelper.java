@@ -88,6 +88,7 @@ public class DialogHelper {
         dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
         dialog.setCanceledOnTouchOutside(false);
         dialog.show();
+        dialog.setCanceledOnTouchOutside(true);
     }
 
     public void resetLayout(){
@@ -97,6 +98,9 @@ public class DialogHelper {
     }
 
     public void showDialog(String title, String info) {
+        if(title.contains("Failed")){
+            errorTitle();
+        }
         dialogTitle.setText(title);
         dialogInfo.setText(info);
         dialog.show();
@@ -110,6 +114,7 @@ public class DialogHelper {
         dialogLoading.playAnimation();
         dialog.setCanceledOnTouchOutside(false);
         dialog.show();
+        dialog.setCanceledOnTouchOutside(true);
     }
 
 

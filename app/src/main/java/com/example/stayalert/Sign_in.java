@@ -71,6 +71,7 @@ public class Sign_in extends AppCompatActivity {
     Map<String, Object> userData;
     boolean cameraPermissionDialog=false;
     boolean userDataExist=false;
+    private DialogHelper splashDialogHelper;
     private DialogHelper dialogHelper;
     ConstraintLayout signInLayout;
 
@@ -90,8 +91,8 @@ public class Sign_in extends AppCompatActivity {
         db = FirebaseFirestore.getInstance();
         firebaseDB = new FirebaseDatabase();
         user = FirebaseAuth.getInstance().getCurrentUser();
-        dialogHelper=new DialogHelper(Sign_in.this);
-        dialogHelper.showEntrance();
+        splashDialogHelper=new DialogHelper(this);
+        splashDialogHelper.showEntrance();
 
         if(user != null){
 
@@ -110,7 +111,7 @@ public class Sign_in extends AppCompatActivity {
             handler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    dialogHelper.resetLayout();
+                    splashDialogHelper.resetLayout();
                 }
             }, 2000);
         }
@@ -157,6 +158,7 @@ public class Sign_in extends AppCompatActivity {
         if(email!=null){
             username.setText(email);
         }
+        dialogHelper = new DialogHelper(this);
 
         dialogHelper = new DialogHelper(this, new DialogHelper.DialogClickListener() {
             @Override
@@ -165,12 +167,11 @@ public class Sign_in extends AppCompatActivity {
                     viewCameraPermission();
                     cameraPermissionDialog=false;
                 }
-                dialog.dismiss();
             }
 
             @Override
             public void onActionClicked() {
-
+                System.out.println("kj");
             }
 
         });
@@ -428,7 +429,6 @@ public class Sign_in extends AppCompatActivity {
     }
 
     public void hideLoading(){
-        Toast.makeText(this, "hide", Toast.LENGTH_SHORT).show();
         buttonAnimation.setVisibility(View.GONE);
         buttonAnimation.pauseAnimation();
         signInBtn.setText("Sign in");

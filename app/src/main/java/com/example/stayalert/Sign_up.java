@@ -276,8 +276,9 @@ public class Sign_up extends AppCompatActivity {
 
 
                     }else if(pass.getText().toString().trim().equals(conPass.getText().toString().trim())){
-                        playLoadingAnim();
+
                         if(privacyCheckedTextView.isChecked()){
+                            playLoadingAnim();
                             SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
                             SharedPreferences.Editor editor = sharedPreferences.edit();
                             editor.putBoolean("isPrivacyPolicyAccepted", true); // Storing a boolean value with key "isAccepted"

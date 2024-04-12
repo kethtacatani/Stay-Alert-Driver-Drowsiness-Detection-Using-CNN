@@ -815,7 +815,7 @@ public class HomeFrag extends Fragment {
 
             @Override
             public void onErrorResponse(VolleyError error) {
-                Toast.makeText(CameraActivity.context, error.toString().trim(), Toast.LENGTH_SHORT).show();
+               Log.e(TAG, error.toString().trim(), error);
             }
 
 
@@ -831,7 +831,10 @@ public class HomeFrag extends Fragment {
             weatherType.setText((String) weatherMap.get("description"));
             weatherAddress.setText((String) weatherMap.get("city")+", "+(String) weatherMap.get("country"));
 
-            weatherDescIV.setImageDrawable(getweatherDrawable(weatherMap.get("description").toString()));
+            if(weatherMap.get("description")!=null){
+                weatherDescIV.setImageDrawable(getweatherDrawable(weatherMap.get("description").toString()));
+            }
+
 
         }
     }

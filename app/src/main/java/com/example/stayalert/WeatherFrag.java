@@ -58,7 +58,9 @@ public class WeatherFrag extends Fragment {
             feelsLike.setText(String.format("%.0f", CameraActivity.weatherMap.get("feels_like")) + "°");
             wind.setText(String.format("%.1f", CameraActivity.weatherMap.get("wind")) + " km/hr");
             cityCountry.setText(CameraActivity.weatherMap.get("city")+", "+CameraActivity.weatherMap.get("country"));
-            weatherDescIV.setImageDrawable(HomeFrag.getweatherDrawable(cameraActivity.weatherMap.get("description").toString()));
+            if(cameraActivity.weatherMap.get("description")!=null){
+                weatherDescIV.setImageDrawable(HomeFrag.getweatherDrawable(cameraActivity.weatherMap.get("description").toString()));
+            }
         }
         return view;
     }

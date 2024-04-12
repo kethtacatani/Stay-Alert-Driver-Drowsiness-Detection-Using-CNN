@@ -148,7 +148,7 @@ public class ProfileFrag extends Fragment implements View.OnTouchListener{
         dialogHelper = new DialogHelper(cameraActivity, new DialogHelper.DialogClickListener() {
             @Override
             public void onOkayClicked() {
-
+                System.out.println("okay");
             }
 
             @Override
