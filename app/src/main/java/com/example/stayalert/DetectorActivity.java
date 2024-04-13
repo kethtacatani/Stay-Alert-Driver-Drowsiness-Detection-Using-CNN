@@ -64,7 +64,7 @@ public class DetectorActivity extends com.example.stayalert.CameraActivity imple
     private static final Logger LOGGER = new Logger();
 
     private static final DetectorMode MODE = DetectorMode.TF_OD_API;
-    private static final float MINIMUM_CONFIDENCE_TF_OD_API = 0.f;
+    private static final float MINIMUM_CONFIDENCE_TF_OD_API = 0.5f;
     private static final boolean MAINTAIN_ASPECT = true;
     private static final Size DESIRED_PREVIEW_SIZE = new Size(1920, 1080);
     private static final boolean SAVE_PREVIEW_BITMAP = false;
@@ -131,6 +131,7 @@ public class DetectorActivity extends com.example.stayalert.CameraActivity imple
         LOGGER.i("Initializing at size %dx%d", previewWidth, previewHeight);
         rgbFrameBitmap = Bitmap.createBitmap(previewWidth, previewHeight, Config.ARGB_8888);
         croppedBitmap = Bitmap.createBitmap(cropSize, cropSize, Config.ARGB_8888);
+        System.out.println("crop size "+cropSize);
 
 
 
@@ -166,6 +167,10 @@ public class DetectorActivity extends com.example.stayalert.CameraActivity imple
         final int deviceIndex = deviceView.getCheckedItemPosition();
         String threads = threadsTextView.getText().toString().trim();
         final int numThreads = Integer.parseInt(threads);
+
+        if (handler == null) {
+            return;
+        }
 
         handler.post(() -> {
             if (modelIndex == currentModel && deviceIndex == currentDevice
@@ -364,7 +369,7 @@ public class DetectorActivity extends com.example.stayalert.CameraActivity imple
                                     public void run() {
                                         showFrameInfo(previewWidth + "x" + previewHeight);
                                         showCropInfo(cropCopyBitmap.getWidth() + "x" + cropCopyBitmap.getHeight());
-//                                        showInference(lastProcessingTimeMs + "ms");
+                                        showInference(lastProcessingTimeMs + "ms");
                                     }
                                 });
 
@@ -433,7 +438,14 @@ public class DetectorActivity extends com.example.stayalert.CameraActivity imple
     public Bitmap cropToSquare(Bitmap srcBmp){
         Bitmap dstBmp;
         Matrix matrix = new Matrix();
-        matrix.postRotate(270);
+        int orientation = getResources().getConfiguration().orientation;
+        System.out.println("orient "+orientation);
+        if(orientation==2){
+            matrix.postRotate(180);
+        }else{
+            matrix.postRotate(270);
+        }
+
         matrix.preScale(1 ,-1);
         if (srcBmp.getWidth() >= srcBmp.getHeight()){
 

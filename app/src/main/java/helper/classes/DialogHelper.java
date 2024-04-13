@@ -1,9 +1,11 @@
 package helper.classes;
 
+import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -81,7 +83,24 @@ public class DialogHelper {
         dialogLoading= dialog.findViewById(R.id.Dialogloading);
     }
 
+    public void showEntrance(){
+        dialog.setContentView(R.layout.fullscreen_dialog);
+        dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        dialog.setCanceledOnTouchOutside(false);
+        dialog.show();
+        dialog.setCanceledOnTouchOutside(true);
+    }
+
+    public void resetLayout(){
+        dialog.setContentView(R.layout.pop_up_dialog);
+        dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        dialog.dismiss();
+    }
+
     public void showDialog(String title, String info) {
+        if(title.contains("Failed")){
+            errorTitle();
+        }
         dialogTitle.setText(title);
         dialogInfo.setText(info);
         dialog.show();
@@ -93,13 +112,16 @@ public class DialogHelper {
         dialogInfo.setText(info);
         dialogOkay.setVisibility(View.GONE);
         dialogLoading.playAnimation();
+        dialog.setCanceledOnTouchOutside(false);
         dialog.show();
+        dialog.setCanceledOnTouchOutside(true);
     }
 
 
     public void dismissDialog() {
         if (dialog != null && dialog.isShowing()) {
             dialog.dismiss();
+            dialog.setCanceledOnTouchOutside(true);
         }
     }
 
@@ -120,6 +142,11 @@ public class DialogHelper {
         dialogOkay.setText("Cancel");
         dialogAction.setText("Sign in");
     }
+    public void customDialog(String action){
+        dialogAction.setVisibility(View.VISIBLE);
+        dialogOkay.setText("Cancel");
+        dialogAction.setText(action);
+    }
 
     public void discardDialog(){
         dialogAction.setVisibility(View.VISIBLE);
@@ -136,5 +163,11 @@ public class DialogHelper {
         }
         dialogAction.setVisibility(View.GONE);
         dialogOkay.setText("Okay");
+        dialogTitle.setTextColor(Color.parseColor("#000000"));
+    }
+
+    @SuppressLint("ResourceAsColor")
+    public void errorTitle(){
+        dialogTitle.setTextColor(Color.parseColor("#FF0000"));
     }
 }

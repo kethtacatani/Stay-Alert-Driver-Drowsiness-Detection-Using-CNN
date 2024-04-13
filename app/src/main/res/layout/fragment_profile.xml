@@ -6,6 +6,7 @@
     android:layout_height="match_parent"
     android:background="#E6E6E6"
     android:orientation="vertical"
+    android:clickable="true"
     tools:context=".ProfileFrag">
 
     <!-- TODO: Update blank fragment layout -->
@@ -163,7 +164,7 @@
                     android:layout_width="10dp"
                     android:layout_height="24dp"
                     android:layout_marginRight="15dp"
-                    android:background="@color/transparent"
+                    android:background="@drawable/grey_btn_ripple"
                     android:src="@drawable/ic_arrow_settings"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
@@ -620,7 +621,7 @@
                     android:layout_width="10dp"
                     android:layout_height="24dp"
                     android:layout_marginRight="15dp"
-                    android:background="@color/transparent"
+                    android:background="@drawable/grey_btn_ripple"
                     android:src="@drawable/ic_arrow_settings"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
@@ -827,7 +828,7 @@
                         android:layout_width="wrap_content"
                         android:layout_marginRight="5dp"
                         android:layout_height="24dp"
-                        android:background="@color/transparent"
+                        android:background="@drawable/grey_btn_ripple"
                         android:src="@drawable/ic_sign_out_squre_light"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintEnd_toEndOf="parent"
@@ -904,7 +905,6 @@
                     android:id="@+id/profileAppDevs"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:layout_marginBottom="10dp"
                     android:background="@drawable/grey_btn_ripple"
                     android:clickable="true"
                     android:visibility="visible">
@@ -920,6 +920,34 @@
                         android:layout_marginBottom="6dp"
                         android:fontFamily="@font/nunito_regular"
                         android:text="App Developers"
+                        android:textColor="@color/black"
+                        android:textSize="18sp"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/profileAppPrivacy"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginBottom="10dp"
+                    android:background="@drawable/grey_btn_ripple"
+                    android:clickable="true"
+                    android:visibility="visible">
+                    >
+
+
+                    <TextView
+                        android:id="@+id/textVisew3s3w"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="17dp"
+                        android:layout_marginTop="5dp"
+                        android:layout_marginBottom="6dp"
+                        android:fontFamily="@font/nunito_regular"
+                        android:text="Privacy Policy"
                         android:textColor="@color/black"
                         android:textSize="18sp"
                         app:layout_constraintBottom_toBottomOf="parent"

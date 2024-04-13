@@ -3,6 +3,7 @@ package com.example.stayalert;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
@@ -41,10 +42,13 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import firebase.classes.FirebaseDatabase;
 import helper.classes.DialogHelper;
+import pl.droidsonroids.gif.GifImageView;
 
 public class Sign_in extends AppCompatActivity {
     private static final String TAG = "Sign_up";
@@ -67,33 +71,49 @@ public class Sign_in extends AppCompatActivity {
     Map<String, Object> userData;
     boolean cameraPermissionDialog=false;
     boolean userDataExist=false;
+    private DialogHelper splashDialogHelper;
     private DialogHelper dialogHelper;
+    ConstraintLayout signInLayout;
+
 
     @Override
     public void onStart() {
         super.onStart();
 
-        if(!ifHasCameraPermission()){
-            viewCameraPermission();
+        if(checkAndRequestPermissions()){
+            signInUser();
         }
 
-        if(!ifHasStoragePermission()){
-            viewStoragePermission();
-        }
+
+
         // Check if user is signed in (non-null) and update UI accordingly.
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
         firebaseDB = new FirebaseDatabase();
         user = FirebaseAuth.getInstance().getCurrentUser();
-        dialogHelper=new DialogHelper(Sign_in.this);
+        splashDialogHelper=new DialogHelper(this);
+        splashDialogHelper.showEntrance();
 
         if(user != null){
 
-            dialogHelper.showLoadingDialog("Logging In","Please wait...");
-            getUserInfo();
+
+            final Handler handler = new Handler();
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    getUserInfo();
+                }
+            }, 2000);
 
         }
         else{
+            final Handler handler = new Handler();
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    splashDialogHelper.resetLayout();
+                }
+            }, 2000);
         }
     }
 
@@ -115,6 +135,15 @@ public class Sign_in extends AppCompatActivity {
         googleBtn= findViewById(R.id.BTNgoogle);
 
 
+        signInLayout= findViewById(R.id.signInLayout);
+
+        final Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                signInLayout.setVisibility(View.VISIBLE);
+            }
+        }, 2000);
 
         creatAccTV = (TextView)findViewById(R.id.TVcreateAcc);
         signInBtn = ( Button)findViewById(R.id.BTNsignin);
@@ -129,8 +158,9 @@ public class Sign_in extends AppCompatActivity {
         if(email!=null){
             username.setText(email);
         }
+        dialogHelper = new DialogHelper(Sign_in.this);
 
-        dialogHelper = new DialogHelper(this, new DialogHelper.DialogClickListener() {
+        dialogHelper = new DialogHelper(Sign_in.this, new DialogHelper.DialogClickListener() {
             @Override
             public void onOkayClicked() {
                 if(cameraPermissionDialog){
@@ -141,7 +171,7 @@ public class Sign_in extends AppCompatActivity {
 
             @Override
             public void onActionClicked() {
-
+                System.out.println("kj");
             }
 
         });
@@ -376,7 +406,7 @@ public class Sign_in extends AppCompatActivity {
     public void signInUser(){
         user = mAuth.getCurrentUser();
         Intent intent = new Intent(getApplicationContext(), DetectorActivity.class);
-        if(ifHasCameraPermission()){
+        if(user!=null){
             startActivity(intent);
             stopActivity();
 
@@ -399,7 +429,6 @@ public class Sign_in extends AppCompatActivity {
     }
 
     public void hideLoading(){
-        Toast.makeText(this, "hide", Toast.LENGTH_SHORT).show();
         buttonAnimation.setVisibility(View.GONE);
         buttonAnimation.pauseAnimation();
         signInBtn.setText("Sign in");
@@ -410,6 +439,7 @@ public class Sign_in extends AppCompatActivity {
                     == PackageManager.PERMISSION_DENIED) {
                 return false;
             }
+
         }else {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
                     == PackageManager.PERMISSION_DENIED) {
@@ -445,33 +475,6 @@ public class Sign_in extends AppCompatActivity {
 
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == 100) {
-            // Check if the CAMERA permission is granted after the user responds to the permission request
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                if(userDataExist){
-                    signInUser();
-                }
-            } else {
-                dialogHelper.showDialog("Login Failed", "You need to allow permission for camera usage as it is required for detection");
-                hideLoading();
-            }
-        }
-
-        else if (requestCode == 110) {
-            // Check if the CAMERA permission is granted after the user responds to the permission request
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                if(userDataExist){
-                    signInUser();
-                }
-            } else {
-                dialogHelper.showDialog("Login Failed", "You need to allow permission for storage usage as it is required for detection");
-                hideLoading();
-            }
-        }
-    }
 
     private void stopActivity(){
         finish();
@@ -488,6 +491,97 @@ public class Sign_in extends AppCompatActivity {
                     break;
 
             }
+        }
+    }
+
+    private boolean checkAndRequestPermissions() {
+        int permissionReadMediaImages = ContextCompat.checkSelfPermission(this,
+                Manifest.permission.READ_MEDIA_IMAGES);
+        int cameraPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA);
+
+        int writepermission = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+
+        int callpermission = ContextCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE);
+
+        int readContactsPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS);
+        int locationpermission = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION);
+
+        List<String> listPermissionsNeeded = new ArrayList<>();
+
+        if (locationpermission != PackageManager.PERMISSION_GRANTED) {
+            listPermissionsNeeded.add(Manifest.permission.ACCESS_FINE_LOCATION);
+        }
+
+        if (cameraPermission != PackageManager.PERMISSION_GRANTED) {
+            listPermissionsNeeded.add(Manifest.permission.CAMERA);
+        }
+        if (writepermission != PackageManager.PERMISSION_GRANTED) {
+            listPermissionsNeeded.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        }
+        if (permissionReadMediaImages != PackageManager.PERMISSION_GRANTED) {
+            listPermissionsNeeded.add(Manifest.permission.READ_MEDIA_IMAGES);
+        }
+        if (readContactsPermission != PackageManager.PERMISSION_GRANTED) {
+            listPermissionsNeeded.add(Manifest.permission.READ_CONTACTS);
+        }
+
+        if (callpermission != PackageManager.PERMISSION_GRANTED) {
+            listPermissionsNeeded.add(Manifest.permission.CALL_PHONE);
+        }
+        if (!listPermissionsNeeded.isEmpty()) {
+            requestPermissions(listPermissionsNeeded.toArray(new String[listPermissionsNeeded.size()]), 3);
+            return false;
+        }
+        return true;
+    }
+
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+
+        if (requestCode == 3) {
+
+
+            if (grantResults.length > 0) {
+                for (int i = 0; i < permissions.length; i++) {
+
+
+                    if (permissions[i].equals(Manifest.permission.CAMERA)) {
+                        if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
+                            Log.e("msg", "camera granted");
+
+                        }
+                    } else if (permissions[i].equals(Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                        if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
+                            Log.e("msg", "storage granted");
+
+                        }
+                    } else if (permissions[i].equals(Manifest.permission.CALL_PHONE)) {
+                        if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
+                            Log.e("msg", "call granted");
+
+                        }
+                    } else if (permissions[i].equals(Manifest.permission.READ_MEDIA_IMAGES)) {
+                        if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
+                            Log.e("msg", "sms granted");
+
+                        }
+                    } else if (permissions[i].equals(Manifest.permission.ACCESS_FINE_LOCATION)) {
+                        if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
+                            Log.e("msg", "location granted");
+
+                        }
+                    }
+
+
+                }
+
+            }
+
+
         }
     }
 

@@ -3,7 +3,6 @@ package helper.classes;
 
         import android.app.Dialog;
         import android.content.Context;
-        import android.content.DialogInterface;
         import android.graphics.Bitmap;
         import android.util.Log;
         import android.view.View;
@@ -15,7 +14,7 @@ package helper.classes;
         import android.widget.Toast;
 
         import com.example.stayalert.CameraActivity;
-        import com.example.stayalert.DetectionLogsInfo;
+        import com.example.stayalert.custom.classes.DetectionLogsInfo;
         import com.example.stayalert.R;
 
         import firebase.classes.FirebaseDatabase;
@@ -31,8 +30,8 @@ public class ViewDetectedImageHelper {
     Context context;
 
     public ViewDetectedImageHelper(Context context) {
-        this.context=context;
-        instantiate(this.context);
+        this.context=CameraActivity.context;
+        instantiate(CameraActivity.context);
     }
 
 
@@ -94,6 +93,8 @@ public class ViewDetectedImageHelper {
         if(info.getDetectionType().equals("Drowsy")){
             responseTimeLL.setVisibility(View.VISIBLE);
             responseTime.setText(String.format("%.2f",Double.parseDouble(info.getResponseTime())) +"s");
+        }else{
+            responseTimeLL.setVisibility(View.GONE);
         }
 
         Bitmap bitmap = firebaseDB.getImageFromLocal(context, info.getLocalPath(),info.getTitle());
@@ -101,7 +102,7 @@ public class ViewDetectedImageHelper {
             detectionImage.setImageBitmap(bitmap);
 
         }else{
-            Toast.makeText(context, "no image for", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, "Loading Image", Toast.LENGTH_SHORT).show();
             firebaseDB.getImageFromServer(info.getTitle(),"detection_images", new FirebaseDatabase.BitmapTaskCallback() {
                 @Override
                 public void onSuccess(Bitmap bitmap) {

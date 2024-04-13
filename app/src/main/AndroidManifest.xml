@@ -8,19 +8,31 @@
     <uses-feature
         android:glEsVersion="0x00030001"
         android:required="true" />
+    <meta-data android:name="com.mapbox.maps.location.gms.SKIP_IF_INVALID_VERSION" android:value="true"/>
 
     <uses-permission android:name="android.permission.CAMERA" />
 
     <uses-feature android:name="android.hardware.camera" />
     <uses-feature android:name="android.hardware.camera.autofocus" />
 
+    <uses-permission android:name="android.permission.CALL" />
+    <uses-permission android:name="android.permission.VIBRATE"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <uses-permission android:name="android.permission.WRITE_CONTACTS" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+    <!-- Always include this permission -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <!-- Include only if your app benefits from precise location access. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
+
 
     <application
         android:allowBackup="true"
@@ -32,22 +44,25 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.StayAlert"
         android:usesCleartextTraffic="true"
-        android:networkSecurityConfig="@xml/network_security_config">
+        android:networkSecurityConfig="@xml/network_security_config"
         tools:targetApi="31">
         <activity
             android:name=".ForgotPassActivity"
             android:exported="false" />
         <activity
             android:name=".DetectorActivity"
+            android:configChanges="orientation"
             android:exported="false" />
         <activity
             android:name=".Home"
             android:exported="false" />
         <activity
+            android:screenOrientation="portrait"
             android:name=".Sign_up"
             android:exported="false"
             android:windowSoftInputMode="adjustPan" />
         <activity
+            android:screenOrientation="portrait"
             android:name=".Sign_in"
             android:exported="true"
             android:windowSoftInputMode="adjustPan">

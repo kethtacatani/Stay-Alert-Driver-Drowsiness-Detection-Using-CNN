@@ -51,7 +51,7 @@
                 android:layout_marginRight="-5dp"
                 android:layout_marginTop="2dp"
                 android:layout_marginBottom="2dp"
-                android:background="@color/transparent"
+                android:background="@drawable/grey_btn_ripple"
                 android:src="@drawable/ic_close_round"
                 app:layout_constraintEnd_toEndOf="@+id/detectionLogsImage"
                 app:layout_constraintTop_toTopOf="parent" />
@@ -154,7 +154,7 @@
                     <TextView
                         android:id="@+id/detectionLogsLocation"
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent"
+                        android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:layout_gravity="center"
                         android:fontFamily="@font/nunito_sans"

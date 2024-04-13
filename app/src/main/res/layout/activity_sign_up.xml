@@ -564,7 +564,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             app:layout_constraintBottom_toTopOf="@+id/TVloginAcc"
-            android:layout_marginBottom="20dp"
+            android:layout_marginBottom="10dp"
             >
 
             <Button
@@ -584,6 +584,8 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
+
+
             <com.airbnb.lottie.LottieAnimationView
                 android:id="@+id/BTNSign_upLoading"
                 android:layout_width="150dp"
@@ -598,6 +600,55 @@
                 app:lottie_autoPlay="false"
                 app:lottie_loop="true"
                 app:lottie_rawRes="@raw/loading" />
+
+            <LinearLayout
+                android:id="@+id/checkedLL"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                app:layout_constraintEnd_toEndOf="@+id/BTNsignup"
+                app:layout_constraintStart_toStartOf="@+id/BTNsignup"
+                app:layout_constraintTop_toBottomOf="@+id/BTNsignup"
+                android:orientation="horizontal">
+
+                <CheckBox
+                    android:id="@+id/checkedTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:fontFamily="@font/poppins_regular"
+                    android:minWidth="0dp"
+                    android:minHeight="0dp"
+                    android:paddingTop="5dp"
+                    android:textColor="@color/black"
+                    android:textSize="15sp" />
+
+                <TextView
+                    android:id="@+id/checkboxText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:clickable="true"
+                    android:fontFamily="@font/poppins_regular"
+                    android:minWidth="0dp"
+                    android:minHeight="0dp"
+                    android:paddingTop="5dp"
+                    android:textColor="@color/black"
+                    android:text="I have read and agreed to StayAlert's Privacy and Policy"
+                    />
+            </LinearLayout>
+
+
+
+            <TextView
+                android:id="@+id/checkboxErr"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Required*"
+                android:textColor="@color/red"
+                android:textSize="12sp"
+                android:visibility="invisible"
+                app:layout_constraintStart_toStartOf="@+id/checkedLL"
+                app:layout_constraintTop_toBottomOf="@+id/checkedLL" />
+
 
 
 

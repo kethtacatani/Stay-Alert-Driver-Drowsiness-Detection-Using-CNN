@@ -17,16 +17,22 @@
 package com.example.stayalert;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Fragment;
 import android.content.Context;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.hardware.Camera;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.params.StreamConfigurationMap;
+import android.location.Address;
+import android.location.Geocoder;
+import android.location.Location;
 import android.media.Image;
 import android.media.Image.Plane;
 import android.media.ImageReader;
@@ -39,6 +45,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Trace;
+import android.os.Vibrator;
+import android.provider.ContactsContract;
 import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
@@ -57,35 +65,33 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.etebarian.meowbottomnavigation.MeowBottomNavigation;
+import com.example.stayalert.custom.classes.ChartGenerator;
+import com.example.stayalert.custom.classes.ContactsInfo;
+import com.example.stayalert.custom.classes.CustomizedExceptionHandler;
+import com.example.stayalert.custom.classes.DetectionLogsInfo;
+import com.example.stayalert.custom.classes.NotificationInfo;
 import com.example.stayalert.env.ImageUtils;
 import com.example.stayalert.env.Logger;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.AggregateField;
-import com.google.firebase.firestore.AggregateQuery;
-import com.google.firebase.firestore.AggregateQuerySnapshot;
-import com.google.firebase.firestore.AggregateSource;
-import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
-import com.google.firebase.firestore.Source;
 import com.google.firebase.storage.FirebaseStorage;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import firebase.classes.FirebaseDatabase;
@@ -101,6 +107,7 @@ public abstract class CameraActivity extends AppCompatActivity
 
 
   MeowBottomNavigation bottomNavigation;
+  public static int bottomNavIndex=3;
   private static final Logger LOGGER = new Logger();
   private static final String TAG = "CameraActivity";
   private static final int PERMISSIONS_REQUEST = 1;
@@ -114,6 +121,7 @@ public abstract class CameraActivity extends AppCompatActivity
   protected int previewHeight = 0;
   private boolean debug = false;
   protected Handler handler;
+  private Handler scanHandler;
   private HandlerThread handlerThread;
   private boolean useCamera2API;
   private boolean isProcessingFrame = false;
@@ -121,7 +129,7 @@ public abstract class CameraActivity extends AppCompatActivity
   private int[] rgbBytes = null;
   private int yRowStride;
   protected int defaultModelIndex = 0;
-  protected int defaultDeviceIndex = 0;
+  protected int defaultDeviceIndex = 1;
   private Runnable postInferenceCallback;
   private Runnable imageConverter;
   protected ArrayList<String> modelStrings = new ArrayList<String>();
@@ -172,16 +180,20 @@ public abstract class CameraActivity extends AppCompatActivity
   FirebaseFirestore db;
   FirebaseDatabase firebaseDB;
   FirebaseStorage storage = FirebaseStorage.getInstance();
-  public Map<String, Object> userInfo = new HashMap<>();
+  public static Map<String, Object> userInfo = new HashMap<>();
   DialogHelper dialogHelper;
 
   ArrayList<String> deviceStrings = new ArrayList<String>();
 
   public static ArrayList<DetectionLogsInfo> detectionLogsInfo = new ArrayList<>();
+  public static ArrayList<NotificationInfo> notificationsInfo = new ArrayList<>();
   public static Query query;
   public static int drowsyCount=0, yawnCountRes=0;
   public static double averageResponse=0.0;
   double currentResponseTime =0;
+
+  long lastYawnReportTime = System.currentTimeMillis();
+  long lastDrowsyReportTime = System.currentTimeMillis();
 
   public static Map<String, Object> weatherMap = new HashMap<>();
 
@@ -191,7 +203,21 @@ public abstract class CameraActivity extends AppCompatActivity
 
   public static DocumentSnapshot drowsyCountDocument;
   public static DocumentSnapshot yawnCountDocument;
+  public static DocumentSnapshot averageDrowsyCountDocument;
 
+  public static androidx.fragment.app.Fragment lastFragment;
+  public static ArrayList<ContactsInfo> contactInfoList = new ArrayList<>();
+  public static ArrayList<ContactsInfo> favoritesInfoList = new ArrayList<>();
+  public static ChartGenerator chartGenerator;
+  public Location location;
+  public  Geocoder geocoder;
+  public  List<Address> addresses;
+  public static String[] addressGlobal = new String[]{"NA","NA"};
+  public String[] lastCoordinate =new String[]{"0","0"};
+  Vibrator v;
+  boolean vibrating=false;
+  private boolean toastVisible =false;
+  public static boolean canDetect=false;
 
 
   @Override
@@ -207,7 +233,11 @@ public abstract class CameraActivity extends AppCompatActivity
     firebaseDB= new FirebaseDatabase();
     db = FirebaseFirestore.getInstance();
     user = FirebaseAuth.getInstance().getCurrentUser();
+
     getUserInfo();
+
+
+
 
     CameraManager cameraManager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
 
@@ -215,10 +245,17 @@ public abstract class CameraActivity extends AppCompatActivity
     super.onCreate(null);
     getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
+    Thread.setDefaultUncaughtExceptionHandler(new CustomizedExceptionHandler(
+            "/mnt/sdcard/"));
+
+
     dialogHelper= new DialogHelper(this);
     setContentView(R.layout.tfe_od_activity_camera);
+    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LOCKED);
+    dialogHelper.showLoadingDialog("Fetching Content","Getting things ready...");
+
     frameLayout = findViewById(R.id.container);
-    Handler handler = new Handler();
+    scanHandler = new Handler();
     Uri defaultRingtoneUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
     // Create a Ringtone object from the URI
     ringtone = RingtoneManager.getRingtone(CameraActivity.this, defaultRingtoneUri);
@@ -226,6 +263,7 @@ public abstract class CameraActivity extends AppCompatActivity
 
     bottomNavigation= findViewById(R.id.bottomNavigation);
     backBtn= findViewById(R.id.backBtn);
+    geocoder = new Geocoder(this, Locale.getDefault());
 
 
     bottomNavigation.add(new MeowBottomNavigation.Model(1, R.drawable.ic_menu));
@@ -235,107 +273,127 @@ public abstract class CameraActivity extends AppCompatActivity
     bottomNavigation.add(new MeowBottomNavigation.Model(5, R.drawable.ic_profile));
 
 
-
-
-    String[] values = new String[30];
+    v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+    long[] pattern = {0, 1000, 1000};
+    String[] values = new String[20];
 
     runnableCode = new Runnable() {
       @Override
       public void run() {
+
         String eyeValue = eyeStatus;
 
-        if ("closed".equals(eyeValue) && closeCount<30) {
+        if ("closed".equals(eyeValue) && closeCount<20) {
           closeCount++;
         }else if (closeCount>0){
           closeCount--;
         }
         values[currentIndex] = eyeValue;
-        currentIndex = (currentIndex + 1) % 30; // Wrap around to the beginning of the array
-        double closePercentage = (closeCount / 30.0) * 100.0;
+        currentIndex = (currentIndex + 1) % 20; // Wrap around to the beginning of the array
+        double closePercentage = (closeCount / 20.0) * 100.0;
 
+        if(canDetect){
+          if(closePercentage>70 && !ringtone.isPlaying() && !appStopped ){
+            toastAMessage("Drowsiness Alert! Your safety is at risk");
 
-        if(closePercentage>70 && !ringtone.isPlaying() && !appStopped){
-          Toast.makeText(CameraActivity.this, "Please WAKE UP!!!!", Toast.LENGTH_SHORT).show();
-          // Play the default ringtone
-          if(detectedEye==null && values[values.length-1]!=null){
-            ringtone.play();
-            detectedBitmap= copyBitmap;
-            detectedEye=eyeStatus;
-            detectMS=lastProcessingTimeMs+"";
-            startResponseTime= System.currentTimeMillis();
-            statusDriver=" DROWSY ";
-          }
-
-        }
-        else if(closePercentage<60){
-          if(detectedEye!=null && values[values.length-1]!=null){
-            System.out.println("insert");
-            currentResponseTime = (double) (System.currentTimeMillis() - (double)startResponseTime - 1500.0)/1000.0;
-            if(currentResponseTime<0){
-              currentResponseTime=0.3;
+            // Play the default ringtone
+            if(detectedEye==null && values[values.length-1]!=null){
+              ringtone.play();
+              detectedBitmap= copyBitmap;
+              detectedEye=eyeStatus;
+              detectMS=lastProcessingTimeMs+"";
+              startResponseTime= System.currentTimeMillis();
+              statusDriver=" DROWSY ";
             }
-            startResponseTime = 0L;
-
-            saveDetectedImage(detectedBitmap,detectedEye, detectMS+"",currentResponseTime);
-            detectedEye=null;
-            ringtone.stop();
-            statusDriver=" ACTIVE ";
-            //start timer for alert response
           }
+          else if(closePercentage<60){
+            if(detectedEye!=null && values[values.length-1]!=null){
+              System.out.println("insert");
+              currentResponseTime = (double) (System.currentTimeMillis() - (double)startResponseTime - 1500.0)/1000.0;
+              if(currentResponseTime<0){
+                currentResponseTime=0.3;
+              }
+              startResponseTime = 0L;
 
-
-
+              if(lastDrowsyReportTime>3000){
+                saveDetectedImage(detectedBitmap,detectedEye, detectMS+"",currentResponseTime);
+                lastDrowsyReportTime=System.currentTimeMillis();
+              }
+              detectedEye=null;
+              ringtone.stop();
+              statusDriver=" ACTIVE ";
+              //start timer for alert response
+            }
+          }
         }
-        msTV.setText(statusDriver+" "+(int)closePercentage);
 
-        handler.postDelayed(this, 100); // Schedule the task to run again after 100 milliseconds
+//        msTV.setText(statusDriver+" "+(int)closePercentage);
+
+        scanHandler.postDelayed(this, 100); // Schedule the task to run again after 100 milliseconds
       }
     };
-    handler.post(runnableCode);
+    scanHandler.post(runnableCode);
 
     //FOR MOUTH
 
-    String[] valuesYawn = new String[30];
+    String[] valuesYawn = new String[20];
+
 
     Runnable mouthRunnable;
     mouthRunnable = new Runnable() {
       @Override
       public void run() {
+
+
         String mouthValue = mouthStatus;
-        if ("yawn".equals(mouthValue) && yawnCount<30) {
+        if ("yawn".equals(mouthValue) && yawnCount<20) {
           yawnCount++;
         }else if (yawnCount>0){
           yawnCount--;
         }
         valuesYawn[currentIndexYawn] = mouthValue;
-        currentIndexYawn = (currentIndexYawn + 1) % 30; // Wrap around to the beginning of the array
-        double yawnPercentage = (yawnCount / 30.0) * 100.0;
+        currentIndexYawn = (currentIndexYawn + 1) % 20; // Wrap around to the beginning of the array when past 20 it will be back to 1
+        double yawnPercentage = (yawnCount / 20.0) * 100.0;  //convert to perncet base on stringlength
+
+        if(canDetect){
+          if(yawnPercentage>70 && !ringtone.isPlaying() && !appStopped ){
+            toastAMessage("Heads up! A yawn can be a sign of fatigue. Consider getting some fresh air");
 
 
-        if(yawnPercentage>70 && !ringtone.isPlaying() && !appStopped ){
-          Toast.makeText(CameraActivity.this, "YAWNING", Toast.LENGTH_SHORT).show();
+            if(statusDriverMouth.contains("ACTIVE") && valuesYawn[valuesYawn.length-1]!=null && lastYawnReportTime>3000){
+              saveDetectedImage(copyBitmap,mouthStatus,lastProcessingTimeMs+"",0);
+              lastYawnReportTime=System.currentTimeMillis();
+            }
+            statusDriverMouth=" YAWNING ";
 
-
-//          if(statusDriverMouth.contains("ACTIVE")){
-//            firebaseDB.saveImageToLocal(getApplicationContext(),""+timestamp,cropCopyBitmap,"detections");
-//          }
-          if(statusDriverMouth.contains("ACTIVE") && valuesYawn[valuesYawn.length-1]!=null){
-            saveDetectedImage(copyBitmap,mouthStatus,lastProcessingTimeMs+"",0);
           }
-          statusDriverMouth=" YAWNING ";
+          else if(yawnPercentage<=70){
+            statusDriverMouth=" ACTIVE ";
 
+          }
         }
-        else if(yawnPercentage<90){
-          statusDriverMouth=" ACTIVE ";
 
-        }
         if(HomeFrag.statusDriverTV!=null){
           HomeFrag.statusDriverTV.setText((statusDriver.contains("ACTIVE"))?statusDriverMouth:statusDriver);
+
+
+          if(HomeFrag.statusDriverTV.getText().toString().contains("ACTIVE")){
+            if(vibrating){
+              vibrating=false;
+              toastVisible=true;
+              v.cancel();
+            }
+          }else{
+            if(!vibrating){
+              vibrating=true;
+              v.vibrate(pattern, 0);
+            }
+          }
         }
-        handler.postDelayed(this, 100); // Schedule the task to run again after 100 milliseconds
+        scanHandler.postDelayed(this, 100); // Schedule the task to run again after 100 milliseconds
       }
     };
-    handler.post(mouthRunnable);
+    scanHandler.post(mouthRunnable);
 
 
 
@@ -345,28 +403,34 @@ public abstract class CameraActivity extends AppCompatActivity
       public Unit invoke(MeowBottomNavigation.Model model) {
         switch (model.getId()){
           case 1:
-            replaceFragment(new MenuFrag());
+            bottomNavIndex=1;
+            addFragment(new MenuFrag());
+            HomeFrag.notifIcon.setEnabled(false);
             Toast.makeText(CameraActivity.this, "Menu", Toast.LENGTH_SHORT).show();
             break;
           case 2:
-            replaceFragment(new PhoneFrag());
+            bottomNavIndex=2;
+            addFragment(new PhoneFrag());
             Toast.makeText(CameraActivity.this, "Phone", Toast.LENGTH_SHORT).show();
-
             break;
           case 3:
-            replaceFragment(new HomeFrag());
+            bottomNavIndex=3;
+            addFragment(new HomeFrag());
+            HomeFrag.notifIcon.setEnabled(true);
             Toast.makeText(CameraActivity.this, "Home", Toast.LENGTH_SHORT).show();
+
 
             break;
           case 4:
-            replaceFragment(new StatsFrag());
+            bottomNavIndex=4;
+            addFragment(new StatsFrag());
             Toast.makeText(CameraActivity.this, "Stats", Toast.LENGTH_SHORT).show();
 
             break;
           case 5:
-            replaceFragment(new ProfileFrag());
+            bottomNavIndex=5;
+            addFragment(new ProfileFrag());
             Toast.makeText(CameraActivity.this, "Profile", Toast.LENGTH_SHORT).show();
-
             break;
         }
         return null;
@@ -495,33 +559,28 @@ public abstract class CameraActivity extends AppCompatActivity
         minusImageView.performClick();
         updateActiveModel();
         firebaseDB.checkSync();
-
-
       }
     }, 6000);
+
+    Handler loadingHandler = new Handler();
+    loadingHandler.postDelayed(new Runnable() {
+      @Override
+      public void run() {
+        dialogHelper.dismissDialog();
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+        canDetect = true;
+      }
+    }, 8000);
 
     refreshDefaultQuery();
 
     updateDetectionLogs(null,"");
-    getDetectionRecordsCount(null, null, new TaskCallback() {
-      @Override
-      public void onSuccess(Object result) {
-        Log.d(TAG, "Get count success");
-      }
 
-      @Override
-      public void onFailure(String errorMessage) {
-        Log.d(TAG, "Get count failed");
-      }
-    });
-
-    HomeFrag.getWeatherDetails("Calape","Philippines");
-    firebaseDB.checkStatCount("drowsy");
-    firebaseDB.checkStatCount("yawn");
-    firebaseDB.checkStatCount("average_response");
-
-
+    getContactList();
+    getContactFavoritesList();
   }
+
+
 
   private void refreshDefaultQuery() {
     Calendar calendar = Calendar.getInstance();
@@ -540,6 +599,8 @@ public abstract class CameraActivity extends AppCompatActivity
             .orderBy("timestamp", Query.Direction.DESCENDING)
             .limit(10);
 
+
+
   }
 
   ////////////////////////////////////////////
@@ -553,8 +614,20 @@ public abstract class CameraActivity extends AppCompatActivity
         Log.d(TAG, "DocumentSnapshot datas: " + documentSnapshot.getData());
         userInfo = documentSnapshot.getData();
         bottomNavigation.show(3,true);
-        replaceFragment(new HomeFrag());
+        addFragment(new HomeFrag());
         bottomNavigation.clearCount(1);
+
+        chartGenerator = new ChartGenerator();
+        chartGenerator.setRange("yesterday");
+
+
+        //moves count if past n days
+        firebaseDB.checkStatCount("drowsy");
+        firebaseDB.checkStatCount("yawn");
+        firebaseDB.checkStatCount("average_response");
+
+
+
       }
 
       @Override
@@ -567,12 +640,62 @@ public abstract class CameraActivity extends AppCompatActivity
         Log.d(TAG,"Failed getting user info: "+e);
         Toast.makeText(CameraActivity.this, "Unable to load user information", Toast.LENGTH_SHORT).show();
         bottomNavigation.show(3,true);
-        replaceFragment(new HomeFrag());
+        addFragment(new HomeFrag());
         bottomNavigation.clearCount(1);
       }
     });
 
   }
+
+  @SuppressLint("MissingPermission")
+  public void getCurrentAddress(){
+
+    Handler addressHandler= new Handler();
+    addressHandler.post(new Runnable() {
+      @Override
+      public void run() {
+        //sige na siya e call nga function to check if address kay na chage
+        try {
+          if (location != null && (!lastCoordinate[0].equals(String.valueOf(location.getLatitude())) || !lastCoordinate[1].equals(String.valueOf(location.getLongitude())))) {
+            addresses = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1); // Here 1 represent max location result to returned, by documents it recommended 1 to 5
+            lastCoordinate = new String[]{String.valueOf(location.getLatitude()), String.valueOf(location.getLongitude())};
+          }else{
+            return;
+          }
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+        String address="NA",city="NA" ,country="NA",state="NA",postalCode, knownName;
+
+        if(addresses!=null){
+          address = addresses.get(0).getAddressLine(0); // If any additional address line present than only, check with max available address lines by getMaxAddressLineIndex()
+          city = addresses.get(0).getLocality();
+          state = addresses.get(0).getAdminArea();
+          country = addresses.get(0).getCountryName();
+          postalCode = addresses.get(0).getPostalCode();
+          knownName = addresses.get(0).getFeatureName();
+
+          addressGlobal = new String[]{city,state,address};
+
+          System.out.printf("address "+postalCode);
+          System.out.printf("country "+String.valueOf(location.getLatitude())+","+String.valueOf(location.getLongitude())+" sdf");
+        }else{
+          if(location!=null){
+            addressGlobal = new String[]{String.valueOf(location.getLatitude()),String.valueOf(location.getLongitude())};
+          }
+        }
+
+        if(!city.equals("NA") && city!=weatherMap.get("city")){
+          HomeFrag.getWeatherDetails(city,country);
+        }
+      }
+    });
+
+
+
+  }
+
+
 
   public void saveDetectedImage(Bitmap bitmap,String detectionType, String ms, double responseTime){
     if(detectionType.equals("open")||detectionType.equals("no_yawn")){
@@ -580,10 +703,12 @@ public abstract class CameraActivity extends AppCompatActivity
     }
 
     String result[] =firebaseDB.saveImageToLocal(""+timestamp,bitmap,"detections");
+
     if(result!=null){
       Map<String, Object> imageInfo = new HashMap<>();
       imageInfo.put("detection_name", (detectionType.equals("yawn")?"Yawn":"Drowsy"));
       imageInfo.put("timestamp", date);
+      imageInfo.put("location",(addressGlobal.length==3)? addressGlobal[2]: addressGlobal[0]+", "+ addressGlobal[1]);
       imageInfo.put("file_name",result[1]);
       imageInfo.put("local_path",result[0]);
       imageInfo.put("firestore_path","users/"+user.getUid()+"/image_detection/"+result[1]);
@@ -598,33 +723,13 @@ public abstract class CameraActivity extends AppCompatActivity
 
       updateDetectionLogs(query, detectionType.equals("yawn")?"Yawn":"Drowsy");
       firebaseDB.incrementCount(detectionType.equals("closed")?"drowsy":detectionType,1);
+      firebaseDB.incrementCount("average_response",responseTime);
 
 
-
-      //can be possible to start display of image even if saved to cache
-      //if save to server trigger syncing
     }
   }
 
-  public void getDetectionCountOnLocal(){
-    DocumentReference docRef = db.collection("users/"+user.getUid()+"/user_res/").document("detection_records");
 
-    docRef.get(Source.CACHE).addOnCompleteListener(task -> {
-      if (task.isSuccessful()) {
-        DocumentSnapshot document = task.getResult();
-        if (document.exists()) {
-          drowsyCount= Integer.parseInt(document.get("today_count").toString());
-//          syncToServer();
-        } else {
-          Log.d(TAG+" getCount","No connection to database");
-        }
-      } else {
-        // Handle failures
-        Exception exception = task.getException();
-        Log.w(TAG, "+ getCount: Error getting document", exception);
-      }
-    });
-  }
 
   public void setDetectionCountOnLocal(int count){
     Map<String, Object> countInfo = new HashMap<>();
@@ -647,16 +752,17 @@ public abstract class CameraActivity extends AppCompatActivity
       this.query=query;
     }
     refreshDefaultQuery();
+    if(chartGenerator!=null){
+      chartGenerator.fetchDetectionCounts();
+    }
     detectionLogsInfo = firebaseDB.getDetectionLogsInfo(this.query, new FirebaseDatabase.ArrayListTaskCallback<Void>() {
       @Override
       public void onSuccess(ArrayList<DetectionLogsInfo> arrayList) {
         detectionLogsInfo =arrayList;
-        if(detectionType.equals("Yawn")){
-          yawnCountRes++;
-        }else if(detectionType.equals("Drowsy")){
-          averageResponse= ((averageResponse*drowsyCount)+currentResponseTime)/(drowsyCount+1);
-          drowsyCount++;
-        }
+//        if(detectionType.equals("Yawn")){
+//        }else if(detectionType.equals("Drowsy")){
+//          averageResponse= ((averageResponse*drowsyCount)+currentResponseTime)/(drowsyCount+1);
+//        }
         StatsFrag statsFrag = (StatsFrag)getSupportFragmentManager().findFragmentByTag("StatsFrag");
         if(statsFrag!=null&& statsFrag.isVisible()){
           StatsFrag fragment = (StatsFrag) getSupportFragmentManager().findFragmentById(R.id.frame_layout);
@@ -668,7 +774,6 @@ public abstract class CameraActivity extends AppCompatActivity
       @Override
       public void onFailure(String errorMessage) {
         System.out.println("error "+errorMessage);
-
       }
     });
   }
@@ -691,90 +796,123 @@ public abstract class CameraActivity extends AppCompatActivity
     return calendar;
   }
 
-  public void getDetectionRecordsCount(Date startDate, Date endDate, TaskCallback callback){
+  public static void getDetectionRecordsCount(String range, TaskCallback callback){
 
-    if(startDate==null){
-      getDetectionCountOnLocal();
+    int limit=24;
+    if(range.equals("day3")){
+      limit=3;
+    }else if(range.equals("day7")) {
+      limit = 7;
+    }else if(range.equals("day")) {
+      limit = 30;
     }
 
-    Date newStartDate = getCurrentDate().getTime();
+    if(drowsyCountDocument==null || yawnCountDocument==null || averageDrowsyCountDocument==null){
+      return;
+    }
 
-    Query yawnCountQuery = db.collection("users/"+user.getUid()+"/image_detection").whereEqualTo("detection_name", "Yawn");
-    Query drowsyCountQuery = db.collection("users/"+user.getUid()+"/image_detection").whereEqualTo("detection_name", "Drowsy");
-    AggregateQuery countQueryYawn = yawnCountQuery
-            .whereGreaterThanOrEqualTo("timestamp", (startDate!=null)?startDate:newStartDate)
-            .whereLessThanOrEqualTo("timestamp", (endDate!=null)?endDate:new Date())
-            .count();
-    AggregateQuery countQueryDrowsy = drowsyCountQuery
-            .whereGreaterThanOrEqualTo("timestamp", (startDate!=null)?startDate:newStartDate)
-            .whereLessThanOrEqualTo("timestamp", (endDate!=null)?endDate:new Date())
-            .count();
 
-    countQueryYawn.get(AggregateSource.SERVER).addOnCompleteListener(new OnCompleteListener<AggregateQuerySnapshot>() {
-      @Override
-      public void onComplete(@NonNull Task<AggregateQuerySnapshot> task) {
-        if (task.isSuccessful()) {
-          // Count fetched successfully
-          AggregateQuerySnapshot snapshot = task.getResult();
-          yawnCountRes=(int)snapshot.getCount();
-          callback.onSuccess(true);
-        } else {
-          Log.d(TAG, "Count failed: ", task.getException());
+    double drowsySum=0;
+    for (int i = 1; i < 80; i++) {
+      String field=((range.equals("day7") || range.equals("day3"))?"day":range)+String.format("%02d",i);
+      if(drowsyCountDocument.contains(field) && i<= limit){
+        int value= (int) Double.parseDouble(drowsyCountDocument.getData().get(field).toString()) ;
+        if(value>0){
+          drowsySum += value;
+        }
+      }else{
+        break;
+      }
+    }
+    drowsyCount=(int)drowsySum;
+
+    double yawnSum=0;
+    for (int i = 1; i < 80; i++) {
+      String field=((range.equals("day7") || range.equals("day3"))?"day":range)+String.format("%02d",i);
+      if(yawnCountDocument.contains(field) && i<= limit){
+        int value= (int) Double.parseDouble(yawnCountDocument.getData().get(field).toString()) ;
+        if(value>0){
+          yawnSum += value;
+        }
+      }else{
+        break;
+      }
+    }
+    yawnCountRes=(int)yawnSum;
+
+    double averageSum=0;
+    for (int i = 1; i < 80; i++) {
+      String field=((range.equals("day7") || range.equals("day3"))?"day":range)+String.format("%02d",i);
+      if(averageDrowsyCountDocument.contains(field) && i<= limit){
+        double value= Double.parseDouble(averageDrowsyCountDocument.getData().get(field).toString()) ;
+        if(value>0){
+          averageSum += value;
+        }
+      }else{
+        break;
+      }
+    }
+    averageResponse=Double.isNaN(averageSum/drowsyCount)?0:averageSum/drowsyCount;
+
+
+    callback.onSuccess(true);
+  }
+
+
+  public void getContactList(){
+    Uri uri = ContactsContract.Contacts.CONTENT_URI;
+    String sort = ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME+"ASC";
+    Cursor cursor = getContentResolver().query(
+            uri, null,null,null,sort
+    );
+
+    if (cursor.getCount()>0){
+      while (cursor.moveToNext()){
+        @SuppressLint("Range") String id = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts._ID));
+
+        @SuppressLint("Range") String name = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
+
+        Uri uriPhone = ContactsContract.CommonDataKinds.Phone.CONTENT_URI;
+
+        String selection = ContactsContract.CommonDataKinds.Phone.CONTACT_ID+" =?";
+
+        Cursor cursor1= getContentResolver().query(
+                uriPhone, null, selection, new String[]{id},null
+        );
+
+        if (cursor1.moveToNext()){
+          @SuppressLint("Range") String number = cursor1.getString(cursor1.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+
+          contactInfoList.add(new ContactsInfo(name, number, null));
+
+          cursor1.close();
         }
       }
-    });
+      cursor.close();
+    }
+  }
 
-    countQueryDrowsy.get(AggregateSource.SERVER).addOnCompleteListener(new OnCompleteListener<AggregateQuerySnapshot>() {
+  public void getContactFavoritesList(){
+    Query query = db.collection("users/"+user.getUid()+"/contact_favorites");
+    firebaseDB.getFavoritesList(query, new FirebaseDatabase.ArrayListTaskCallbackContact<Void>() {
       @Override
-      public void onComplete(@NonNull Task<AggregateQuerySnapshot> task) {
-        if (task.isSuccessful()) {
-          // Count fetched successfully
-          AggregateQuerySnapshot snapshot = task.getResult();
-          drowsyCount=(int)snapshot.getCount();
-          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            Date date = new Date();
-            if(startDate!=null){
-              date= startDate;
-            }
-            if(date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate().equals(LocalDate.now())){
-              setDetectionCountOnLocal(drowsyCount);
-              System.out.println("is today");
-            }
-          }
-          callback.onSuccess(true);
-        } else {
-          Log.d(TAG, "Count failed: ", task.getException());
-        }
+      public void onSuccess(ArrayList<ContactsInfo> arrayList) {
+        favoritesInfoList= arrayList;
       }
-    });
 
-    Query query= db.collection("users/"+user.getUid()+"/image_detection").whereEqualTo("detection_name", "Drowsy").whereGreaterThanOrEqualTo("timestamp", (startDate!=null)?startDate:newStartDate)
-            .whereLessThanOrEqualTo("timestamp", (endDate!=null)?endDate:new Date());
-    AggregateQuery aggregateQuery = query.aggregate(AggregateField.average("response_time"));
-    aggregateQuery.get(AggregateSource.SERVER).addOnCompleteListener(new OnCompleteListener<AggregateQuerySnapshot>() {
       @Override
-      public void onComplete(@NonNull Task<AggregateQuerySnapshot> task) {
-        if (task.isSuccessful()) {
-          // Aggregate fetched successfully
-          AggregateQuerySnapshot snapshot = task.getResult();
-          Double average = snapshot.get(AggregateField.average("response_time"));
-          if (average != null) {
-            callback.onSuccess(true);
-            averageResponse= average;
-          }
-          else{
-            Log.d(TAG, "Aggregation failed: Null");
-          }
-
-        } else {
-          Log.d(TAG, "Aggregation failed: "+ task.getException().getLocalizedMessage());
-        }
+      public void onFailure(String errorMessage) {
+        Log.e(TAG, errorMessage);
       }
     });
   }
 
-
-
+  public void toastAMessage(String message){
+    if(!toastVisible){
+      toastVisible=true;
+      Toast.makeText(context, message, Toast.LENGTH_LONG).show();
+    }
+  }
 
 
   @Override
@@ -793,17 +931,76 @@ public abstract class CameraActivity extends AppCompatActivity
     }
     ringtone.stop();
     appStopped=true;
-    handler.removeCallbacks(runnableCode);
+    scanHandler.removeCallbacks(runnableCode);
     finish();
   }
 
 
 
-  private void replaceFragment(androidx.fragment.app.Fragment fragment) {
+  public void replaceFragment(androidx.fragment.app.Fragment fragment) {
     FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
     transaction.replace(R.id.frame_layout,fragment,fragment.getClass().getSimpleName());
     transaction.commit();
   }
+
+  public void addFragment(androidx.fragment.app.Fragment fragment) {
+    FragmentManager fragmentManager = getSupportFragmentManager();
+    if (!fragmentManager.isDestroyed()) {
+      int backStackEntryCount = fragmentManager.getBackStackEntryCount();
+
+
+      if((fragment instanceof HomeFrag && backStackEntryCount>1)){
+        removeFragment();
+        HomeFrag.minimizeMap();
+      }else{
+
+        if(bottomNavIndex==3 && backStackEntryCount > 0 && !(lastFragment instanceof HomeFrag)){
+          HomeFrag.minimizeMap();
+          return;
+        }
+
+        for (int i = 0; i < backStackEntryCount - 1; i++) {
+          fragmentManager.popBackStack();
+        }
+
+
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        transaction.add(R.id.frame_layout, fragment, fragment.getClass().getSimpleName());
+        transaction.addToBackStack(null); // This allows the user to press the back button to return to the previous fragment
+        transaction.commit();
+      }
+
+//      setWrapper(fragment);
+
+    }
+
+
+  }
+
+
+  public void removeFragment() {
+    FragmentManager fragmentManager = getSupportFragmentManager();
+    if (fragmentManager.getBackStackEntryCount() > 0) {
+      fragmentManager.popBackStack();
+    }
+  }
+
+  public void setWrapper(androidx.fragment.app.Fragment fragment) {
+    if (HomeFrag.wrapper != null) {
+      if(fragment instanceof HomeFrag){
+        HomeFrag.wrapper.setVisibility(View.GONE);
+      }else{
+        new Handler().postDelayed(new Runnable() {
+          @Override
+          public void run() {
+              HomeFrag.wrapper.setVisibility(View.VISIBLE);
+          }
+        }, 1000); // Delay for 1 second (1000 milliseconds)
+      }
+
+    }
+  }
+
   public void changeFrameLayoutElevation() {
     int newElevation= elevation;
     if (frameLayout != null) {
@@ -812,12 +1009,10 @@ public abstract class CameraActivity extends AppCompatActivity
         backBtn.setElevation(newElevation);
         backBtn.setVisibility(View.VISIBLE);
         msTV.setElevation(newElevation);
-        HomeFrag.viewDetectionBtn.setVisibility(View.GONE);
       }
       else{
         backBtn.setVisibility(View.GONE);
         msTV.setElevation(newElevation);
-        HomeFrag.viewDetectionBtn.setVisibility(View.VISIBLE);
       }
     }
   }
@@ -1107,6 +1302,7 @@ public abstract class CameraActivity extends AppCompatActivity
 
     String cameraId = rearCam ? "0":chooseCamera();
 
+//    String cameraId = rearCam ? chooseCamera():"0";
     Fragment fragment;
     if (useCamera2API) {
       CameraConnectionFragment camera2Fragment =
@@ -1134,6 +1330,7 @@ public abstract class CameraActivity extends AppCompatActivity
 
 
   }
+
 
   protected void fillBytes(final Plane[] planes, final byte[][] yuvBytes) {
     // Because of the variable row stride it's not possible to know in

@@ -2,9 +2,11 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/signInLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#fff"
+    android:visibility="gone"
     tools:context=".Sign_in">
 
 
@@ -174,7 +176,7 @@
             android:fontFamily="@font/poppins_semibold"
             android:gravity="right"
             android:text="Forgot password?"
-            android:textColor="@drawable/forgot_pass_button"
+            android:textColor="@drawable/primary_black_selector"
             android:textSize="14sp"
             app:layout_constraintEnd_toEndOf="@+id/ETpassLayout"
             app:layout_constraintTop_toBottomOf="@+id/ETpassLayout" />
@@ -259,7 +261,7 @@
                 android:layout_height="44dp"
                 android:drawableLeft="@drawable/ic_google_icon_logo_svgrepo_com"
                 android:gravity="left|center_vertical"
-                android:text="Sign up with Google"
+                android:text="Sign in with Google"
                 android:textColor="@color/black"
                 app:backgroundTint="@color/white"
                 android:textAllCaps="false"

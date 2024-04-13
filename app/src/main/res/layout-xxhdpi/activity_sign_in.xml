@@ -2,15 +2,18 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/signInLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#fff"
+    android:visibility="gone"
     tools:context=".Sign_in">
 
 
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:visibility="visible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -42,8 +45,8 @@
             android:layout_width="89dp"
             android:layout_height="304dp"
             android:layout_alignParentBottom="true"
-            android:layout_marginBottom="-80dp"
             android:layout_marginLeft="-30dp"
+            android:layout_marginBottom="-80dp"
             android:src="@drawable/bg_rectangle_4" />
 
         <ImageView
@@ -55,8 +58,6 @@
             android:layout_marginBottom="0dp"
             android:src="@drawable/bg_rectangle_3"
             app:layout_constraintStart_toStartOf="parent" />
-
-
 
 
     </RelativeLayout>
@@ -72,8 +73,8 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="74dp"
             android:fontFamily="@font/poppins_semibold"
-            android:text="Login Here"
             android:gravity="center"
+            android:text="Login Here"
             android:textColor="@color/primary"
             android:textSize="30sp"
             app:layout_constraintEnd_toEndOf="parent"
@@ -99,13 +100,13 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="50dp"
-            app:endIconMode="clear_text"
             android:textColorHint="@color/selection_highlight"
             app:boxStrokeWidth="0dp"
             app:boxStrokeWidthFocused="0dp"
+            app:endIconMode="clear_text"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textView2" >
+            app:layout_constraintTop_toBottomOf="@+id/textView2">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/ETusername"
@@ -116,8 +117,7 @@
                 android:hint="Email"
                 android:inputType="textPersonName"
                 android:paddingLeft="15dp"
-                android:textSize="16sp"
-                />
+                android:textSize="16sp" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <TextView
@@ -135,14 +135,14 @@
             android:id="@+id/ETpassLayout"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="25dp"
+            android:textColorHint="@color/selection_highlight"
             app:boxStrokeWidth="0dp"
             app:boxStrokeWidthFocused="0dp"
-            android:layout_marginTop="25dp"
-            app:passwordToggleEnabled="true"
             app:layout_constraintEnd_toEndOf="parent"
-            android:textColorHint="@color/selection_highlight"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/ETusernameLayout">
+            app:layout_constraintTop_toBottomOf="@+id/ETusernameLayout"
+            app:passwordToggleEnabled="true">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/ETpass"
@@ -177,7 +177,7 @@
             android:fontFamily="@font/poppins_semibold"
             android:gravity="right"
             android:text="Forgot password?"
-            android:textColor="@drawable/forgot_pass_button"
+            android:textColor="@drawable/primary_black_selector"
             android:textSize="14sp"
             app:layout_constraintEnd_toEndOf="@+id/ETpassLayout"
             app:layout_constraintTop_toBottomOf="@+id/ETpassLayout" />
@@ -192,10 +192,10 @@
             android:ems="8"
             android:fontFamily="@font/poppins_semibold"
             android:padding="10dp"
-            android:textSize="20sp"
             android:text="Sign in"
             android:textAllCaps="false"
             android:textColor="@color/white"
+            android:textSize="20sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/TVforgot" />
@@ -206,8 +206,8 @@
             android:layout_width="150dp"
             android:layout_height="50dp"
             android:layout_marginLeft="3dp"
-            android:visibility="gone"
             android:elevation="10dp"
+            android:visibility="gone"
             app:layout_constraintBottom_toBottomOf="@+id/BTNsignin"
             app:layout_constraintEnd_toEndOf="@+id/BTNsignin"
             app:layout_constraintStart_toStartOf="@+id/BTNsignin"
@@ -244,15 +244,14 @@
             app:layout_constraintBottom_toTopOf="@+id/linearLayout"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.501"
-            app:layout_constraintStart_toStartOf="parent"
-            />
+            app:layout_constraintStart_toStartOf="parent" />
 
         <LinearLayout
             android:id="@+id/linearLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center"
             android:layout_marginBottom="20dp"
+            android:gravity="center"
             android:orientation="horizontal"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
@@ -264,10 +263,10 @@
                 android:layout_height="44dp"
                 android:drawableLeft="@drawable/ic_google_icon_logo_svgrepo_com"
                 android:gravity="left|center_vertical"
-                android:text="Sign up with Google"
+                android:text="Sign in with Google"
+                android:textAllCaps="false"
                 android:textColor="@color/black"
                 app:backgroundTint="@color/white"
-                android:textAllCaps="false"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/TVtext3"
                 tools:ignore="SpeakableTextPresentCheck,TouchTargetSizeCheck,TouchTargetSizeCheck" />
