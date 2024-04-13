@@ -323,6 +323,7 @@ public class StatsFrag extends Fragment implements AdapterView.OnItemSelectedLis
         }
 
         if(CameraActivity.yawnCountDocument!=null && CameraActivity.drowsyCountDocument!= null){
+            chartGenerator.resetCounts();
             chartGenerator.setRange(range);
             chartGenerator.setLineChart(lineChart);
             chartGenerator.processYawnCount(CameraActivity.yawnCountDocument,range);

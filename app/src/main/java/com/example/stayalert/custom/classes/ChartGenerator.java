@@ -177,6 +177,7 @@ public class ChartGenerator {
 
     public void processDrowsyCount(DocumentSnapshot documentSnapshot, String range){
         drowsyList.clear();
+
         for (int i = 1; i < 80; i++) {
             String field=((range.equals("day7") || range.equals("day3"))?"day":range)+String.format("%02d",i);
             if(documentSnapshot.contains(field) && i<= daysRange){
@@ -207,6 +208,7 @@ public class ChartGenerator {
 
     public void processYawnCount(DocumentSnapshot documentSnapshot, String range) {
         yawnList.clear();
+
         for (int i = 1; i < 80; i++) {
             String field = ((range.equals("day7") || range.equals("day3")) ? "day" : range) + String.format("%02d", i);
             if (documentSnapshot.contains(field) && i <= daysRange) {
@@ -298,6 +300,11 @@ public class ChartGenerator {
                 Collections.reverse(xValues);
                 xValues.add(0,"Date");
                 xValues.add(sdf.format(currentDate));
+
+                List<Integer> sublist = yawnList.subList(0,3);
+                yawnList = new ArrayList<>(sublist);
+                List<Integer> sublist2 = drowsyList.subList(0,3);
+                drowsyList = new ArrayList<>(sublist2);
             }else if(range.equals("day7")){
                 daysRange=7;
                 Date tomorrowDate;
@@ -309,6 +316,11 @@ public class ChartGenerator {
                 Collections.reverse(xValues);
                 xValues.add(0,"Date");
                 xValues.add(sdf.format(currentDate));
+
+                List<Integer> sublist = yawnList.subList(0,7);
+                yawnList = new ArrayList<>(sublist);
+                List<Integer> sublist2 = drowsyList.subList(0,7);
+                drowsyList = new ArrayList<>(sublist2);
             }
 
 
@@ -440,6 +452,12 @@ public class ChartGenerator {
             }
         }
         return sum;
+    }
+
+    public void resetCounts(){
+        highestTime=1;
+        lowestTime=24;
+        highestYLength=0;
     }
 
     public void setDrowsyList(ArrayList<Integer> drowsyList) {
