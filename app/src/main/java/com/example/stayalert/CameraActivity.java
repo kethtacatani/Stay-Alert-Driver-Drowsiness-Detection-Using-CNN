@@ -25,6 +25,7 @@ import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.RectF;
 import android.hardware.Camera;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
@@ -73,9 +74,13 @@ import com.example.stayalert.custom.classes.ChartGenerator;
 import com.example.stayalert.custom.classes.ContactsInfo;
 import com.example.stayalert.custom.classes.CustomizedExceptionHandler;
 import com.example.stayalert.custom.classes.DetectionLogsInfo;
+import com.example.stayalert.custom.classes.ImageProcessor;
 import com.example.stayalert.custom.classes.NotificationInfo;
 import com.example.stayalert.env.ImageUtils;
 import com.example.stayalert.env.Logger;
+import com.example.stayalert.env.Utils;
+import com.example.stayalert.tflite.Classifier;
+import com.example.stayalert.tflite.YoloV5Classifier;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -160,6 +165,7 @@ public abstract class CameraActivity extends AppCompatActivity
   public long timestamp = 0;
   public long lastProcessingTimeMs;
   public float confidenceLevel=0;
+  public YoloV5Classifier detector;
 
   public static boolean isOfflineMode=false;
 
@@ -276,6 +282,7 @@ public abstract class CameraActivity extends AppCompatActivity
     v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
     long[] pattern = {0, 1000, 1000};
     String[] values = new String[20];
+    ImageProcessor imageChecker = new ImageProcessor();
 
     runnableCode = new Runnable() {
       @Override
@@ -318,12 +325,15 @@ public abstract class CameraActivity extends AppCompatActivity
               if(lastDrowsyReportTime>3000){
                 saveDetectedImage(detectedBitmap,detectedEye, detectMS+"",currentResponseTime);
                 lastDrowsyReportTime=System.currentTimeMillis();
+
+
               }
               detectedEye=null;
-              ringtone.stop();
+
               statusDriver=" ACTIVE ";
               //start timer for alert response
             }
+            ringtone.stop();
           }
         }
 
@@ -361,6 +371,7 @@ public abstract class CameraActivity extends AppCompatActivity
 
 
             if(statusDriverMouth.contains("ACTIVE") && valuesYawn[valuesYawn.length-1]!=null && lastYawnReportTime>3000){
+
               saveDetectedImage(copyBitmap,mouthStatus,lastProcessingTimeMs+"",0);
               lastYawnReportTime=System.currentTimeMillis();
             }
@@ -578,6 +589,39 @@ public abstract class CameraActivity extends AppCompatActivity
 
     getContactList();
     getContactFavoritesList();
+  }
+
+  public interface ImageDetectionCallback {
+    void onImageDetected(boolean isTrue, List<Classifier.Recognition> results);
+  }
+
+  public boolean checkImage(Bitmap bitmap, ImageDetectionCallback callback){
+    int size=160;
+    Bitmap cropBitmap = Utils.processBitmap(bitmap, size);
+
+    List<String> resultTitles = new ArrayList<>();
+
+    Handler handler = new Handler();
+
+    new Thread(() -> {
+      final List<Classifier.Recognition> results = detector.recognizeImage(cropBitmap);
+      handler.post(new Runnable() {
+        @Override
+        public void run() {
+          for (final Classifier.Recognition result : results) {
+            final RectF location = result.getLocation();
+            if (location != null && result.getConfidence() >= 0.5f) {
+              resultTitles.add(result.getTitle());
+            }
+          }
+          if(resultTitles.contains("closed") || resultTitles.contains("yawn")){
+            callback.onImageDetected(true, results);
+          }
+        }
+      });
+    }).start();
+
+    return false;
   }
 
 
@@ -1180,6 +1224,7 @@ public abstract class CameraActivity extends AppCompatActivity
   public synchronized void onPause() {
     LOGGER.d("onPause " + this);
     ringtone.stop();
+    v.cancel();
     handlerThread.quitSafely();
     try {
       handlerThread.join();
@@ -1202,6 +1247,9 @@ public abstract class CameraActivity extends AppCompatActivity
   public synchronized void onDestroy() {
     LOGGER.d("onDestroy " + this);
     super.onDestroy();
+    v.cancel();
+    ringtone.stop();
+
   }
 
   protected synchronized void runInBackground(final Runnable r) {

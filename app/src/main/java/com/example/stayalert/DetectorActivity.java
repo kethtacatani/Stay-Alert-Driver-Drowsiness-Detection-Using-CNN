@@ -72,7 +72,7 @@ public class DetectorActivity extends com.example.stayalert.CameraActivity imple
     OverlayView trackingOverlay;
     private Integer sensorOrientation;
 
-    private YoloV5Classifier detector;
+
 
     private Bitmap rgbFrameBitmap = null;
     private Bitmap croppedBitmap = null;
@@ -337,7 +337,7 @@ public class DetectorActivity extends com.example.stayalert.CameraActivity imple
                             final RectF location = result.getLocation();
                             if (location != null && result.getConfidence() >= minimumConfidence) {
                                 setCanvas(canvas,result.getTitle(),location);
-                                copyBitmap=newBm;
+
 
                                 cropToFrameTransform.mapRect(location);
                                 resultTitles.add(result.getTitle());
@@ -353,6 +353,9 @@ public class DetectorActivity extends com.example.stayalert.CameraActivity imple
 //                        RectF myRectF = new RectF(80, 90, 80, 90);
 //                        setCanvas(canvas,"sdd",myRectF);
 //                        dialogHelper.showTestImage(copyBitmap);
+                        if(resultTitles.contains("closed")|| resultTitles.contains("yawn")){
+                            copyBitmap=newBm;
+                        }
 
                         eyeStatus=resultTitles.contains("open")||resultTitles.contains("closed")?resultTitles.contains("open") ? "open" : "closed":"";
                         mouthStatus=resultTitles.contains("yawn")||resultTitles.contains("no_yawn")?resultTitles.contains("yawn") ? "yawn" : "no_yawn":"";
@@ -469,6 +472,8 @@ public class DetectorActivity extends com.example.stayalert.CameraActivity imple
         }
         return dstBmp;
     }
+
+
 
     @Override
     protected int getLayoutId() {
