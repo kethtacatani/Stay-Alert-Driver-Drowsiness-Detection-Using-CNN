@@ -70,28 +70,33 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.etebarian.meowbottomnavigation.MeowBottomNavigation;
+import com.example.stayalert.custom.classes.BitmapInfo;
 import com.example.stayalert.custom.classes.ChartGenerator;
 import com.example.stayalert.custom.classes.ContactsInfo;
 import com.example.stayalert.custom.classes.CustomizedExceptionHandler;
 import com.example.stayalert.custom.classes.DetectionLogsInfo;
-import com.example.stayalert.custom.classes.ImageProcessor;
+import com.example.stayalert.custom.classes.NotificationBuilder;
 import com.example.stayalert.custom.classes.NotificationInfo;
+import com.example.stayalert.custom.classes.SMSManager;
 import com.example.stayalert.env.ImageUtils;
 import com.example.stayalert.env.Logger;
 import com.example.stayalert.env.Utils;
 import com.example.stayalert.tflite.Classifier;
 import com.example.stayalert.tflite.YoloV5Classifier;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.storage.FirebaseStorage;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -103,6 +108,11 @@ import firebase.classes.FirebaseDatabase;
 import helper.classes.DialogHelper;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 public abstract class CameraActivity extends AppCompatActivity
     implements OnImageAvailableListener,
@@ -162,6 +172,7 @@ public abstract class CameraActivity extends AppCompatActivity
   public static String mouthStatus="";
   public Bitmap cropCopyBitmap = null;
   public Bitmap copyBitmap = null;
+  BitmapInfo detectedBitmapInfo;
   public long timestamp = 0;
   public long lastProcessingTimeMs;
   public float confidenceLevel=0;
@@ -175,6 +186,7 @@ public abstract class CameraActivity extends AppCompatActivity
   private int closeCount = 0;
   private int yawnCount = 0;
   private Runnable runnableCode;
+  private Runnable mouthRunnable;
   boolean ring=false;
   Ringtone ringtone;
   boolean  appStopped=false;
@@ -197,6 +209,9 @@ public abstract class CameraActivity extends AppCompatActivity
   public static int drowsyCount=0, yawnCountRes=0;
   public static double averageResponse=0.0;
   double currentResponseTime =0;
+  public static Timestamp lastDetectionTime =null;
+  public static NotificationBuilder notificationBuilder;
+  public static QuerySnapshot detectionSnapshot=null;
 
   long lastYawnReportTime = System.currentTimeMillis();
   long lastDrowsyReportTime = System.currentTimeMillis();
@@ -206,6 +221,8 @@ public abstract class CameraActivity extends AppCompatActivity
   Bitmap detectedBitmap;
   String detectedEye, detectMS;
   private long startResponseTime = 0L;
+  public static Date lastDetectionOnOpen= new Date();
+
 
   public static DocumentSnapshot drowsyCountDocument;
   public static DocumentSnapshot yawnCountDocument;
@@ -220,10 +237,13 @@ public abstract class CameraActivity extends AppCompatActivity
   public  List<Address> addresses;
   public static String[] addressGlobal = new String[]{"NA","NA"};
   public String[] lastCoordinate =new String[]{"0","0"};
-  Vibrator v;
+  Vibrator vibrator;
   boolean vibrating=false;
   private boolean toastVisible =false;
-  public static boolean canDetect=false;
+  public static boolean canAlarmGlobal =false;
+  public static boolean canAlarm=false;
+  public List<Date> alarmList= new ArrayList<>(Arrays.asList(new Date[3]));
+
 
 
   @Override
@@ -254,7 +274,7 @@ public abstract class CameraActivity extends AppCompatActivity
     Thread.setDefaultUncaughtExceptionHandler(new CustomizedExceptionHandler(
             "/mnt/sdcard/"));
 
-
+    notificationBuilder = new NotificationBuilder();
     dialogHelper= new DialogHelper(this);
     setContentView(R.layout.tfe_od_activity_camera);
     setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LOCKED);
@@ -279,10 +299,12 @@ public abstract class CameraActivity extends AppCompatActivity
     bottomNavigation.add(new MeowBottomNavigation.Model(5, R.drawable.ic_profile));
 
 
-    v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+    vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
     long[] pattern = {0, 1000, 1000};
     String[] values = new String[20];
-    ImageProcessor imageChecker = new ImageProcessor();
+    detectedBitmapInfo= new BitmapInfo();
+    
+
 
     runnableCode = new Runnable() {
       @Override
@@ -299,20 +321,21 @@ public abstract class CameraActivity extends AppCompatActivity
         currentIndex = (currentIndex + 1) % 20; // Wrap around to the beginning of the array
         double closePercentage = (closeCount / 20.0) * 100.0;
 
-        if(canDetect){
+        if(canAlarm){
           if(closePercentage>70 && !ringtone.isPlaying() && !appStopped ){
             toastAMessage("Drowsiness Alert! Your safety is at risk");
 
             // Play the default ringtone
-            if(detectedEye==null && values[values.length-1]!=null){
+            if(detectedEye==null && values[values.length-1]!=null && detectedBitmapInfo.getResultTitles().contains("closed")){
               ringtone.play();
-              detectedBitmap= copyBitmap;
+              detectedBitmap= detectedBitmapInfo.getBitmap();
               detectedEye=eyeStatus;
               detectMS=lastProcessingTimeMs+"";
               startResponseTime= System.currentTimeMillis();
               statusDriver=" DROWSY ";
             }
           }
+
           else if(closePercentage<60){
             if(detectedEye!=null && values[values.length-1]!=null){
               System.out.println("insert");
@@ -325,7 +348,7 @@ public abstract class CameraActivity extends AppCompatActivity
               if(lastDrowsyReportTime>3000){
                 saveDetectedImage(detectedBitmap,detectedEye, detectMS+"",currentResponseTime);
                 lastDrowsyReportTime=System.currentTimeMillis();
-
+                checkAlertForSMS(new Date());
 
               }
               detectedEye=null;
@@ -349,7 +372,7 @@ public abstract class CameraActivity extends AppCompatActivity
     String[] valuesYawn = new String[20];
 
 
-    Runnable mouthRunnable;
+
     mouthRunnable = new Runnable() {
       @Override
       public void run() {
@@ -365,15 +388,17 @@ public abstract class CameraActivity extends AppCompatActivity
         currentIndexYawn = (currentIndexYawn + 1) % 20; // Wrap around to the beginning of the array when past 20 it will be back to 1
         double yawnPercentage = (yawnCount / 20.0) * 100.0;  //convert to perncet base on stringlength
 
-        if(canDetect){
+        if(canAlarm){
           if(yawnPercentage>70 && !ringtone.isPlaying() && !appStopped ){
             toastAMessage("Heads up! A yawn can be a sign of fatigue. Consider getting some fresh air");
 
 
             if(statusDriverMouth.contains("ACTIVE") && valuesYawn[valuesYawn.length-1]!=null && lastYawnReportTime>3000){
+              if(detectedBitmapInfo.getResultTitles().contains("yawn")){
+                saveDetectedImage(detectedBitmapInfo.getBitmap(),mouthValue,lastProcessingTimeMs+"",0);
+                lastYawnReportTime=System.currentTimeMillis();
+              }
 
-              saveDetectedImage(copyBitmap,mouthStatus,lastProcessingTimeMs+"",0);
-              lastYawnReportTime=System.currentTimeMillis();
             }
             statusDriverMouth=" YAWNING ";
 
@@ -391,13 +416,15 @@ public abstract class CameraActivity extends AppCompatActivity
           if(HomeFrag.statusDriverTV.getText().toString().contains("ACTIVE")){
             if(vibrating){
               vibrating=false;
-              toastVisible=true;
-              v.cancel();
+              toastVisible=false;
+              vibrator.cancel();
+              dialogHelper.dismissDialog();
+              dialogHelper.normalDialog();
             }
           }else{
             if(!vibrating){
               vibrating=true;
-              v.vibrate(pattern, 0);
+              vibrator.vibrate(pattern, 0);
             }
           }
         }
@@ -452,7 +479,13 @@ public abstract class CameraActivity extends AppCompatActivity
       @Override
       public void onClick(View v) {
         elevation=0;
+        canAlarm= canAlarmGlobal;
+        vibrator.cancel();
+        ringtone.stop();
+        statusDriver=" ACTIVE ";
+        statusDriverMouth=" ACTIVE ";
         changeFrameLayoutElevation();
+        
       }
     });
 
@@ -579,7 +612,8 @@ public abstract class CameraActivity extends AppCompatActivity
       public void run() {
         dialogHelper.dismissDialog();
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
-        canDetect = true;
+        canAlarmGlobal = true;
+        canAlarm= canAlarmGlobal;
       }
     }, 8000);
 
@@ -589,6 +623,7 @@ public abstract class CameraActivity extends AppCompatActivity
 
     getContactList();
     getContactFavoritesList();
+
   }
 
   public interface ImageDetectionCallback {
@@ -760,6 +795,7 @@ public abstract class CameraActivity extends AppCompatActivity
       imageInfo.put("inference",ms);
       imageInfo.put("accuracy",(int) ((Math.round(confidenceLevel * 100.0f) / 100.0f)*100));
       imageInfo.put("response_time",responseTime);
+      lastDetectionOnOpen =new Date();
 
       firebaseDB.saveFileInfoToFirestore(imageInfo, "upload_queue");
       firebaseDB.saveFileInfoToFirestore(imageInfo, "image_detection");
@@ -771,6 +807,38 @@ public abstract class CameraActivity extends AppCompatActivity
 
 
     }
+  }
+
+  public void checkAlertForSMS(Date date){
+      alarmList.add(0,date);
+      int rangeMinutes=10;
+
+    System.out.println("listss "+alarmList.get(0)+" "+alarmList.get(1)+" "+alarmList.get(2));
+
+    if(alarmList.get(2)!=null){
+      long diffInMillis = Math.abs(alarmList.get(0).getTime() - alarmList.get(2).getTime());
+      long diffInMinutes = diffInMillis / (60 * 1000);
+      if(diffInMinutes <= rangeMinutes){
+        if(!favoritesInfoList.isEmpty()){
+          for (ContactsInfo contact : favoritesInfoList) {
+            SMSManager.sendSMS(convertPhoneNumber(contact.getContactNumber()), "Good "+HomeFrag.getTimeOfDay()+"\n"+userInfo.get("first_name").toString()
+                    + " " + userInfo.get("middle_name") + ". " + userInfo.get("last_name") + " " + userInfo.get("suffix") +" is experiencing continuous drowsiness" +
+                    " for the last "+rangeMinutes+" minutes. Consider taking action for the safety of "+userInfo.get("first_name").toString());
+            System.out.println("sent Sms "+convertPhoneNumber(contact.getContactNumber()));
+          }
+        }
+      };
+
+    }
+  }
+
+  public String convertPhoneNumber(String phoneNumber) {
+    int index = phoneNumber.indexOf('9');
+    if (index != -1) {
+      String rightPart = phoneNumber.substring(index);
+      return "63" + rightPart;
+    }
+    return phoneNumber;
   }
 
 
@@ -796,13 +864,15 @@ public abstract class CameraActivity extends AppCompatActivity
       this.query=query;
     }
     refreshDefaultQuery();
-    if(chartGenerator!=null){
-      chartGenerator.fetchDetectionCounts();
-    }
+
     detectionLogsInfo = firebaseDB.getDetectionLogsInfo(this.query, new FirebaseDatabase.ArrayListTaskCallback<Void>() {
       @Override
       public void onSuccess(ArrayList<DetectionLogsInfo> arrayList) {
         detectionLogsInfo =arrayList;
+
+        if(chartGenerator!=null){
+          chartGenerator.fetchDetectionCounts();
+        }
 //        if(detectionType.equals("Yawn")){
 //        }else if(detectionType.equals("Drowsy")){
 //          averageResponse= ((averageResponse*drowsyCount)+currentResponseTime)/(drowsyCount+1);
@@ -820,6 +890,8 @@ public abstract class CameraActivity extends AppCompatActivity
         System.out.println("error "+errorMessage);
       }
     });
+
+
   }
 
   public interface TaskCallback<T> {
@@ -954,7 +1026,9 @@ public abstract class CameraActivity extends AppCompatActivity
   public void toastAMessage(String message){
     if(!toastVisible){
       toastVisible=true;
-      Toast.makeText(context, message, Toast.LENGTH_LONG).show();
+      dialogHelper.normalDialog();
+      dialogHelper.showDialog("Alert",message);
+//      Toast.makeText(context, message, Toast.LENGTH_LONG).show();
     }
   }
 
@@ -966,6 +1040,11 @@ public abstract class CameraActivity extends AppCompatActivity
       backBtn.setVisibility(View.GONE);
       msTV.setElevation(elevation);
       frameLayout.setElevation(elevation);
+      canAlarm= canAlarmGlobal;
+      vibrator.cancel();
+      ringtone.stop();
+      statusDriver=" ACTIVE ";
+      statusDriverMouth=" ACTIVE ";
     }
 
   }
@@ -1224,7 +1303,7 @@ public abstract class CameraActivity extends AppCompatActivity
   public synchronized void onPause() {
     LOGGER.d("onPause " + this);
     ringtone.stop();
-    v.cancel();
+    vibrator.cancel();
     handlerThread.quitSafely();
     try {
       handlerThread.join();
@@ -1247,8 +1326,12 @@ public abstract class CameraActivity extends AppCompatActivity
   public synchronized void onDestroy() {
     LOGGER.d("onDestroy " + this);
     super.onDestroy();
-    v.cancel();
+    notificationBuilder.setNotifSent(false);
+    notificationBuilder.resetCountBuilder();
+    vibrator.cancel();
     ringtone.stop();
+    scanHandler.removeCallbacks(runnableCode);
+    scanHandler.removeCallbacks(mouthRunnable);
 
   }
 

@@ -97,7 +97,7 @@ public class AppDevFragment extends Fragment {
             public void onClick(View v) {
                 actionType="git1";
                 helper.customDialog("Redirect anyway");
-                helper.showDialog("Github Profilw", "This action will exit the app");
+                helper.showDialog("Github Profile", "This action will exit the app");
             }
         });
 

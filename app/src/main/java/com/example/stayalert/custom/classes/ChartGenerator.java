@@ -1,15 +1,13 @@
 package com.example.stayalert.custom.classes;
 
-import android.content.Context;
 import android.graphics.Color;
-import android.text.format.DateUtils;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
 import com.example.stayalert.CameraActivity;
 import com.example.stayalert.HomeFrag;
-import com.example.stayalert.NotificationFragment;
 import com.example.stayalert.StatsFrag;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.Description;
@@ -566,26 +564,19 @@ public class ChartGenerator {
             return;
         }
 
-        Object timestampObject = CameraActivity.userInfo.get("last_sign_in");
-        Timestamp timestamp = (Timestamp) timestampObject;
-        long seconds = timestamp.getSeconds();
-        int nanos = timestamp.getNanoseconds();
-
-        long milliseconds = seconds * 1000 + nanos / 1000000;
-        Date lastSignInDate = new Date(milliseconds);
         firebaseDB.getNotificationsList();
 
-
-        if ((((int) Double.parseDouble(CameraActivity.drowsyCountDocument.getData().get("day02").toString()) == 0 &&
-                        (int) Double.parseDouble(CameraActivity.yawnCountDocument.getData().get("day02").toString()) == 0)) || DateUtils.isToday(lastSignInDate.getTime()) ){
-            Log.d("ChartGenerator",  " no notif");
+        if(CameraActivity.lastDetectionTime==null || CameraActivity.notificationBuilder.notifSent){
             firebaseDB.updateCheckin();
             return;
         }
 
+
         Query query= db.collection("users/"+user.getUid()+"/user_notifications")
                 .orderBy("timestamp", Query.Direction.DESCENDING)
                 .limit(1);
+
+
         query.get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
             @Override
             public void onComplete(@NonNull Task<QuerySnapshot> task) {
@@ -594,12 +585,39 @@ public class ChartGenerator {
                     if (querySnapshot != null) {
                         System.out.println("sizee "+querySnapshot.size());
                         Timestamp timestamp= new Timestamp(new Date());
-                        if(!querySnapshot.isEmpty()){
+                        if(!querySnapshot.isEmpty() && querySnapshot.getDocuments().get(0).contains("last_detection_time")){
                             DocumentSnapshot documentSnapshot = querySnapshot.getDocuments().get(0);
-                            timestamp = documentSnapshot.getTimestamp("timestamp");
-                            Date date = timestamp.toDate();
+                            timestamp = documentSnapshot.getTimestamp("last_detection_time");
                         }
-                        if(querySnapshot.isEmpty() || !DateUtils.isToday(timestamp.toDate().getTime()) ){
+
+                        if(querySnapshot.isEmpty() || !querySnapshot.getDocuments().get(0).contains("last_detection_time")
+                                || timestamp.compareTo(CameraActivity.lastDetectionTime)<0 ){
+
+                            Date date1 = timestamp.toDate();
+                            SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                            String formattedDate = sdf1.format(date1);
+
+                            System.out.println("Formatted date: " + formattedDate);
+
+                            if(CameraActivity.detectionSnapshot!=null){
+                                for (DocumentSnapshot documentFields : CameraActivity.detectionSnapshot.getDocuments()) {
+                                    Timestamp fbTimestamp=  documentFields.getTimestamp("timestamp");
+                                    String type= documentFields.getData().get("detection_name").toString();
+                                    Date date = fbTimestamp.toDate();
+                                    SimpleDateFormat sdf = new SimpleDateFormat("HH", Locale.getDefault());
+                                    String hour = sdf.format(date);
+
+                                   if(fbTimestamp.compareTo(timestamp)>0 || querySnapshot.isEmpty()){
+                                       if(type.equals("Drowsy")){
+                                           CameraActivity.notificationBuilder.setDrowsyListIndex(Integer.parseInt(hour));
+                                           CameraActivity.notificationBuilder.addAverageResponseList(documentFields.getDouble("response_time"));
+                                       }else if(type.equals("Yawn")){
+                                           CameraActivity.notificationBuilder.setYawnyListIndex(Integer.parseInt(hour));
+                                       }
+                                   }
+                                }
+                            }
+
                             Calendar calendar = Calendar.getInstance();
                             calendar.add(Calendar.DATE, 0); // Move to yesterday
                             calendar.set(Calendar.HOUR_OF_DAY, 12);
@@ -610,12 +628,9 @@ public class ChartGenerator {
                             String formattedTime = dateFormat.format(lastSignInDate);
                             SimpleDateFormat sdf = new SimpleDateFormat("MMMM d, yyyy", Locale.ENGLISH);
                             String detectionDate = sdf.format(lastSignInDate);
-                            double averageResponse=getAverageDrowsyResponseSum();
-                            int yawnCount= getYawnCount();
-                            int drowsyCount= getDrowsyCount();
-                            int lowestTime= getLowestTime();
-                            int highestTime= getHighestTime();
-                            int highestYLength= getHighestYLength();
+                            double averageResponse=CameraActivity.notificationBuilder.getAverageDrowsyResponseSum();
+                            int yawnCount= CameraActivity.notificationBuilder.getYawnCount();
+                            int drowsyCount= CameraActivity.notificationBuilder.getDrowsyCount();
                             Map<String, Object> notifInfo = new HashMap<>();
                             notifInfo.put("wasRead",false);
                             notifInfo.put("title","Detection Report Summary");
@@ -624,14 +639,15 @@ public class ChartGenerator {
                                     "actions to stay safe on the road.\\n\\t\\t\\u2022 Total Sleep Detected: "+drowsyCount+"\\n\\t\\t\\u2022 Total Yawn Detected: "+yawnCount+
                                     "\\n\\t\\t\\u2022 Average Drowsy Response Time: "+String.format("%.2f",(Double.isNaN(averageResponse)?0:averageResponse))+"s");
                             notifInfo.put("timestamp",new Date());
+                            notifInfo.put("last_detection_time",CameraActivity.lastDetectionOnOpen);
                             notifInfo.put("detection_date",lastSignInDate);
-                            notifInfo.put("drowsy_list",getDrowsyList());
-                            notifInfo.put("yawn_list",getYawnList());
+                            notifInfo.put("drowsy_list",CameraActivity.notificationBuilder.getDrowsyList());
+                            notifInfo.put("yawn_list",CameraActivity.notificationBuilder.getYawnList());
                             notifInfo.put("time_values",new ArrayList<Integer>(){
                                 {
-                                    add(lowestTime);
-                                    add(highestTime);
-                                    add(highestYLength);
+                                    add(CameraActivity.notificationBuilder.getLowestTime());
+                                    add(CameraActivity.notificationBuilder.getHighestTime());
+                                    add(CameraActivity.notificationBuilder.getHighestCount());
                                 }
                             });
                             String time = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
@@ -641,6 +657,7 @@ public class ChartGenerator {
                                     HomeFrag.changeNotifIcon(true);
                                     firebaseDB.getNotificationsList();
                                     firebaseDB.updateCheckin();
+                                    CameraActivity.notificationBuilder.setNotifSent(true);
                                     Log.d("ChartGenerator", " write notification success");
                                 }
                                 @Override
@@ -649,6 +666,9 @@ public class ChartGenerator {
                                 }
                             });
                             //update check in after notif is writeen
+                        }else{
+                            firebaseDB.updateCheckin();
+                            CameraActivity.notificationBuilder.setNotifSent(true);
                         }
 
                     }

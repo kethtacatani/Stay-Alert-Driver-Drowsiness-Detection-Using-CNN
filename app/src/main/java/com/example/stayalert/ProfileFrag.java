@@ -15,8 +15,10 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -34,10 +36,8 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.Query;
 import com.rilixtech.widget.countrycodepicker.CountryCodePicker;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -68,6 +68,7 @@ public class ProfileFrag extends Fragment implements View.OnTouchListener{
     public static final int PICK_IMAGE= 20;
     boolean profilePicChanged = false;
     Bitmap picBitmap, oldPic;
+    Switch toggleBGDetectionSW;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -112,6 +113,7 @@ public class ProfileFrag extends Fragment implements View.OnTouchListener{
         profileAppDev = view.findViewById(R.id.profileAppDevs);
         profileAppAbout = view.findViewById(R.id.profileAbout);
         profileAppPrivacy=view.findViewById(R.id.profileAppPrivacy);
+        toggleBGDetectionSW = view.findViewById(R.id.profileToggleDetectionSW);
 
         fName.setOnTouchListener(this);
         mName.setOnTouchListener(this);
@@ -180,6 +182,8 @@ public class ProfileFrag extends Fragment implements View.OnTouchListener{
             }
         });
 
+
+
         edit.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -202,6 +206,25 @@ public class ProfileFrag extends Fragment implements View.OnTouchListener{
                     }
                 }
 
+            }
+        });
+
+        toggleBGDetectionSW.setChecked(CameraActivity.canAlarmGlobal);
+
+        toggleBGDetectionSW.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if(isChecked){
+                    CameraActivity.canAlarmGlobal =true;
+                    CameraActivity.canAlarm=true;
+                }else{
+                    CameraActivity.canAlarmGlobal =false;
+                    CameraActivity.canAlarm=false;
+                    cameraActivity.vibrator.cancel();
+                    cameraActivity.ringtone.stop();
+                    cameraActivity.statusDriver=" ACTIVE ";
+                    cameraActivity.statusDriverMouth=" ACTIVE ";
+                }
             }
         });
 
@@ -578,8 +601,9 @@ public class ProfileFrag extends Fragment implements View.OnTouchListener{
 
     private  void displayUserInfo(){
         userData= cameraActivity.userInfo;
-        if(!userData.isEmpty()){
-            profileName.setText(userData.get("first_name").toString() + " " + userData.get("middle_name") + ". " + userData.get("last_name") + " " + userData.get("suffix"));
+        if(!userData.isEmpty()){profileName.setText(userData.get("first_name").toString() + " " + userData.get("middle_name") + ". " + userData.get("last_name") + " " + userData.get("suffix"));
+            HomeFrag. nameDriverTV.setText(userData.get("first_name").toString() + " " + userData.get("middle_name") + ". " + userData.get("last_name") + " " + userData.get("suffix"));
+
             profileAddress.setText(userData.get("address").toString());
         }
     }
