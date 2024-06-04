@@ -4,32 +4,18 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.View;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 
 import com.example.stayalert.CameraActivity;
-import com.example.stayalert.HomeFrag;
 import com.example.stayalert.R;
-import com.example.stayalert.custom.classes.ChartGenerator;
 import com.example.stayalert.custom.classes.ContactsInfo;
 import com.example.stayalert.custom.classes.DetectionLogsInfo;
 import com.example.stayalert.custom.classes.NotificationInfo;
-import com.github.mikephil.charting.charts.LineChart;
-import com.github.mikephil.charting.components.Description;
-import com.github.mikephil.charting.components.XAxis;
-import com.github.mikephil.charting.components.YAxis;
-import com.github.mikephil.charting.data.Entry;
-import com.github.mikephil.charting.data.LineData;
-import com.github.mikephil.charting.data.LineDataSet;
-import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
-import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -54,9 +40,6 @@ import com.google.firebase.firestore.Source;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
-import com.google.firestore.v1.DocumentTransform;
-
-import org.checkerframework.checker.units.qual.C;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -534,11 +517,14 @@ public class FirebaseDatabase {
     }
 
     public ArrayList<DetectionLogsInfo> getDetectionLogsInfo(Query query,ArrayListTaskCallback<Void> callback) {
+
         ArrayList<DetectionLogsInfo> info = new ArrayList<>();
+
 
         query.get().addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
                 QuerySnapshot querySnapshot = task.getResult();
+                CameraActivity.detectionSnapshot= querySnapshot;
                 if (querySnapshot != null) {
                     for (DocumentSnapshot documentFields : querySnapshot.getDocuments()) {
                         String fileName = getValue(documentFields.getData(), "file_name", "");
@@ -552,6 +538,17 @@ public class FirebaseDatabase {
                         String downloadURL = getValue(documentFields.getData(), "downloadURL", "");
 
                         info.add( new DetectionLogsInfo(type,timestamp,location,accuracy,inference,fileName, localPath, downloadURL,responseTime)); //must be in correct order
+
+                        Timestamp fbTimestamp=  documentFields.getTimestamp("timestamp");
+
+                        if(CameraActivity.lastDetectionTime ==null){
+                            CameraActivity.lastDetectionTime =fbTimestamp;
+                        }
+                        else if(fbTimestamp.compareTo(CameraActivity.lastDetectionTime)>0){
+                            CameraActivity.lastDetectionTime =documentFields.getTimestamp("timestamp");
+                        }
+
+
                     }
                     callback.onSuccess(info);
                 }
@@ -759,28 +756,19 @@ public class FirebaseDatabase {
 
 
     public void updateCheckin(){
-        Object timestampObject = CameraActivity.userInfo.get("last_sign_in");
-        Timestamp timestamp = (Timestamp) timestampObject;
-        long seconds = timestamp.getSeconds();
-        int nanos = timestamp.getNanoseconds();
+        updateUserInfo(new HashMap<String, Object>() {{
+            put("last_sign_in", new Date());
+        }}, db.collection("users").document(mAuth.getUid()), new FirebaseDatabase.TaskCallback<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                Log.e(TAG,"Success updatingCheckIn ");
+            }
 
-        long milliseconds = seconds * 1000 + nanos / 1000000;
-        Date lastSignInDate = new Date(milliseconds);
-        if(!DateUtils.isToday(lastSignInDate.getTime())){
-            updateUserInfo(new HashMap<String, Object>() {{
-                put("last_sign_in", new Date());
-            }}, db.collection("users").document(mAuth.getUid()), new FirebaseDatabase.TaskCallback<Void>() {
-                @Override
-                public void onSuccess(Void result) {
-                    Log.e(TAG,"Success updatingCheckIn ");
-                }
-
-                @Override
-                public void onFailure(String errorMessage) {
-                    Log.e(TAG,"Error updatingCheckIn "+errorMessage);
-                }
-            });
-        }
+            @Override
+            public void onFailure(String errorMessage) {
+                Log.e(TAG,"Error updatingCheckIn "+errorMessage);
+            }
+        });
     }
 
     public void sendNotif(){

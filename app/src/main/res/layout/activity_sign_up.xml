@@ -292,7 +292,6 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginRight="20dp"
-                        app:endIconMode="clear_text"
                         android:layout_weight="1.5"
                         android:textColorHint="@color/selection_highlight"
                         app:boxStrokeWidth="0dp"

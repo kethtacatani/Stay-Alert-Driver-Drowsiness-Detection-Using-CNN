@@ -3,6 +3,7 @@ package com.example.stayalert;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,6 +18,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.stayalert.custom.classes.ContactsInfo;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,6 +37,7 @@ public class ContactsRecycleViewAdapter extends  RecyclerView.Adapter<ContactsRe
     String actionType="";
     FirebaseDatabase firebaseDB;
     FirebaseAuth auth;
+    FirebaseFirestore db;
 
     public ContactsRecycleViewAdapter(ArrayList<ContactsInfo> data, Context context){
         this.contactsInfo=data;
@@ -41,6 +45,7 @@ public class ContactsRecycleViewAdapter extends  RecyclerView.Adapter<ContactsRe
         this. helper = new DialogHelper(this.context);
         this.firebaseDB = new FirebaseDatabase();
         this.auth = FirebaseAuth.getInstance();
+        this.db = FirebaseFirestore.getInstance();
     }
 
     @NonNull
@@ -99,20 +104,37 @@ public class ContactsRecycleViewAdapter extends  RecyclerView.Adapter<ContactsRe
                 @Override
                 public void onActionClicked() {
                     if(actionType.equals("Add")){
-                        Map<String, Object> contactInfo = new HashMap<>();
-                        contactInfo.put("contactName",contactName.getText().toString());
-                        contactInfo.put("contactNumber",contactNumber.getText().toString());
-                        firebaseDB.writeUserInfo(contactInfo, "users/" + auth.getUid() + "/contact_favorites", contactNumber.getText().toString(), new FirebaseDatabase.TaskCallback<Void>() {
-                            @Override
-                            public void onSuccess(Void result) {
-                                Toast.makeText(context, "Added to favorites", Toast.LENGTH_SHORT).show();
-                            }
+                        if(CameraActivity.favoritesInfoList.size()<6){
+                            Map<String, Object> contactInfo = new HashMap<>();
+                            contactInfo.put("contactName",contactName.getText().toString());
+                            contactInfo.put("contactNumber",contactNumber.getText().toString());
+                            firebaseDB.writeUserInfo(contactInfo, "users/" + auth.getUid() + "/contact_favorites", contactNumber.getText().toString(), new FirebaseDatabase.TaskCallback<Void>() {
+                                @Override
+                                public void onSuccess(Void result) {
+                                    Toast.makeText(context, "Added to favorites", Toast.LENGTH_SHORT).show();
+                                    Query query = db.collection("users/"+auth.getUid()+"/contact_favorites");
+                                    firebaseDB.getFavoritesList(query, new FirebaseDatabase.ArrayListTaskCallbackContact<Void>() {
+                                        @Override
+                                        public void onSuccess(ArrayList<ContactsInfo> arrayList) {
+                                            CameraActivity.favoritesInfoList= arrayList;
+                                        }
 
-                            @Override
-                            public void onFailure(String errorMessage) {
-                                Toast.makeText(context, "Failed adding to favorites", Toast.LENGTH_SHORT).show();
-                            }
-                        });
+                                        @Override
+                                        public void onFailure(String errorMessage) {
+                                            Log.e("Get Favorires", errorMessage);
+                                        }
+                                    });
+                                }
+
+                                @Override
+                                public void onFailure(String errorMessage) {
+                                    Toast.makeText(context, "Failed adding to favorites", Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        }else{
+                            helper.normalDialog();
+                            helper.showDialog("Add to Favorites", "You've reached max favorite limits");
+                        }
 
                     }else{
                         Intent intent = new Intent(Intent.ACTION_DIAL);

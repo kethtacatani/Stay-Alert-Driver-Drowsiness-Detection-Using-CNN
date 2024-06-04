@@ -37,6 +37,7 @@ import android.widget.Toast;
 
 import androidx.core.content.res.ResourcesCompat;
 
+import com.example.stayalert.custom.classes.BitmapInfo;
 import com.example.stayalert.customview.OverlayView;
 import com.example.stayalert.customview.OverlayView.DrawCallback;
 import com.example.stayalert.env.BorderedText;
@@ -72,7 +73,7 @@ public class DetectorActivity extends com.example.stayalert.CameraActivity imple
     OverlayView trackingOverlay;
     private Integer sensorOrientation;
 
-    private YoloV5Classifier detector;
+
 
     private Bitmap rgbFrameBitmap = null;
     private Bitmap croppedBitmap = null;
@@ -328,6 +329,8 @@ public class DetectorActivity extends com.example.stayalert.CameraActivity imple
                                 break;
                         }
 
+                        detectedBitmapInfo.clearList();
+
                         final List<Classifier.Recognition> mappedRecognitions =
                                 new LinkedList<Classifier.Recognition>();
 
@@ -336,8 +339,13 @@ public class DetectorActivity extends com.example.stayalert.CameraActivity imple
                         for (final Classifier.Recognition result : results) {
                             final RectF location = result.getLocation();
                             if (location != null && result.getConfidence() >= minimumConfidence) {
+                                if(resultTitles.contains("closed") && result.getTitle().equals("open")){
+                                    System.out.printf("skippeds");
+                                    continue;
+                                }
                                 setCanvas(canvas,result.getTitle(),location);
-                                copyBitmap=newBm;
+//                                copyBitmap=newBm;
+
 
                                 cropToFrameTransform.mapRect(location);
                                 resultTitles.add(result.getTitle());
@@ -349,10 +357,15 @@ public class DetectorActivity extends com.example.stayalert.CameraActivity imple
                             }
                         }
 
+                        detectedBitmapInfo.setBitmap(newBm);
+                        detectedBitmapInfo.setList(resultTitles);
+
+
 
 //                        RectF myRectF = new RectF(80, 90, 80, 90);
 //                        setCanvas(canvas,"sdd",myRectF);
 //                        dialogHelper.showTestImage(copyBitmap);
+
 
                         eyeStatus=resultTitles.contains("open")||resultTitles.contains("closed")?resultTitles.contains("open") ? "open" : "closed":"";
                         mouthStatus=resultTitles.contains("yawn")||resultTitles.contains("no_yawn")?resultTitles.contains("yawn") ? "yawn" : "no_yawn":"";
@@ -469,6 +482,8 @@ public class DetectorActivity extends com.example.stayalert.CameraActivity imple
         }
         return dstBmp;
     }
+
+
 
     @Override
     protected int getLayoutId() {
